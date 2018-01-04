@@ -14,7 +14,7 @@ sa.para = require('sensorsdata_conf.js');
 /*
   if (sa.para.debug_mode) {
     sa.para.debug_mode_url = sa.para.server_url.replace(/\/sa$/, '/debug').replace(/(\/sa)(\?[^\/]+)$/, '/debug$2');
-  }
+  }router
 */
 
 sa._queue = [];
@@ -27,7 +27,7 @@ var ArrayProto = Array.prototype,
     slice = ArrayProto.slice,
     toString = ObjProto.toString,
     hasOwnProperty = ObjProto.hasOwnProperty,
-    LIB_VERSION = '0.2',
+    LIB_VERSION = '0.5',
 	LIB_NAME = 'MiniProgram';
 
 sa.lib_version = LIB_VERSION;
@@ -740,7 +740,7 @@ function pageOnload(t, n) {
 function pageOnshow(t, n) {
   var router = typeof this["__route__"] === 'string' ? this["__route__"] : '系统没有取到值';
   if (sa.para.onshow){		
-    sa.para.onshow(sa, n, this)
+    sa.para.onshow(sa, router, this)
 	}else{
     sa.track('$MPViewScreen', {
       $url: router
