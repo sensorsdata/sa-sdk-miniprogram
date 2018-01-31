@@ -27,7 +27,7 @@ var ArrayProto = Array.prototype,
     slice = ArrayProto.slice,
     toString = ObjProto.toString,
     hasOwnProperty = ObjProto.hasOwnProperty,
-    LIB_VERSION = '0.5',
+    LIB_VERSION = '0.6',
 	LIB_NAME = 'MiniProgram';
 
 sa.lib_version = LIB_VERSION;
@@ -507,14 +507,14 @@ sa.prepareData = function(p, callback) {
 	_.extend(data, p);
 
 	// 合并properties里的属性
-	if (_.isObject(p.properties) && !_.isEmptyObject(p.properties)) {
+	if (_.isObject(p.properties) && !_.isEmptyObject(p.properties)){
 		_.extend(data.properties, p.properties);
 	}
 
 	// profile时不传公用属性
 	if (!p.type || p.type.slice(0, 7) !== 'profile') {
 		// 传入的属性 > 当前页面的属性 > session的属性 > cookie的属性 > 预定义属性
-		data.properties = _.extend({}, _.info.properties, data.properties);
+    data.properties = _.extend({}, _.info.properties, sa.store.getProps(), data.properties);
 	}
 	// 如果$time是传入的就用，否则使用服务端时间
 	if (data.properties.$time && _.isDate(data.properties.$time)) {
@@ -569,6 +569,18 @@ sa.store = {
 	getDistinctId : function() {
 		return this._state.distinct_id;
 	},
+  getProps: function () {
+    return this._state.props || {};
+  },
+  setProps: function (newp, isCover) {
+    var props = this._state.props || {};
+    if (!isCover) {
+      _.extend(props, newp);
+      this.set('props', props);
+    } else {
+      this.set('props', newp);
+    }
+  },  
 	set : function(name, value) {
     var obj = {};
     if(typeof name === 'string'){
@@ -582,6 +594,9 @@ sa.store = {
     }
 		this.save();
 	},
+  change: function (name, value) {
+    this._state[name] = value;
+  },
 	save : function() {
 		wx.setStorageSync("sensorsdata2015_wechat", JSON.stringify(this._state));
 	},
@@ -625,6 +640,29 @@ sa.track = function(e, p, c) {
 		properties : p
 	}, c);
 };
+/*
+sa.identify = function (id, isSave) {
+  if (typeof id === 'number') {
+    id = String(id);
+  }else if(typeof id !== 'string'){
+    return false;
+  }
+  var firstId = sa.store.getFirstId();
+  if (isSave === true) {
+    if (firstId) {
+      sa.store.set('first_id', id);
+    } else {
+      sa.store.set('distinct_id', id);
+    }
+  } else {
+    if (firstId) {
+      sa.store.change('first_id', id);
+    } else {
+      sa.store.change('distinct_id', id);
+    }
+  }
+};
+*/
 
 sa.trackSignup = function(id, e, p, c) {
 
@@ -638,10 +676,14 @@ sa.trackSignup = function(id, e, p, c) {
 	sa.store.set('distinct_id', id);
 };
 
-sa.register = function(){
-	
+sa.register = function(obj){
+  if (_.isObject(obj) && !_.isEmptyObject(obj)) {
+    sa.store.setProps(obj);
+  }
+};
 
-
+sa.clearAllRegister = function(){
+  sa.store.setProps({},true);
 };
 
 sa.login = function(id) {
