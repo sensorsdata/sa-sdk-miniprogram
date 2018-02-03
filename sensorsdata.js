@@ -640,7 +640,7 @@ sa.track = function(e, p, c) {
 		properties : p
 	}, c);
 };
-/*
+
 sa.identify = function (id, isSave) {
   if (typeof id === 'number') {
     id = String(id);
@@ -662,7 +662,6 @@ sa.identify = function (id, isSave) {
     }
   }
 };
-*/
 
 sa.trackSignup = function(id, e, p, c) {
 
