@@ -27,7 +27,7 @@ var ArrayProto = Array.prototype,
     slice = ArrayProto.slice,
     toString = ObjProto.toString,
     hasOwnProperty = ObjProto.hasOwnProperty,
-    LIB_VERSION = '0.6',
+    LIB_VERSION = '0.7',
 	LIB_NAME = 'MiniProgram';
 
 sa.lib_version = LIB_VERSION;
@@ -708,7 +708,6 @@ sa.init = function() {
 };
 
 sa.send = function(t) {
-	var o = 0;
 	var url = '';
 	t._nocache = (String(Math.random()) + String(Math.random()) + String(Math.random())).slice(2, 15);
 
@@ -725,11 +724,7 @@ sa.send = function(t) {
 	var sendRequest = function() {
 		wx.request({
 			"url" : url,
-			"method" : "GET",
-			"fail" : function() {
-				logger.info('发送错误，重新发送');
-				o < 2 && (o++, sendRequest())
-			}
+			"method" : "GET"
 		})
 	};
 	sendRequest();
