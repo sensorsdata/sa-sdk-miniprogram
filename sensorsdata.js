@@ -9,14 +9,6 @@ var sa = {};
 
 sa.para = require('sensorsdata_conf.js');
 
-
-// 优化配置  
-/*
-  if (sa.para.debug_mode) {
-    sa.para.debug_mode_url = sa.para.server_url.replace(/\/sa$/, '/debug').replace(/(\/sa)(\?[^\/]+)$/, '/debug$2');
-  }router
-*/
-
 sa._queue = [];
 // 是否已经获取到系统信息
 sa.getSystemInfoComplete = false;
@@ -27,8 +19,12 @@ var ArrayProto = Array.prototype,
     slice = ArrayProto.slice,
     toString = ObjProto.toString,
     hasOwnProperty = ObjProto.hasOwnProperty,
-    LIB_VERSION = '0.7',
+    LIB_VERSION = '0.9',
 	LIB_NAME = 'MiniProgram';
+
+var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
+
+var sa_referrer = '直接打开';
 
 sa.lib_version = LIB_VERSION;
 
@@ -441,6 +437,42 @@ _.base64Encode = function(data) {
 	return enc;
 };
 
+_.getQueryParam = function (url, param) {
+  url = _.decodeURIComponent(url);
+  var regexS = "[\\?&]" + param + "=([^&#]*)",
+    regex = new RegExp(regexS),
+    results = regex.exec(url);
+  if (results === null || (results && typeof (results[1]) !== 'string' && results[1].length)) {
+    return '';
+  } else {
+    return _.decodeURIComponent(results[1]);
+  }
+};
+
+_.getUtm = function(url){
+  var campaign_keywords = source_channel_standard.split(' ');
+  var kw = '';
+  var params = {};
+  url = _.decodeURIComponent(url);
+  url = url.split('?')[1];
+  if(url.indexOf('?') === -1){
+    url = '?' + url;
+    if (_.isArray(sa.para.source_channel) && sa.para.source_channel.length > 0) {
+      campaign_keywords = campaign_keywords.concat(sa.para.source_channel);
+      campaign_keywords = _.unique(campaign_keywords);
+    }
+    _.each(campaign_keywords, function (kwkey) {
+      kw = _.getQueryParam(url, kwkey);
+      if (kw.length) {
+        params[kwkey] = kw;
+      }
+    });
+    return params;
+  }else{
+    return {};
+  }
+};
+
 _.info = {
 	properties : {
 		$lib : LIB_NAME,
@@ -515,6 +547,13 @@ sa.prepareData = function(p, callback) {
 	if (!p.type || p.type.slice(0, 7) !== 'profile') {
 		// 传入的属性 > 当前页面的属性 > session的属性 > cookie的属性 > 预定义属性
     data.properties = _.extend({}, _.info.properties, sa.store.getProps(), data.properties);
+
+    // 判断是否是首日访问，果子说要做
+    if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > (new Date()).getTime()) {
+      data.properties.$is_first_day = true;
+    } else {
+      data.properties.$is_first_day = false;
+    }
 	}
 	// 如果$time是传入的就用，否则使用服务端时间
 	if (data.properties.$time && _.isDate(data.properties.$time)) {
@@ -525,12 +564,7 @@ sa.prepareData = function(p, callback) {
 			data.time = (new Date()) * 1;
 		}
 	}
-  // 判断是否是首日访问，果子说要做
-  if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > (new Date()).getTime() ){
-    data.properties.$is_first_day = true;
-  }else{
-    data.properties.$is_first_day = false;
-  }
+
 
 	_.searchObjDate(data);
 	_.searchObjString(data);
@@ -725,7 +759,7 @@ sa.send = function(t) {
 		wx.request({
 			"url" : url,
 			"method" : "GET"
-		})
+		});
 	};
 	sendRequest();
 };
@@ -734,63 +768,141 @@ function e(t, n, o) {
 	if (t[n]) {
 		var e = t[n];
 		t[n] = function(t) {
-			o.call(this, t, n), e.call(this, t)
+			o.call(this, t, n);
+      e.call(this, t);
 		}
 	} else
 		t[n] = function(t) {
-			o.call(this, t, n)
+			o.call(this, t, n);
 		}
 }
 
-function appLaunch() {
+function appLaunch(para) {
 	this[sa.para.name] = sa;
 	sa.init();
+  var prop = {};
 
+  if(para && para.path){
+    prop.$url_path = para.path;
+  }
+  // 暂时只解析传统网页渠道的query
+  if(para && _.isObject(para.query) && para.query.q){
+    _.extend(prop,_.getUtm(para.query.q));
+  }
+//  console.log('app_launch', JSON.stringify(arguments));
+  sa.track('$MPLaunch',prop);
 };
 
-function appShow() {
+function appShow(para) {
+//  console.log('app_show', JSON.stringify(arguments));
+  var prop = {};
 
+  if (para && para.path) {
+    prop.$url_path = para.path;
+  }
+  // 暂时只解析传统网页渠道的query
+  if (para && _.isObject(para.query) && para.query.q) {
+    _.extend(prop, _.getUtm(para.query.q));
+  }
+  sa.track('$MPShow', prop);
 };
 
-function appHide(n, e) {
-
+function appHide() {
+  sa.track('$MPHide');
+//  console.log('app_hide', JSON.stringify(arguments));
+//  sa.track('app_hide', { detail: JSON.stringify(arguments) });
 };
+
+function appError(){
+//  console.log('app_error', JSON.stringify(arguments));
+//  sa.track('app_error', { detail: JSON.stringify(arguments) });
+}
+function appUnLaunch() {
+//  console.log('app_unlaunch', JSON.stringify(arguments));
+//  sa.track('app_unlaunch', { detail: JSON.stringify(arguments) });
+}
 
 var p = App;
 
 App = function(t) {
 	e(t, "onLaunch", appLaunch);
 	e(t, "onShow", appShow);
+//  e(t, "onUnLaunch", appUnLaunch);
 	e(t, "onHide", appHide);
+//  e(t, "onError",appError);
 	p(t);
 };
 
 function pageOnunload(n, e) {
-
+  
+ // console.log('s-page_unload', JSON.stringify(arguments));
+//  sa.track('page_unload', { detail: JSON.stringify(arguments) });  
 }
 
-function pageOnload(t, n) {
+function pageOnload(para) {
+  //console.log('s-page_onload', JSON.stringify(arguments));
+  var router = typeof this["__route__"] === 'string' ? this["__route__"] : '系统没有取到值'; 
 
-};
-
-function pageOnshow(t, n) {
-  var router = typeof this["__route__"] === 'string' ? this["__route__"] : '系统没有取到值';
-  if (sa.para.onshow){		
-    sa.para.onshow(sa, router, this)
-	}else{
-    sa.track('$MPViewScreen', {
-      $url: router
-    });
+  var prop = {};
+  prop.$referrer = sa_referrer;
+  prop.$url_path = router;
+  // 暂时只解析传统网页渠道的query
+  if (para && _.isObject(para[0]) && para[0].q) {
+    _.extend(prop, _.getUtm(para[0].q));
   }
+  
+  if (sa.para.onshow) {
+    sa.para.onshow(sa, router, this);
+  } else {
+    sa.track('$MPViewScreen', prop);
+  }
+
+  sa_referrer = router;
+
 };
+
+function pageOnshow() {
+  //console.log('s-page_show', JSON.stringify(arguments));
+};
+
+function pageOnHide() {
+ // console.log('s-page_hide', JSON.stringify(arguments));
+//  sa.track('page_hide', { detail: JSON.stringify(arguments) });
+}
+
+function pageOnReady() {
+ // console.log('s-page_ready', JSON.stringify(arguments));
+//  sa.track('page_ready', { detail: JSON.stringify(arguments) });
+}
+
+function pageOnPullDownRefresh() {
+//  console.log('page_PullDownRefresh', JSON.stringify(arguments));
+//  sa.track('page_PullDownRefresh', { detail: JSON.stringify(arguments) });
+}
+
+function pageOnReachBottom() {
+//  console.log('page_ReachBottom', JSON.stringify(arguments));
+//  sa.track('page_ReachBottom', { detail: JSON.stringify(arguments) };
+}
+function pageOnShareAppMessage(n, e) {
+//  console.log('page_ShareAppMessage', JSON.stringify(arguments));
+//  sa.track('page_ShareAppMessage', { detail: JSON.stringify(arguments) });
+}
 
 var v = Page;
 
 Page = function(t) {
+
 	e(t, "onLoad", pageOnload);
-	e(t, "onUnload", pageOnunload);
-	e(t, "onShow", pageOnshow);
-	e(t, "onHide", pageOnunload);
+//	e(t, "onUnload", pageOnunload);
+//	e(t, "onShow", pageOnshow);
+//	e(t, "onHide", pageOnHide);
+
+//  e(t, "onReady", pageOnReady);
+//  e(t, "onPullDownRefresh", pageOnPullDownRefresh);
+//  e(t, "onReachBottom", pageOnReachBottom);
+//  e(t, "onShareAppMessage", pageOnShareAppMessage);
+
 
 	v(t);
 
