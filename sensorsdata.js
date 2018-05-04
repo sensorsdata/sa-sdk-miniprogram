@@ -450,6 +450,7 @@ _.getQueryParam = function (url, param) {
 };
 
 _.getUtm = function (url) {
+  var campagin_w = source_channel_standard.split(' ');
   var campaign_keywords = source_channel_standard.split(' ');
   var kw = '';
   var params = {};
@@ -464,7 +465,11 @@ _.getUtm = function (url) {
     _.each(campaign_keywords, function (kwkey) {
       kw = _.getQueryParam(url, kwkey);
       if (kw.length) {
-        params[kwkey] = kw;
+        if (_.include(campagin_w,kwkey)){
+          params['$' + kwkey] = kw;
+        }else{
+          params[kwkey] = kw;
+        }
       }
     });
     return params;
@@ -854,8 +859,8 @@ function pageOnload(para) {
   prop.$referrer = sa_referrer;
   prop.$url_path = router;
   // 暂时只解析传统网页渠道的query
-  if (para && _.isObject(para[0]) && para[0].q) {
-    _.extend(prop, _.getUtm(para[0].q));
+  if (para && _.isObject(para) && para.q) {
+    _.extend(prop, _.getUtm(para.q));
   }
 
   if (sa.para.onshow) {
