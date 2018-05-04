@@ -455,8 +455,13 @@ _.getUtm = function (url) {
   var kw = '';
   var params = {};
   url = _.decodeURIComponent(url);
-  url = url.split('?')[1];
-  if (url.indexOf('?') === -1) {
+  url = url.split('?');
+  if(url.length === 2){
+    url = url[1];
+  }else{
+    return {};
+  }
+
     url = '?' + url;
     if (_.isArray(sa.para.source_channel) && sa.para.source_channel.length > 0) {
       campaign_keywords = campaign_keywords.concat(sa.para.source_channel);
@@ -473,9 +478,6 @@ _.getUtm = function (url) {
       }
     });
     return params;
-  } else {
-    return {};
-  }
 };
 
 _.info = {
