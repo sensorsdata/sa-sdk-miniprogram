@@ -16,7 +16,7 @@ var conf = {
     //$MPHide
     appHide:true,
     //$MPViewScreen
-    pageLoad:true
+    pageShow:true
   }
 };
 

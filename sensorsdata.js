@@ -19,7 +19,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '0.9',
+  LIB_VERSION = '1.0',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -456,28 +456,28 @@ _.getUtm = function (url) {
   var params = {};
   url = _.decodeURIComponent(url);
   url = url.split('?');
-  if(url.length === 2){
+  if (url.length === 2) {
     url = url[1];
-  }else{
+  } else {
     return {};
   }
 
-    url = '?' + url;
-    if (_.isArray(sa.para.source_channel) && sa.para.source_channel.length > 0) {
-      campaign_keywords = campaign_keywords.concat(sa.para.source_channel);
-      campaign_keywords = _.unique(campaign_keywords);
-    }
-    _.each(campaign_keywords, function (kwkey) {
-      kw = _.getQueryParam(url, kwkey);
-      if (kw.length) {
-        if (_.include(campagin_w,kwkey)){
-          params['$' + kwkey] = kw;
-        }else{
-          params[kwkey] = kw;
-        }
+  url = '?' + url;
+  if (_.isArray(sa.para.source_channel) && sa.para.source_channel.length > 0) {
+    campaign_keywords = campaign_keywords.concat(sa.para.source_channel);
+    campaign_keywords = _.unique(campaign_keywords);
+  }
+  _.each(campaign_keywords, function (kwkey) {
+    kw = _.getQueryParam(url, kwkey);
+    if (kw.length) {
+      if (_.include(campagin_w, kwkey)) {
+        params['$' + kwkey] = kw;
+      } else {
+        params[kwkey] = kw;
       }
-    });
-    return params;
+    }
+  });
+  return params;
 };
 
 _.info = {
@@ -748,6 +748,63 @@ sa.init = function () {
 
 };
 
+// 发送队列
+_.autoExeQueue = function () {
+  var queue = {
+    // 简单队列
+    items: [],
+    enqueue: function (val) {
+      this.items.push(val);
+      this.start();
+    },
+    dequeue: function () {
+      return this.items.shift();
+    },
+    getCurrentItem: function () {
+      return this.items[0];
+    },
+    // 自动循环执行队列
+    isRun: false,
+    start: function () {
+      if (this.items.length > 0 && !this.isRun) {
+        this.isRun = true;
+        this.getCurrentItem().start();
+      }
+    },
+    close: function () {
+      this.dequeue();
+      this.isRun = false;
+      this.start();
+    }
+  };
+  return queue;
+};
+
+sa.requestQueue = function (para) {
+  this.url = para.url;
+};
+sa.requestQueue.prototype.isEnd = function () {
+  if (!this.received) {
+    this.received = true;
+    this.close();
+  }
+};
+sa.requestQueue.prototype.start = function () {
+  var me = this;
+  setTimeout(function () {
+    me.isEnd();
+  }, 300);
+  wx.request({
+    url: this.url,
+    method: 'GET',
+    complete: function(){
+      me.isEnd();
+    }
+  });
+};
+
+sa.dataQueue = _.autoExeQueue();
+
 sa.send = function (t) {
   var url = '';
   t._nocache = (String(Math.random()) + String(Math.random()) + String(Math.random())).slice(2, 15);
@@ -761,15 +818,32 @@ sa.send = function (t) {
   } else {
     url = sa.para.server_url + '?data=' + encodeURIComponent(_.base64Encode(t));
   }
-
-  var sendRequest = function () {
-    wx.request({
-      "url": url,
-      "method": "GET"
-    });
+  var instance = new sa.requestQueue({
+    url:url
+  });
+  instance.close = function () {
+    sa.dataQueue.close();
   };
-  sendRequest();
+  sa.dataQueue.enqueue(instance);
+
 };
+
+sa.autoTrackCustom = function(api, prop, event) {
+  var temp = sa.para.autoTrack[api];
+  var tempFunc = '';
+  if (sa.para.autoTrack && temp) {
+    if (typeof temp === 'function') {
+      tempFunc = temp();
+      if(_.isObject(tempFunc)){
+        _.extend(prop, tempFunc);
+      }
+    }else if(_.isObject(temp)){
+      _.extend(prop, temp);
+    }
+    sa.track(event, prop);
+  }
+};
+
 
 function e(t, n, o) {
   if (t[n]) {
@@ -798,7 +872,7 @@ function appLaunch(para) {
   }
   //  console.log('app_launch', JSON.stringify(arguments));
   if (sa.para.autoTrack && sa.para.autoTrack.appLaunch === true) {
-    sa.track('$MPLaunch', prop);
+    sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
   }
 
 };
@@ -815,13 +889,13 @@ function appShow(para) {
     _.extend(prop, _.getUtm(para.query.q));
   }
   if (sa.para.autoTrack && sa.para.autoTrack.appShow === true) {
-    sa.track('$MPShow', prop);
+    sa.autoTrackCustom('appShow',prop,'$MPShow');
   }
 };
 
 function appHide() {
   if (sa.para.autoTrack && sa.para.autoTrack.appHide === true) {
-    sa.track('$MPHide');
+    sa.autoTrackCustom('appHide', {}, '$MPHide');
   }
   //  console.log('app_hide', JSON.stringify(arguments));
   //  sa.track('app_hide', { detail: JSON.stringify(arguments) });
@@ -853,34 +927,6 @@ function pageOnunload(n, e) {
   //  sa.track('page_unload', { detail: JSON.stringify(arguments) });  
 }
 
-function pageOnload(para) {
-  //console.log('s-page_onload', JSON.stringify(arguments));
-  var router = typeof this["__route__"] === 'string' ? this["__route__"] : '系统没有取到值';
-
-  var prop = {};
-  prop.$referrer = sa_referrer;
-  prop.$url_path = router;
-  // 暂时只解析传统网页渠道的query
-  if (para && _.isObject(para) && para.q) {
-    _.extend(prop, _.getUtm(para.q));
-  }
-
-  if (sa.para.onshow) {
-    sa.para.onshow(sa, router, this);
-  } else {
-    if (sa.para.autoTrack && sa.para.autoTrack.pageLoad === true) {
-      sa.track('$MPViewScreen', prop);
-    }
-  }
-
-  sa_referrer = router;
-
-};
-
-function pageOnshow() {
-  //console.log('s-page_show', JSON.stringify(arguments));
-};
-
 function pageOnHide() {
   // console.log('s-page_hide', JSON.stringify(arguments));
   //  sa.track('page_hide', { detail: JSON.stringify(arguments) });
@@ -906,12 +952,39 @@ function pageOnShareAppMessage(n, e) {
 }
 
 var v = Page;
-
 Page = function (t) {
+  e(t, "onLoad", function (para) {
+    // 暂时只解析传统网页渠道的query
+    if (para && _.isObject(para) && para.q) {
+      this.sensors_mp_load_utm = _.getUtm(para.q);
+    }
+  });
 
-  e(t, "onLoad", pageOnload);
-  //	e(t, "onUnload", pageOnunload);
-  //	e(t, "onShow", pageOnshow);
+  e(t, "onShow", function () {
+    var router = '系统没有取到值';
+    if (typeof this === 'object') {
+      if (typeof this.route === 'string') {
+        router = this.route;
+      } else if (typeof this.__route__ === 'string') {
+        router = this.__route__;
+      }
+    }
+
+    var prop = {};
+    prop.$referrer = sa_referrer;
+    prop.$url_path = router;
+    if (this.sensors_mp_load_utm){
+      _.extend(prop, this.sensors_mp_load_utm);
+      this.sensors_mp_load_utm = null;
+    }
+    if (sa.para.onshow) {
+      sa.para.onshow(sa, router, this);
+    } else {
+      sa.autoTrackCustom('pageShow', prop, '$MPViewScreen');
+    }
+    sa_referrer = router;
+  });
+
   //	e(t, "onHide", pageOnHide);
 
   //  e(t, "onReady", pageOnReady);
