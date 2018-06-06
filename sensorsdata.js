@@ -83,6 +83,8 @@ var mp_scene = {
 
 var sa_referrer = '直接打开';
 
+var mpshow_time = null;
+
 sa.lib_version = LIB_VERSION;
 
 var logger = typeof logger === 'object' ? logger : {};
@@ -944,6 +946,8 @@ function appShow(para) {
   //  console.log('app_show', JSON.stringify(arguments));
   var prop = {};
 
+  mpshow_time = (new Date()).getTime();
+
   if (para && para.path) {
     prop.$url_path = para.path;
   }
@@ -958,8 +962,14 @@ function appShow(para) {
 };
 
 function appHide() {
+  var current_time = (new Date()).getTime();
+  var prop = {};
+  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time)/3600000 < 24) ) {
+    prop.event_duration = (current_time - mpshow_time)/1000;
+  }
   if (sa.para.autoTrack && sa.para.autoTrack.appHide === true) {
-    sa.autoTrackCustom('appHide', {}, '$MPHide');
+
+    sa.autoTrackCustom('appHide', prop, '$MPHide');
   }
   //  console.log('app_hide', JSON.stringify(arguments));
   //  sa.track('app_hide', { detail: JSON.stringify(arguments) });
