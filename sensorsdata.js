@@ -9,9 +9,13 @@ var sa = {};
 
 sa.para = require('sensorsdata_conf.js');
 
-sa._queue = [];
-// 是否已经获取到系统信息
-sa.getSystemInfoComplete = false;
+// 初始化各种预定义参数
+if (!sa.para.openid_url){
+  sa.para.openid_url = sa.para.server_url.replace(/\/sa(\.gif){0,1}/, '/mp_login');
+}
+
+
+// 工具函数
 
 var ArrayProto = Array.prototype,
   FuncProto = Function.prototype,
@@ -19,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.0',
+  LIB_VERSION = '1.2',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -84,6 +88,8 @@ var mp_scene = {
 var sa_referrer = '直接打开';
 
 var mpshow_time = null;
+
+var is_first_launch = false;
 
 sa.lib_version = LIB_VERSION;
 
@@ -508,7 +514,49 @@ _.getQueryParam = function (url, param) {
   }
 };
 
-_.getUtm = function (url) {
+// 发数据预存队列
+sa.initialState = {
+  queue : [],
+  isComplete : false,
+  systemIsComplete : false,
+  storeIsComplete : false,
+  checkIsComplete : function () {
+    if (this.systemIsComplete && this.storeIsComplete) {
+      this.isComplete = true;
+      if (this.queue.length > 0) {
+        _.each(this.queue, function (content) {
+          sa[content[0]].apply(sa, slice.call(content[1]));
+        });
+        sa.queue = [];
+      }
+    }
+  }
+};
+
+// 业务工具方法
+
+
+_.getPrefixUtm = function (utms, prefix, prefix_add) {
+  prefix = prefix || '';
+  prefix_add = prefix_add || '_';
+  if (!_.isObject(utms)) {
+    return {};
+  }
+  var $utms = {}, otherUtms = {};
+  for (var i in utms) {
+    if ((' ' + source_channel_standard + ' ').indexOf(' ' + i + ' ') !== -1) {
+      $utms[prefix + i] = utms[i];
+    } else {
+      otherUtms[prefix_add + i] = utms[i];
+    }
+  }
+  return {
+    $utms: $utms,
+    otherUtms: otherUtms
+  };
+}
+
+_.getSource = function (url) {
   var campagin_w = source_channel_standard.split(' ');
   var campaign_keywords = source_channel_standard.split(' ');
   var kw = '';
@@ -530,8 +578,6 @@ _.getUtm = function (url) {
     kw = _.getQueryParam(url, kwkey);
     if (kw.length) {
       if (_.include(campagin_w, kwkey)) {
-        params['$' + kwkey] = kw;
-      } else {
         params[kwkey] = kw;
       }
     }
@@ -539,11 +585,25 @@ _.getUtm = function (url) {
   return params;
 };
 
-_.getMPScene = function(key){
+_.getUtm = function(url,prefix1,prefix2){
+  var utms = _.getSource(url);
+  var pre1 = {};
+  var pre2 = {};
+  if(typeof prefix1 === 'undefined'){
+    return _.getPrefixUtm(utms,'$').$utms;
+  }
+  if(typeof prefix2 !== 'undefined'){
+    return {
+      pre1: _.getPrefixUtm(utms, '$').$utms || {},
+      pre2: _.getPrefixUtm(utms, '$latest_').$utms || {}
+    }
+  }
+}
+
+_.getMPScene = function (key) {
   key = String(key);
   return mp_scene[key] || key;
 };
-
 _.info = {
   properties: {
     $lib: LIB_NAME,
@@ -572,30 +632,22 @@ _.info = {
           e.$os = t["system"].split(' ')[0];
           e.$os_version = t["system"].split(' ')[1];
         },
-        "complete": that.setStatusComplete
+        "complete": function(){
+          sa.initialState.systemIsComplete = true;
+          sa.initialState.checkIsComplete();
+        }
       })
     }
 
     getNetwork();
-  },
-  setStatusComplete: function () {
-    sa.getSystemInfoComplete = true;
-    if (sa._queue.length > 0) {
-      _.each(sa._queue, function (content) {
-        sa.prepareData.apply(sa, slice.call(content));
-      });
-      sa._queue = [];
-    }
   }
 };
 
 sa._ = _;
 
+
+
 sa.prepareData = function (p, callback) {
-  if (!sa.getSystemInfoComplete) {
-    sa._queue.push(arguments);
-    return false;
-  }
 
   var data = {
     distinct_id: this.store.getDistinctId(),
@@ -644,21 +696,32 @@ sa.prepareData = function (p, callback) {
 };
 
 sa.store = {
+  // 防止重复请求
+  storageInfo:null,
   getUUID: function () {
     return "" + Date.now() + '-' + Math.floor(1e7 * Math.random()) + '-' + Math.random().toString(16).replace('.', '') + '-' + String(Math.random() * 31242).replace('.', '').slice(0, 8);
 
   },
-  setStorage: function () {
-
-  },
   getStorage: function () {
-    return wx.getStorageSync("sensorsdata2015_wechat") || '';
+    if(this.storageInfo){
+      return this.storageInfo;
+    }else{
+      this.storageInfo = wx.getStorageSync("sensorsdata2015_wechat") || '';
+      return this.storageInfo;
+    }
   },
   _state: {},
   toState: function (ds) {
     var state = null;
     if (_.isJSONString(ds)) {
       state = JSON.parse(ds);
+      if (state.distinct_id) {
+        this._state = state;
+      } else {
+        this.set('distinct_id', this.getUUID());
+      }
+    }else if (_.isObject(ds)) {
+      state = ds;
       if (state.distinct_id) {
         this._state = state;
       } else {
@@ -703,18 +766,20 @@ sa.store = {
     this._state[name] = value;
   },
   save: function () {
-    wx.setStorageSync("sensorsdata2015_wechat", JSON.stringify(this._state));
+    wx.setStorageSync("sensorsdata2015_wechat", this._state);
   },
   init: function () {
     var info = this.getStorage();
     if (info) {
       this.toState(info);
     } else {
+      is_first_launch = true;
       var time = (new Date());
       var visit_time = time.getTime();
       time.setHours(23);
       time.setMinutes(59);
       time.setSeconds(60);
+//      sa.setOnceProfile({$first_visit_time: new Date()});
       this.set({
         'distinct_id': this.getUUID(),
         'first_visit_time': visit_time,
@@ -780,6 +845,12 @@ sa.trackSignup = function (id, e, p, c) {
   sa.store.set('distinct_id', id);
 };
 
+sa.registerApp = function(obj){
+  if (_.isObject(obj) && !_.isEmptyObject(obj)) {
+    _.info.properties = _.extend(_.info.properties, obj);
+  }
+};
+
 sa.register = function (obj) {
   if (_.isObject(obj) && !_.isEmptyObject(obj)) {
     sa.store.setProps(obj);
@@ -803,7 +874,59 @@ sa.login = function (id) {
   }
 };
 
-sa.init = function () {
+// 获取openid，先从storage里获取，
+sa.openid = {
+  getRequest: function (callback) {
+    wx.login({
+      success: function (res) {
+        if (res.code && sa.para.appid && sa.para.openid_url) {
+          wx.request({
+            url: sa.para.openid_url + '&code=' + res.code + '&appid=' + sa.para.appid,
+            method: 'GET',
+            complete: function (res2) {
+              if (_.isObject(res2) && _.isObject(res2.data) && res2.data.openid){
+                callback(res2.data.openid);
+              }else{
+                callback();
+              }
+            }
+          });
+        }else{
+          callback();
+        }
+      }
+    });
+  },
+  getWXStorage: function(){
+    var storageInfo = sa.store.getStorage();
+    if(storageInfo && _.isObject(storageInfo)){
+      return storageInfo.openid;
+    }
+  },
+  getOpenid: function(callback){
+    if(!sa.para.appid){
+      callback();
+      return false;
+    }
+    var storageId = this.getWXStorage();
+    if (storageId){
+      callback(storageId);
+    }else{
+      this.getRequest(function(openid){
+        if(openid){
+          callback(openid);
+        }
+      });
+    }
+  }
+
+
+};
+
+
+
+
+sa.initial = function () {
   this._.info.getSystem();
   this.store.init();
   if (_.isObject(this.para.register)) {
@@ -811,6 +934,12 @@ sa.init = function () {
   }
 
 };
+
+sa.init = function(){
+  sa.initialState.storeIsComplete = true;
+  sa.initialState.checkIsComplete();
+};
+
 
 // 发送队列
 _.autoExeQueue = function () {
@@ -908,6 +1037,40 @@ sa.autoTrackCustom = function(api, prop, event) {
   }
 };
 
+sa.setOpenid = function (openid, isCover){
+  sa.store.set('openid', openid);
+  if (isCover) {
+    sa.store.set('distinct_id', openid);
+  } else {
+    sa.identify(openid, true);
+  }
+};
+
+sa.initWithOpenid = function (options) {
+  options = options || {};
+  sa.openid.getOpenid(function (openid) {
+    if (openid) {
+      sa.setOpenid(openid,options.isCoverLogin);
+    }
+    sa.init();
+  });
+
+};
+
+// 对所有提供的方法做代理暂存
+_.each(["setProfile", "setOnceProfile", "track", "register", "clearAllRegister", "autoTrackCustom"],function(method){
+  var temp = sa[method];
+  sa[method] = function(){
+    if (sa.initialState.isComplete){
+      temp.apply(sa,arguments);
+    }else{
+      sa.initialState.queue.push([method,arguments]);
+    }
+  };
+});
+
+
+// 全局事件
 
 function e(t, n, o) {
   if (t[n]) {
@@ -924,15 +1087,22 @@ function e(t, n, o) {
 
 function appLaunch(para) {
   this[sa.para.name] = sa;
-  sa.init();
   var prop = {};
 
   if (para && para.path) {
     prop.$url_path = para.path;
   }
   // 暂时只解析传统网页渠道的query
+
+  para.query = {}
+  para.query.q = 'xxs?utm_source=3&sd=2';
   if (para && _.isObject(para.query) && para.query.q) {
-    _.extend(prop, _.getUtm(para.query.q));
+    var utms = _.getUtm(para.query.q,'$','$latest_');
+    _.extend(prop, utms.pre1);
+    if (is_first_launch){
+      sa.setOnceProfile(utms.pre1);
+    }
+    sa.registerApp(utms.pre2);
   }
   prop.$scene = _.getMPScene(para.scene);
   //  console.log('app_launch', JSON.stringify(arguments));
@@ -953,7 +1123,9 @@ function appShow(para) {
   }
   // 暂时只解析传统网页渠道的query
   if (para && _.isObject(para.query) && para.query.q) {
-    _.extend(prop, _.getUtm(para.query.q));
+    var utms = _.getUtm(para.query.q, '$', '$latest');
+    _.extend(prop, utms.pre1);
+    sa.registerApp(utms.pre2);
   }
   prop.$scene = _.getMPScene(para.scene);
   if (sa.para.autoTrack && sa.para.autoTrack.appShow === true) {
@@ -1030,7 +1202,7 @@ Page = function (t) {
   e(t, "onLoad", function (para) {
     // 暂时只解析传统网页渠道的query
     if (para && _.isObject(para) && para.q) {
-      this.sensors_mp_load_utm = _.getUtm(para.q);
+      this.sensors_mp_load_utm = _.getUtm(para.q,'$').pre1;
     }
   });
 
@@ -1070,5 +1242,8 @@ Page = function (t) {
   v(t);
 
 }
+
+sa.initial();
+
 
 module.exports = sa;
