@@ -1093,9 +1093,6 @@ function appLaunch(para) {
     prop.$url_path = para.path;
   }
   // 暂时只解析传统网页渠道的query
-
-  para.query = {}
-  para.query.q = 'xxs?utm_source=3&sd=2';
   if (para && _.isObject(para.query) && para.query.q) {
     var utms = _.getUtm(para.query.q,'$','$latest_');
     _.extend(prop, utms.pre1);
