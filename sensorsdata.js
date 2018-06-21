@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.2',
+  LIB_VERSION = '1.3',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -589,14 +589,21 @@ _.getUtm = function(url,prefix1,prefix2){
   var utms = _.getSource(url);
   var pre1 = {};
   var pre2 = {};
-  if(typeof prefix1 === 'undefined'){
-    return _.getPrefixUtm(utms,'$').$utms;
-  }
-  if(typeof prefix2 !== 'undefined'){
+  if ((typeof prefix2 === 'undefined') && prefix1) {
     return {
-      pre1: _.getPrefixUtm(utms, '$').$utms || {},
-      pre2: _.getPrefixUtm(utms, '$latest_').$utms || {}
-    }
+      pre1: _.getPrefixUtm(utms, prefix1).$utms || {},
+      pre2: {}
+    };
+  } else if (typeof prefix2 !== 'undefined' && prefix1){
+    return {
+      pre1: _.getPrefixUtm(utms, prefix1).$utms || {},
+      pre2: _.getPrefixUtm(utms, prefix2).$utms || {}
+    };
+  } else {
+    return {
+      pre1:{},
+      pre2:{}
+    };
   }
 }
 
@@ -1058,7 +1065,7 @@ sa.initWithOpenid = function (options) {
 };
 
 // 对所有提供的方法做代理暂存
-_.each(["setProfile", "setOnceProfile", "track", "register", "clearAllRegister", "autoTrackCustom"],function(method){
+_.each(['setProfile', 'setOnceProfile', 'track', 'register', 'clearAllRegister', 'autoTrackCustom', 'registerApp'],function(method){
   var temp = sa[method];
   sa[method] = function(){
     if (sa.initialState.isComplete){
@@ -1118,9 +1125,10 @@ function appShow(para) {
   if (para && para.path) {
     prop.$url_path = para.path;
   }
+  
   // 暂时只解析传统网页渠道的query
   if (para && _.isObject(para.query) && para.query.q) {
-    var utms = _.getUtm(para.query.q, '$', '$latest');
+    var utms = _.getUtm(para.query.q, '$', '$latest_');
     _.extend(prop, utms.pre1);
     sa.registerApp(utms.pre2);
   }
