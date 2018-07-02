@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.3',
+  LIB_VERSION = '1.4',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -95,11 +95,13 @@ sa.lib_version = LIB_VERSION;
 
 var logger = typeof logger === 'object' ? logger : {};
 logger.info = function () {
-  if (typeof console === 'object' && console.log) {
-    try {
-      return console.log.apply(console, arguments);
-    } catch (e) {
-      console.log(arguments[0]);
+  if(sa.para.show_log){
+    if (typeof console === 'object' && console.log) {
+      try {
+        return console.log.apply(console, arguments);
+      } catch (e) {
+        console.log(arguments[0]);
+      }
     }
   }
 };
@@ -503,7 +505,6 @@ _.base64Encode = function (data) {
 };
 
 _.getQueryParam = function (url, param) {
-  url = _.decodeURIComponent(url);
   var regexS = "[\\?&]" + param + "=([^&#]*)",
     regex = new RegExp(regexS),
     results = regex.exec(url);
@@ -556,12 +557,31 @@ _.getPrefixUtm = function (utms, prefix, prefix_add) {
   };
 }
 
+_.convertObjToParam = function(obj){
+  var arr = [];
+  for(var i in obj){
+    arr.push(i + '=' + obj[i]);
+  }
+  return arr.join('&');
+}
+
 _.getSource = function (url) {
+  if(_.isObject(url)){
+    if(_.isEmptyObject(url)){
+      return {};
+    }else{
+      url = _.convertObjToParam(url);
+      url = '?' + url;
+    }
+  }else{
+    url = _.decodeURIComponent(url);
+  }
+
   var campagin_w = source_channel_standard.split(' ');
   var campaign_keywords = source_channel_standard.split(' ');
   var kw = '';
   var params = {};
-  url = _.decodeURIComponent(url);
+
   url = url.split('?');
   if (url.length === 2) {
     url = url[1];
@@ -576,13 +596,32 @@ _.getSource = function (url) {
   }
   _.each(campaign_keywords, function (kwkey) {
     kw = _.getQueryParam(url, kwkey);
+    kw = _.decodeURIComponent(kw);
     if (kw.length) {
       if (_.include(campagin_w, kwkey)) {
         params[kwkey] = kw;
       }
     }
   });
+
   return params;
+};
+
+_.getObjFromQuery = function(str){
+  var query = str.split('?');
+  var arr = [];
+  var obj = {};
+  if(query && query[1]){
+    _.each(query[1].split('&'), function(value){
+      var arr = value.split('=');
+      if(arr[0] && arr[1]){
+        obj[arr[0]] = arr[1];
+      }
+    });
+  }else{
+    return {};
+  }
+  return obj;
 };
 
 _.getUtm = function(url,prefix1,prefix2){
@@ -611,6 +650,29 @@ _.getMPScene = function (key) {
   key = String(key);
   return mp_scene[key] || key;
 };
+
+_.setUtm = function(para,prop){
+  var query = {};
+  if (para && _.isObject(para.query)) {
+    query = _.extend({}, para.query);
+    if (para.query.q) {
+      _.extend(query, _.getObjFromQuery(para.query.q));
+    }
+  }
+  if (para && _.isObject(para.referrerInfo) && para.referrerInfo.extraData) {
+    var extraQuery = {};
+    if (_.isObject(para.referrerInfo.extraData) && !_.isEmptyObject(para.referrerInfo.extraData)){
+      extraQuery = para.referrerInfo.extraData;
+    } else if (_.isJSONString(para.referrerInfo.extraData)) {
+      extraQuery = JSON.parse(para.referrerInfo.extraData);
+    }
+    _.extend(query, extraQuery);
+  }
+  var utms = _.getUtm(query, '$', '$latest_');
+  _.extend(prop, utms.pre1);
+  return utms;
+};
+
 _.info = {
   properties: {
     $lib: LIB_NAME,
@@ -1095,22 +1157,21 @@ function e(t, n, o) {
 function appLaunch(para) {
   this[sa.para.name] = sa;
   var prop = {};
-
   if (para && para.path) {
     prop.$url_path = para.path;
   }
-  // 暂时只解析传统网页渠道的query
-  if (para && _.isObject(para.query) && para.query.q) {
-    var utms = _.getUtm(para.query.q,'$','$latest_');
-    _.extend(prop, utms.pre1);
-    if (is_first_launch){
+  var utms = _.setUtm(para,prop);
+  if (is_first_launch) {
+    if (!_.isEmptyObject(utms.pre1)){
       sa.setOnceProfile(utms.pre1);
     }
+  }
+  if (!_.isEmptyObject(utms.pre2)) {
     sa.registerApp(utms.pre2);
   }
   prop.$scene = _.getMPScene(para.scene);
   //  console.log('app_launch', JSON.stringify(arguments));
-  if (sa.para.autoTrack && sa.para.autoTrack.appLaunch === true) {
+  if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
     sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
   }
 
@@ -1126,26 +1187,27 @@ function appShow(para) {
     prop.$url_path = para.path;
   }
   
-  // 暂时只解析传统网页渠道的query
-  if (para && _.isObject(para.query) && para.query.q) {
-    var utms = _.getUtm(para.query.q, '$', '$latest_');
-    _.extend(prop, utms.pre1);
+  var utms = _.setUtm(para, prop);
+
+  if (!_.isEmptyObject(utms.pre2)) {
     sa.registerApp(utms.pre2);
   }
+
   prop.$scene = _.getMPScene(para.scene);
-  if (sa.para.autoTrack && sa.para.autoTrack.appShow === true) {
+  if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
     sa.autoTrackCustom('appShow',prop,'$MPShow');
   }
 };
 
 function appHide() {
+  
+
   var current_time = (new Date()).getTime();
   var prop = {};
   if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time)/3600000 < 24) ) {
     prop.event_duration = (current_time - mpshow_time)/1000;
   }
-  if (sa.para.autoTrack && sa.para.autoTrack.appHide === true) {
-
+  if (sa.para.autoTrack && sa.para.autoTrack.appHide) {
     sa.autoTrackCustom('appHide', prop, '$MPHide');
   }
   //  console.log('app_hide', JSON.stringify(arguments));
@@ -1205,9 +1267,13 @@ function pageOnShareAppMessage(n, e) {
 var v = Page;
 Page = function (t) {
   e(t, "onLoad", function (para) {
-    // 暂时只解析传统网页渠道的query
-    if (para && _.isObject(para) && para.q) {
-      this.sensors_mp_load_utm = _.getUtm(para.q,'$').pre1;
+    if (para && _.isObject(para)) {
+      var query = _.extend({}, para);
+      if (para.q) {
+        _.extend(query, _.getObjFromQuery(para.q));
+      }
+      var utms = _.getUtm(query, '$', '$latest_');
+      this.sensors_mp_load_utm = utms.pre1;
     }
   });
 

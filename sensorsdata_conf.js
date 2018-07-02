@@ -8,9 +8,10 @@ var conf = {
   max_string_length: 300,
   // 发送事件的时间使用客户端时间还是服务端时间
   use_client_time: false,
+  show_log: true,
   // 是否自动采集如下事件
   autoTrack:{
-    //$MPLaunch
+    //$MPLaunch 
     appLaunch:true,
     //$MPShow
     appShow:true,
