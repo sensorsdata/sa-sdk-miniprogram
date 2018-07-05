@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.4',
+  LIB_VERSION = '1.5',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -504,6 +504,18 @@ _.base64Encode = function (data) {
   return enc;
 };
 
+_.getCurrentPath = function (){
+  var url = '未取到';
+  try{
+    var pages = getCurrentPages();
+    var currentPage = pages[pages.length - 1];
+    url = currentPage.route;
+  }catch(e){
+    logger.info(e);
+  };
+  return url;
+};
+
 _.getQueryParam = function (url, param) {
   var regexS = "[\\?&]" + param + "=([^&#]*)",
     regex = new RegExp(regexS),
@@ -655,6 +667,15 @@ _.setUtm = function(para,prop){
   var query = {};
   if (para && _.isObject(para.query)) {
     query = _.extend({}, para.query);
+    var scene = query.scene;
+    if(scene){
+      if(scene.indexOf("?") !== -1 ){
+        scene = '?' + scene.replace(/\?/g,'');
+      }else{
+        scene = '?' + scene;
+      }
+      _.extend(query, _.getObjFromQuery(scene));
+    }
     if (para.query.q) {
       _.extend(query, _.getObjFromQuery(para.query.q));
     }
@@ -1009,6 +1030,15 @@ sa.init = function(){
   sa.initialState.checkIsComplete();
 };
 
+sa.getPresetProperties = function(){
+  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent){
+  delete _.info.properties.$lib;
+  delete _.info.properties.$user_agent;
+  return _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
+  }else{
+    return {};
+  }
+}
 
 // 发送队列
 _.autoExeQueue = function () {
@@ -1204,6 +1234,7 @@ function appHide() {
 
   var current_time = (new Date()).getTime();
   var prop = {};
+  prop.$url_path = _.getCurrentPath();
   if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time)/3600000 < 24) ) {
     prop.event_duration = (current_time - mpshow_time)/1000;
   }
@@ -1302,7 +1333,7 @@ Page = function (t) {
     sa_referrer = router;
   });
 
-  //	e(t, "onHide", pageOnHide);
+  //  e(t, "onHide", pageOnHide);
 
   //  e(t, "onReady", pageOnReady);
   //  e(t, "onPullDownRefresh", pageOnPullDownRefresh);
