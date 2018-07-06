@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.5',
+  LIB_VERSION = '1.6',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -582,6 +582,13 @@ _.getSource = function (url) {
     if(_.isEmptyObject(url)){
       return {};
     }else{
+      for(var i in url){
+        if ((' ' + source_channel_standard + ' ').indexOf(' ' + i + ' ') === -1) {
+          delete url[i];
+        }else{
+          url[i] = url[i].replace('?','*');
+        }
+      }
       url = _.convertObjToParam(url);
       url = '?' + url;
     }
