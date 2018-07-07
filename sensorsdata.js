@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.7',
+  LIB_VERSION = '1.6',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -683,8 +683,8 @@ _.setUtm = function(para,prop){
       }
       _.extend(query, _.getObjFromQuery(scene));
     }
-    if (para.query.q) { 
-      _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.query.q)));
+    if (para.query.q) {
+      _.extend(query, _.getObjFromQuery(para.query.q));
     }
   }
   if (para && _.isObject(para.referrerInfo) && para.referrerInfo.extraData) {
@@ -1223,7 +1223,7 @@ function appShow(para) {
   if (para && para.path) {
     prop.$url_path = para.path;
   }
-
+  
   var utms = _.setUtm(para, prop);
 
   if (!_.isEmptyObject(utms.pre2)) {
@@ -1308,7 +1308,7 @@ Page = function (t) {
     if (para && _.isObject(para)) {
       var query = _.extend({}, para);
       if (para.q) {
-        _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.q)));
+        _.extend(query, _.getObjFromQuery(para.q));
       }
       var utms = _.getUtm(query, '$', '$latest_');
       this.sensors_mp_load_utm = utms.pre1;
