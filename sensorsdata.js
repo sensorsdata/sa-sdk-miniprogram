@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.7',
+  LIB_VERSION = '1.8',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -666,8 +666,12 @@ _.getUtm = function(url,prefix1,prefix2){
 }
 
 _.getMPScene = function (key) {
-  key = String(key);
-  return mp_scene[key] || key;
+  if(typeof key === "number" || (typeof key === "string" && key !== "")){
+    key = String(key);
+    return mp_scene[key] || key;
+  }else{
+    return "未取到值";
+  }
 };
 
 _.setUtm = function(para,prop){
@@ -1199,15 +1203,20 @@ function appLaunch(para) {
   }
   var utms = _.setUtm(para,prop);
   if (is_first_launch) {
+    prop.$is_first_time = true;
     if (!_.isEmptyObject(utms.pre1)){
       sa.setOnceProfile(utms.pre1);
     }
+  }else{
+    prop.$is_first_time = false;
   }
+
   if (!_.isEmptyObject(utms.pre2)) {
     sa.registerApp(utms.pre2);
   }
   prop.$scene = _.getMPScene(para.scene);
-  //  console.log('app_launch', JSON.stringify(arguments));
+  //sa.registerApp({$latest_scene : prop.$scene});
+
   if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
     sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
   }
@@ -1231,6 +1240,8 @@ function appShow(para) {
   }
 
   prop.$scene = _.getMPScene(para.scene);
+  //sa.registerApp({$latest_scene : prop.$scene});
+
   if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
     sa.autoTrackCustom('appShow',prop,'$MPShow');
   }
