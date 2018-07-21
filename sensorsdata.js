@@ -10,7 +10,7 @@ var sa = {};
 sa.para = require('sensorsdata_conf.js');
 
 // 初始化各种预定义参数
-if (!sa.para.openid_url){
+if (!sa.para.openid_url) {
   sa.para.openid_url = sa.para.server_url.replace(/\/sa(\.gif){0,1}/, '/mp_login');
 }
 
@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.8',
+  LIB_VERSION = '1.9',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -89,13 +89,16 @@ var sa_referrer = '直接打开';
 
 var mpshow_time = null;
 
+var share_depth = 0;
+var share_distinct_id = '';
+
 var is_first_launch = false;
 
 sa.lib_version = LIB_VERSION;
 
 var logger = typeof logger === 'object' ? logger : {};
 logger.info = function () {
-  if(sa.para.show_log){
+  if (sa.para.show_log) {
     if (typeof console === 'object' && console.log) {
       try {
         return console.log.apply(console, arguments);
@@ -504,13 +507,13 @@ _.base64Encode = function (data) {
   return enc;
 };
 
-_.getCurrentPath = function (){
+_.getCurrentPath = function () {
   var url = '未取到';
-  try{
+  try {
     var pages = getCurrentPages();
     var currentPage = pages[pages.length - 1];
     url = currentPage.route;
-  }catch(e){
+  } catch (e) {
     logger.info(e);
   };
   return url;
@@ -529,11 +532,11 @@ _.getQueryParam = function (url, param) {
 
 // 发数据预存队列
 sa.initialState = {
-  queue : [],
-  isComplete : false,
-  systemIsComplete : false,
-  storeIsComplete : false,
-  checkIsComplete : function () {
+  queue: [],
+  isComplete: false,
+  systemIsComplete: false,
+  storeIsComplete: false,
+  checkIsComplete: function () {
     if (this.systemIsComplete && this.storeIsComplete) {
       this.isComplete = true;
       if (this.queue.length > 0) {
@@ -569,30 +572,30 @@ _.getPrefixUtm = function (utms, prefix, prefix_add) {
   };
 }
 
-_.convertObjToParam = function(obj){
+_.convertObjToParam = function (obj) {
   var arr = [];
-  for(var i in obj){
+  for (var i in obj) {
     arr.push(i + '=' + obj[i]);
   }
   return arr.join('&');
 }
 
 _.getSource = function (url) {
-  if(_.isObject(url)){
-    if(_.isEmptyObject(url)){
+  if (_.isObject(url)) {
+    if (_.isEmptyObject(url)) {
       return {};
-    }else{
-      for(var i in url){
+    } else {
+      for (var i in url) {
         if ((' ' + source_channel_standard + ' ').indexOf(' ' + i + ' ') === -1) {
           delete url[i];
-        }else{
-          url[i] = url[i].replace('?','*');
+        } else {
+          url[i] = url[i].replace('?', '*');
         }
       }
       url = _.convertObjToParam(url);
       url = '?' + url;
     }
-  }else{
+  } else {
     url = _.decodeURIComponent(url);
   }
 
@@ -626,24 +629,24 @@ _.getSource = function (url) {
   return params;
 };
 
-_.getObjFromQuery = function(str){
+_.getObjFromQuery = function (str) {
   var query = str.split('?');
   var arr = [];
   var obj = {};
-  if(query && query[1]){
-    _.each(query[1].split('&'), function(value){
+  if (query && query[1]) {
+    _.each(query[1].split('&'), function (value) {
       var arr = value.split('=');
-      if(arr[0] && arr[1]){
+      if (arr[0] && arr[1]) {
         obj[arr[0]] = arr[1];
       }
     });
-  }else{
+  } else {
     return {};
   }
   return obj;
 };
 
-_.getUtm = function(url,prefix1,prefix2){
+_.getUtm = function (url, prefix1, prefix2) {
   var utms = _.getSource(url);
   var pre1 = {};
   var pre2 = {};
@@ -652,48 +655,105 @@ _.getUtm = function(url,prefix1,prefix2){
       pre1: _.getPrefixUtm(utms, prefix1).$utms || {},
       pre2: {}
     };
-  } else if (typeof prefix2 !== 'undefined' && prefix1){
+  } else if (typeof prefix2 !== 'undefined' && prefix1) {
     return {
       pre1: _.getPrefixUtm(utms, prefix1).$utms || {},
       pre2: _.getPrefixUtm(utms, prefix2).$utms || {}
     };
   } else {
     return {
-      pre1:{},
-      pre2:{}
+      pre1: {},
+      pre2: {}
     };
   }
 }
 
 _.getMPScene = function (key) {
-  if(typeof key === "number" || (typeof key === "string" && key !== "")){
+  if (typeof key === "number" || (typeof key === "string" && key !== "")) {
     key = String(key);
     return mp_scene[key] || key;
-  }else{
+  } else {
     return "未取到值";
   }
 };
 
-_.setUtm = function(para,prop){
+_.getShareDepth = function () {
+  if (typeof share_depth === 'number' && share_depth !== 0) {
+    var current_id = sa.store.getDistinctId();
+    var current_first_id = sa.store.getFirstId();
+    var latest_id = share_distinct_id;
+    if (latest_id && (latest_id === current_id || latest_id === current_first_id)) {
+      return share_depth;
+    } else {
+      return (share_depth + 1);
+    }
+  } else {
+    return 1;
+  }
+};
+
+_.setShareInfo = function (para, prop) {
+  var share = {};
+  if (para && _.isObject(para.query) && para.query.sampshare) {
+    share = _.decodeURIComponent(para.query.sampshare);
+    if (_.isJSONString(share)) {
+      share = JSON.parse(share);
+    } else {
+      return {};
+    }
+  } else {
+    return {};
+  }
+  var depth = share.d;
+  var path = share.p;
+  var id = share.i;
+  if (typeof id === 'string') {
+    prop.$share_distinct_id = id;
+    share_distinct_id = id;
+  } else {
+    prop.$share_distinct_id = '取值异常';
+  }
+  if (typeof depth === 'number') {
+    prop.$share_depth = depth;
+    share_depth = depth;
+  } else {
+    prop.$share_depth = '取值异常';
+  }
+  if (typeof path === 'string') {
+    prop.$share_url_path = path;
+  } else {
+    prop.$share_url_path = '取值异常';
+  }
+};
+
+_.getShareInfo = function () {
+  return JSON.stringify({
+    i: sa.store.getDistinctId() || '取值异常',
+    p: _.getCurrentPath(),
+    d: _.getShareDepth()
+  });
+};
+
+_.setUtm = function (para, prop) {
   var query = {};
   if (para && _.isObject(para.query)) {
     query = _.extend({}, para.query);
     var scene = query.scene;
-    if(scene){
-      if(scene.indexOf("?") !== -1 ){
-        scene = '?' + scene.replace(/\?/g,'');
-      }else{
+    if (scene) {
+      if (scene.indexOf("?") !== -1) {
+        scene = '?' + scene.replace(/\?/g, '');
+      } else {
         scene = '?' + scene;
       }
       _.extend(query, _.getObjFromQuery(scene));
     }
-    if (para.query.q) { 
+    if (para.query.q) {
       _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.query.q)));
     }
   }
   if (para && _.isObject(para.referrerInfo) && para.referrerInfo.extraData) {
     var extraQuery = {};
-    if (_.isObject(para.referrerInfo.extraData) && !_.isEmptyObject(para.referrerInfo.extraData)){
+    if (_.isObject(para.referrerInfo.extraData) && !_.isEmptyObject(para.referrerInfo.extraData)) {
       extraQuery = para.referrerInfo.extraData;
     } else if (_.isJSONString(para.referrerInfo.extraData)) {
       extraQuery = JSON.parse(para.referrerInfo.extraData);
@@ -733,7 +793,7 @@ _.info = {
           e.$os = t["system"].split(' ')[0];
           e.$os_version = t["system"].split(' ')[1];
         },
-        "complete": function(){
+        "complete": function () {
           sa.initialState.systemIsComplete = true;
           sa.initialState.checkIsComplete();
         }
@@ -798,15 +858,15 @@ sa.prepareData = function (p, callback) {
 
 sa.store = {
   // 防止重复请求
-  storageInfo:null,
+  storageInfo: null,
   getUUID: function () {
     return "" + Date.now() + '-' + Math.floor(1e7 * Math.random()) + '-' + Math.random().toString(16).replace('.', '') + '-' + String(Math.random() * 31242).replace('.', '').slice(0, 8);
 
   },
   getStorage: function () {
-    if(this.storageInfo){
+    if (this.storageInfo) {
       return this.storageInfo;
-    }else{
+    } else {
       this.storageInfo = wx.getStorageSync("sensorsdata2015_wechat") || '';
       return this.storageInfo;
     }
@@ -821,7 +881,7 @@ sa.store = {
       } else {
         this.set('distinct_id', this.getUUID());
       }
-    }else if (_.isObject(ds)) {
+    } else if (_.isObject(ds)) {
       state = ds;
       if (state.distinct_id) {
         this._state = state;
@@ -880,7 +940,7 @@ sa.store = {
       time.setHours(23);
       time.setMinutes(59);
       time.setSeconds(60);
-//      sa.setOnceProfile({$first_visit_time: new Date()});
+      //      sa.setOnceProfile({$first_visit_time: new Date()});
       this.set({
         'distinct_id': this.getUUID(),
         'first_visit_time': visit_time,
@@ -946,7 +1006,7 @@ sa.trackSignup = function (id, e, p, c) {
   sa.store.set('distinct_id', id);
 };
 
-sa.registerApp = function(obj){
+sa.registerApp = function (obj) {
   if (_.isObject(obj) && !_.isEmptyObject(obj)) {
     _.info.properties = _.extend(_.info.properties, obj);
   }
@@ -985,36 +1045,36 @@ sa.openid = {
             url: sa.para.openid_url + '&code=' + res.code + '&appid=' + sa.para.appid,
             method: 'GET',
             complete: function (res2) {
-              if (_.isObject(res2) && _.isObject(res2.data) && res2.data.openid){
+              if (_.isObject(res2) && _.isObject(res2.data) && res2.data.openid) {
                 callback(res2.data.openid);
-              }else{
+              } else {
                 callback();
               }
             }
           });
-        }else{
+        } else {
           callback();
         }
       }
     });
   },
-  getWXStorage: function(){
+  getWXStorage: function () {
     var storageInfo = sa.store.getStorage();
-    if(storageInfo && _.isObject(storageInfo)){
+    if (storageInfo && _.isObject(storageInfo)) {
       return storageInfo.openid;
     }
   },
-  getOpenid: function(callback){
-    if(!sa.para.appid){
+  getOpenid: function (callback) {
+    if (!sa.para.appid) {
       callback();
       return false;
     }
     var storageId = this.getWXStorage();
-    if (storageId){
+    if (storageId) {
       callback(storageId);
-    }else{
-      this.getRequest(function(openid){
-        if(openid){
+    } else {
+      this.getRequest(function (openid) {
+        if (openid) {
           callback(openid);
         }
       });
@@ -1036,17 +1096,17 @@ sa.initial = function () {
 
 };
 
-sa.init = function(){
+sa.init = function () {
   sa.initialState.storeIsComplete = true;
   sa.initialState.checkIsComplete();
 };
 
-sa.getPresetProperties = function(){
-  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent){
-  delete _.info.properties.$lib;
-  delete _.info.properties.$user_agent;
-  return _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
-  }else{
+sa.getPresetProperties = function () {
+  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent) {
+    delete _.info.properties.$lib;
+    delete _.info.properties.$user_agent;
+    return _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
+  } else {
     return {};
   }
 }
@@ -1100,7 +1160,7 @@ sa.requestQueue.prototype.start = function () {
   wx.request({
     url: this.url,
     method: 'GET',
-    complete: function(){
+    complete: function () {
       me.isEnd();
     }
   });
@@ -1122,7 +1182,7 @@ sa.send = function (t) {
     url = sa.para.server_url + '?data=' + encodeURIComponent(_.base64Encode(t));
   }
   var instance = new sa.requestQueue({
-    url:url
+    url: url
   });
   instance.close = function () {
     sa.dataQueue.close();
@@ -1131,23 +1191,23 @@ sa.send = function (t) {
 
 };
 
-sa.autoTrackCustom = function(api, prop, event) {
+sa.autoTrackCustom = function (api, prop, event) {
   var temp = sa.para.autoTrack[api];
   var tempFunc = '';
   if (sa.para.autoTrack && temp) {
     if (typeof temp === 'function') {
       tempFunc = temp();
-      if(_.isObject(tempFunc)){
+      if (_.isObject(tempFunc)) {
         _.extend(prop, tempFunc);
       }
-    }else if(_.isObject(temp)){
+    } else if (_.isObject(temp)) {
       _.extend(prop, temp);
     }
     sa.track(event, prop);
   }
 };
 
-sa.setOpenid = function (openid, isCover){
+sa.setOpenid = function (openid, isCover) {
   sa.store.set('openid', openid);
   if (isCover) {
     sa.store.set('distinct_id', openid);
@@ -1160,7 +1220,7 @@ sa.initWithOpenid = function (options) {
   options = options || {};
   sa.openid.getOpenid(function (openid) {
     if (openid) {
-      sa.setOpenid(openid,options.isCoverLogin);
+      sa.setOpenid(openid, options.isCoverLogin);
     }
     sa.init();
   });
@@ -1168,13 +1228,13 @@ sa.initWithOpenid = function (options) {
 };
 
 // 对所有提供的方法做代理暂存
-_.each(['setProfile', 'setOnceProfile', 'track', 'register', 'clearAllRegister', 'autoTrackCustom', 'registerApp'],function(method){
+_.each(['setProfile', 'setOnceProfile', 'track', 'register', 'clearAllRegister', 'autoTrackCustom', 'registerApp'], function (method) {
   var temp = sa[method];
-  sa[method] = function(){
-    if (sa.initialState.isComplete){
-      temp.apply(sa,arguments);
-    }else{
-      sa.initialState.queue.push([method,arguments]);
+  sa[method] = function () {
+    if (sa.initialState.isComplete) {
+      temp.apply(sa, arguments);
+    } else {
+      sa.initialState.queue.push([method, arguments]);
     }
   };
 });
@@ -1189,10 +1249,11 @@ function e(t, n, o) {
       o.call(this, t, n);
       e.call(this, t);
     }
-  } else
+  } else {
     t[n] = function (t) {
       o.call(this, t, n);
     }
+  }
 }
 
 function appLaunch(para) {
@@ -1201,13 +1262,16 @@ function appLaunch(para) {
   if (para && para.path) {
     prop.$url_path = para.path;
   }
-  var utms = _.setUtm(para,prop);
+  // 设置分享的信息
+  _.setShareInfo(para, prop);
+  // 设置utm的信息
+  var utms = _.setUtm(para, prop);
   if (is_first_launch) {
     prop.$is_first_time = true;
-    if (!_.isEmptyObject(utms.pre1)){
+    if (!_.isEmptyObject(utms.pre1)) {
       sa.setOnceProfile(utms.pre1);
     }
-  }else{
+  } else {
     prop.$is_first_time = false;
   }
 
@@ -1216,6 +1280,7 @@ function appLaunch(para) {
   }
   prop.$scene = _.getMPScene(para.scene);
   //sa.registerApp({$latest_scene : prop.$scene});
+
 
   if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
     sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
@@ -1232,6 +1297,8 @@ function appShow(para) {
   if (para && para.path) {
     prop.$url_path = para.path;
   }
+  // 设置分享的信息
+  _.setShareInfo(para, prop);
 
   var utms = _.setUtm(para, prop);
 
@@ -1240,21 +1307,20 @@ function appShow(para) {
   }
 
   prop.$scene = _.getMPScene(para.scene);
+
   //sa.registerApp({$latest_scene : prop.$scene});
 
   if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
-    sa.autoTrackCustom('appShow',prop,'$MPShow');
+    sa.autoTrackCustom('appShow', prop, '$MPShow');
   }
 };
 
 function appHide() {
-  
-
   var current_time = (new Date()).getTime();
   var prop = {};
   prop.$url_path = _.getCurrentPath();
-  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time)/3600000 < 24) ) {
-    prop.event_duration = (current_time - mpshow_time)/1000;
+  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
+    prop.event_duration = (current_time - mpshow_time) / 1000;
   }
   if (sa.para.autoTrack && sa.para.autoTrack.appHide) {
     sa.autoTrackCustom('appHide', prop, '$MPHide');
@@ -1313,9 +1379,11 @@ function pageOnShareAppMessage(n, e) {
   //  sa.track('page_ShareAppMessage', { detail: JSON.stringify(arguments) });
 }
 
-var v = Page;
-Page = function (t) {
-  e(t, "onLoad", function (para) {
+var oldPage = Page;
+Page = function (option) {
+
+
+  e(option, "onLoad", function (para) {
     if (para && _.isObject(para)) {
       var query = _.extend({}, para);
       if (para.q) {
@@ -1326,7 +1394,7 @@ Page = function (t) {
     }
   });
 
-  e(t, "onShow", function () {
+  e(option, "onShow", function () {
     var router = '系统没有取到值';
     if (typeof this === 'object') {
       if (typeof this.route === 'string') {
@@ -1339,7 +1407,7 @@ Page = function (t) {
     var prop = {};
     prop.$referrer = sa_referrer;
     prop.$url_path = router;
-    if (this.sensors_mp_load_utm){
+    if (this.sensors_mp_load_utm) {
       _.extend(prop, this.sensors_mp_load_utm);
       this.sensors_mp_load_utm = null;
     }
@@ -1356,10 +1424,35 @@ Page = function (t) {
   //  e(t, "onReady", pageOnReady);
   //  e(t, "onPullDownRefresh", pageOnPullDownRefresh);
   //  e(t, "onReachBottom", pageOnReachBottom);
-  //  e(t, "onShareAppMessage", pageOnShareAppMessage);
+  if (typeof option.onShareAppMessage === 'function') {
+    var oldMessage = option.onShareAppMessage;
+    option.onShareAppMessage = function () {
 
+      if (sa.para.autoTrack && sa.para.autoTrack.pageShare){
+        sa.autoTrackCustom('pageShare', {
+          $url_path: _.getCurrentPath(),
+          $share_depth: _.getShareDepth()
+        }, '$MPShare');
+      }
 
-  v(t);
+      var oldValue = oldMessage.apply(this, arguments);
+
+      if (sa.para.allow_amend_share_path && typeof oldValue.path === 'string' && oldValue.path.indexOf('/') !== -1) {
+        if (oldValue.path.indexOf('?') === -1) {
+          oldValue.path = oldValue.path + '?';
+        } else {
+          if (oldValue.path.slice(-1) !== '&') {
+            oldValue.path = oldValue.path + '&';
+          }
+        }
+        oldValue.path = oldValue.path + 'sampshare=' + encodeURIComponent(_.getShareInfo());
+      }
+
+      return oldValue;
+    };
+  }
+
+  oldPage.apply(this, arguments);
 
 }
 
