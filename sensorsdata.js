@@ -1279,7 +1279,7 @@ function appLaunch(para) {
     sa.registerApp(utms.pre2);
   }
   prop.$scene = _.getMPScene(para.scene);
-  //sa.registerApp({$latest_scene : prop.$scene});
+  sa.registerApp({$latest_scene : prop.$scene});
 
 
   if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
@@ -1308,7 +1308,7 @@ function appShow(para) {
 
   prop.$scene = _.getMPScene(para.scene);
 
-  //sa.registerApp({$latest_scene : prop.$scene});
+  sa.registerApp({$latest_scene : prop.$scene});
 
   if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
     sa.autoTrackCustom('appShow', prop, '$MPShow');
