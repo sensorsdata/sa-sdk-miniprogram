@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9',
+  LIB_VERSION = '1.9.1',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1156,7 +1156,7 @@ sa.requestQueue.prototype.start = function () {
   var me = this;
   setTimeout(function () {
     me.isEnd();
-  }, 300);
+  }, 600);
   wx.request({
     url: this.url,
     method: 'GET',
