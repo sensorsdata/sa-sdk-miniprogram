@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.1',
+  LIB_VERSION = '1.9.2',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1246,8 +1246,8 @@ function e(t, n, o) {
   if (t[n]) {
     var e = t[n];
     t[n] = function (t) {
-      o.call(this, t, n);
       e.call(this, t);
+      o.call(this, t, n);    
     }
   } else {
     t[n] = function (t) {
