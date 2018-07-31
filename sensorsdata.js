@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.2',
+  LIB_VERSION = '1.9.3',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1202,6 +1202,7 @@ sa.autoTrackCustom = function (api, prop, event) {
       }
     } else if (_.isObject(temp)) {
       _.extend(prop, temp);
+      sa.para.autoTrack[api] = true;
     }
     sa.track(event, prop);
   }
