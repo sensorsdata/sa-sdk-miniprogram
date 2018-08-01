@@ -16,15 +16,15 @@ var conf = {
   // 是否自动采集如下事件（建议开启）
   autoTrack:{
     //$MPLaunch -> App onLaunch
-    appLaunch:true,
+    appLaunch:false,
     //$MPShow -> App onShow
-    appShow:true,
+    appShow:false,
     //$MPHide -> App onHide
-    appHide:true,
+    appHide:false,
     //$MPViewScreen -> page onShow
-    pageShow:true,
+    pageShow:false,
     //$MPShare -> page onShareMessage
-    pageShare: true
+    pageShare: false
   }
 };
 
