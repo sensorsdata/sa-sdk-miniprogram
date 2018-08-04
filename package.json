@@ -1,0 +1,24 @@
+{
+  "name": "sa-sdk-miniprogram",
+  "version": "1.9.4",
+  "description": "sensorsdata miniprogram sdk",
+  "main": "sensorsdata.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sensorsdata/sa-sdk-miniprogram.git"
+  },
+  "keywords": [
+    "sensorsdata",
+    "mininprogram",
+    "sdk"
+  ],
+  "author": "shengyonggen",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/sensorsdata/sa-sdk-miniprogram/issues"
+  },
+  "homepage": "https://github.com/sensorsdata/sa-sdk-miniprogram#readme"
+}

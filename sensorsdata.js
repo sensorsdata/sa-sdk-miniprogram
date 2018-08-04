@@ -7,7 +7,7 @@ var _ = {};
 
 var sa = {};
 
-sa.para = require('sensorsdata_conf.js');
+sa.para = require('./sensorsdata_conf.js');
 
 // 初始化各种预定义参数
 if (!sa.para.openid_url) {
@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.4',
+  LIB_VERSION = '1.9.5',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
