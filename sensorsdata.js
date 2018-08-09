@@ -23,7 +23,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.5',
+  LIB_VERSION = '1.9.6',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1259,217 +1259,221 @@ _.each(['setProfile', 'setOnceProfile', 'track', 'register', 'clearAllRegister',
 
 // 全局事件
 
-function e(t, n, o) {
-  if (t[n]) {
-    var e = t[n];
-    t[n] = function (t) {
-      e.call(this, t);
-      o.call(this, t, n);    
-    }
-  } else {
-    t[n] = function (t) {
-      o.call(this, t, n);
-    }
-  }
-}
-
-function appLaunch(para) {
-  this[sa.para.name] = sa;
-  var prop = {};
-  if (para && para.path) {
-    prop.$url_path = para.path;
-  }
-  // 设置分享的信息
-  _.setShareInfo(para, prop);
-  // 设置utm的信息
-  var utms = _.setUtm(para, prop);
-  if (is_first_launch) {
-    prop.$is_first_time = true;
-    if (!_.isEmptyObject(utms.pre1)) {
-      sa.setOnceProfile(utms.pre1);
-    }
-  } else {
-    prop.$is_first_time = false;
-  }
-
-  if (!_.isEmptyObject(utms.pre2)) {
-    sa.registerApp(utms.pre2);
-  }
-  prop.$scene = _.getMPScene(para.scene);
-  sa.registerApp({$latest_scene : prop.$scene});
-
-
-  if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
-    sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
-  }
-
-};
-
-function appShow(para) {
-  //  console.log('app_show', JSON.stringify(arguments));
-  var prop = {};
-
-  mpshow_time = (new Date()).getTime();
-
-  if (para && para.path) {
-    prop.$url_path = para.path;
-  }
-  // 设置分享的信息
-  _.setShareInfo(para, prop);
-
-  var utms = _.setUtm(para, prop);
-
-  if (!_.isEmptyObject(utms.pre2)) {
-    sa.registerApp(utms.pre2);
-  }
-
-  prop.$scene = _.getMPScene(para.scene);
-
-  sa.registerApp({$latest_scene : prop.$scene});
-
-  if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
-    sa.autoTrackCustom('appShow', prop, '$MPShow');
-  }
-};
-
-function appHide() {
-  var current_time = (new Date()).getTime();
-  var prop = {};
-  prop.$url_path = _.getCurrentPath();
-  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
-    prop.event_duration = (current_time - mpshow_time) / 1000;
-  }
-  if (sa.para.autoTrack && sa.para.autoTrack.appHide) {
-    sa.autoTrackCustom('appHide', prop, '$MPHide');
-  }
-  //  console.log('app_hide', JSON.stringify(arguments));
-  //  sa.track('app_hide', { detail: JSON.stringify(arguments) });
-};
-
-function appError() {
-  //  console.log('app_error', JSON.stringify(arguments));
-  //  sa.track('app_error', { detail: JSON.stringify(arguments) });
-}
-function appUnLaunch() {
-  //  console.log('app_unlaunch', JSON.stringify(arguments));
-  //  sa.track('app_unlaunch', { detail: JSON.stringify(arguments) });
-}
-
-var p = App;
-
-App = function (t) {
-  e(t, "onLaunch", appLaunch);
-  e(t, "onShow", appShow);
-  //  e(t, "onUnLaunch", appUnLaunch);
-  e(t, "onHide", appHide);
-  //  e(t, "onError",appError);
-  p(t);
-};
-
-function pageOnunload(n, e) {
-
-  // console.log('s-page_unload', JSON.stringify(arguments));
-  //  sa.track('page_unload', { detail: JSON.stringify(arguments) });  
-}
-
-function pageOnHide() {
-  // console.log('s-page_hide', JSON.stringify(arguments));
-  //  sa.track('page_hide', { detail: JSON.stringify(arguments) });
-}
-
-function pageOnReady() {
-  // console.log('s-page_ready', JSON.stringify(arguments));
-  //  sa.track('page_ready', { detail: JSON.stringify(arguments) });
-}
-
-function pageOnPullDownRefresh() {
-  //  console.log('page_PullDownRefresh', JSON.stringify(arguments));
-  //  sa.track('page_PullDownRefresh', { detail: JSON.stringify(arguments) });
-}
-
-function pageOnReachBottom() {
-  //  console.log('page_ReachBottom', JSON.stringify(arguments));
-  //  sa.track('page_ReachBottom', { detail: JSON.stringify(arguments) };
-}
-function pageOnShareAppMessage(n, e) {
-  //  console.log('page_ShareAppMessage', JSON.stringify(arguments));
-  //  sa.track('page_ShareAppMessage', { detail: JSON.stringify(arguments) });
-}
-
-var oldPage = Page;
-Page = function (option) {
-
-
-  e(option, "onLoad", function (para) {
-    if (para && _.isObject(para)) {
-      var query = _.extend({}, para);
-      if (para.q) {
-        _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.q)));
+if(sa.para.autoTrack !== false){
+  
+  function e(t, n, o) {
+    if (t[n]) {
+      var e = t[n];
+      t[n] = function (t) {
+        e.call(this, t);
+        o.call(this, t, n);    
       }
-      var utms = _.getUtm(query, '$', '$latest_');
-      this.sensors_mp_load_utm = utms.pre1;
-    }
-  });
-
-  e(option, "onShow", function () {
-    var router = '系统没有取到值';
-    if (typeof this === 'object') {
-      if (typeof this.route === 'string') {
-        router = this.route;
-      } else if (typeof this.__route__ === 'string') {
-        router = this.__route__;
-      }
-    }
-
-    var prop = {};
-    prop.$referrer = sa_referrer;
-    prop.$url_path = router;
-    if (this.sensors_mp_load_utm) {
-      _.extend(prop, this.sensors_mp_load_utm);
-      this.sensors_mp_load_utm = null;
-    }
-    if (sa.para.onshow) {
-      sa.para.onshow(sa, router, this);
     } else {
-      sa.autoTrackCustom('pageShow', prop, '$MPViewScreen');
+      t[n] = function (t) {
+        o.call(this, t, n);
+      }
     }
-    sa_referrer = router;
-  });
-
-  //  e(t, "onHide", pageOnHide);
-
-  //  e(t, "onReady", pageOnReady);
-  //  e(t, "onPullDownRefresh", pageOnPullDownRefresh);
-  //  e(t, "onReachBottom", pageOnReachBottom);
-  if (typeof option.onShareAppMessage === 'function') {
-    var oldMessage = option.onShareAppMessage;
-    option.onShareAppMessage = function () {
-
-      if (sa.para.autoTrack && sa.para.autoTrack.pageShare){
-        sa.autoTrackCustom('pageShare', {
-          $url_path: _.getCurrentPath(),
-          $share_depth: _.getShareDepth()
-        }, '$MPShare');
-      }
-
-      var oldValue = oldMessage.apply(this, arguments);
-
-      if (sa.para.allow_amend_share_path && typeof oldValue.path === 'string' && oldValue.path.indexOf('/') !== -1) {
-        if (oldValue.path.indexOf('?') === -1) {
-          oldValue.path = oldValue.path + '?';
-        } else {
-          if (oldValue.path.slice(-1) !== '&') {
-            oldValue.path = oldValue.path + '&';
-          }
-        }
-        oldValue.path = oldValue.path + 'sampshare=' + encodeURIComponent(_.getShareInfo());
-      }
-
-      return oldValue;
-    };
   }
 
-  oldPage.apply(this, arguments);
+  function appLaunch(para) {
+    this[sa.para.name] = sa;
+    var prop = {};
+    if (para && para.path) {
+      prop.$url_path = para.path;
+    }
+    // 设置分享的信息
+    _.setShareInfo(para, prop);
+    // 设置utm的信息
+    var utms = _.setUtm(para, prop);
+    if (is_first_launch) {
+      prop.$is_first_time = true;
+      if (!_.isEmptyObject(utms.pre1)) {
+        sa.setOnceProfile(utms.pre1);
+      }
+    } else {
+      prop.$is_first_time = false;
+    }
+
+    if (!_.isEmptyObject(utms.pre2)) {
+      sa.registerApp(utms.pre2);
+    }
+    prop.$scene = _.getMPScene(para.scene);
+    sa.registerApp({$latest_scene : prop.$scene});
+
+
+    if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
+      sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
+    }
+
+  };
+
+  function appShow(para) {
+    //  console.log('app_show', JSON.stringify(arguments));
+    var prop = {};
+
+    mpshow_time = (new Date()).getTime();
+
+    if (para && para.path) {
+      prop.$url_path = para.path;
+    }
+    // 设置分享的信息
+    _.setShareInfo(para, prop);
+
+    var utms = _.setUtm(para, prop);
+
+    if (!_.isEmptyObject(utms.pre2)) {
+      sa.registerApp(utms.pre2);
+    }
+
+    prop.$scene = _.getMPScene(para.scene);
+
+    sa.registerApp({$latest_scene : prop.$scene});
+
+    if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
+      sa.autoTrackCustom('appShow', prop, '$MPShow');
+    }
+  };
+
+  function appHide() {
+    var current_time = (new Date()).getTime();
+    var prop = {};
+    prop.$url_path = _.getCurrentPath();
+    if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
+      prop.event_duration = (current_time - mpshow_time) / 1000;
+    }
+    if (sa.para.autoTrack && sa.para.autoTrack.appHide) {
+      sa.autoTrackCustom('appHide', prop, '$MPHide');
+    }
+    //  console.log('app_hide', JSON.stringify(arguments));
+    //  sa.track('app_hide', { detail: JSON.stringify(arguments) });
+  };
+
+  function appError() {
+    //  console.log('app_error', JSON.stringify(arguments));
+    //  sa.track('app_error', { detail: JSON.stringify(arguments) });
+  }
+  function appUnLaunch() {
+    //  console.log('app_unlaunch', JSON.stringify(arguments));
+    //  sa.track('app_unlaunch', { detail: JSON.stringify(arguments) });
+  }
+
+  var p = App;
+
+  App = function (t) {
+    e(t, "onLaunch", appLaunch);
+    e(t, "onShow", appShow);
+    //  e(t, "onUnLaunch", appUnLaunch);
+    e(t, "onHide", appHide);
+    //  e(t, "onError",appError);
+    p(t);
+  };
+
+  function pageOnunload(n, e) {
+
+    // console.log('s-page_unload', JSON.stringify(arguments));
+    //  sa.track('page_unload', { detail: JSON.stringify(arguments) });  
+  }
+
+  function pageOnHide() {
+    // console.log('s-page_hide', JSON.stringify(arguments));
+    //  sa.track('page_hide', { detail: JSON.stringify(arguments) });
+  }
+
+  function pageOnReady() {
+    // console.log('s-page_ready', JSON.stringify(arguments));
+    //  sa.track('page_ready', { detail: JSON.stringify(arguments) });
+  }
+
+  function pageOnPullDownRefresh() {
+    //  console.log('page_PullDownRefresh', JSON.stringify(arguments));
+    //  sa.track('page_PullDownRefresh', { detail: JSON.stringify(arguments) });
+  }
+
+  function pageOnReachBottom() {
+    //  console.log('page_ReachBottom', JSON.stringify(arguments));
+    //  sa.track('page_ReachBottom', { detail: JSON.stringify(arguments) };
+  }
+  function pageOnShareAppMessage(n, e) {
+    //  console.log('page_ShareAppMessage', JSON.stringify(arguments));
+    //  sa.track('page_ShareAppMessage', { detail: JSON.stringify(arguments) });
+  }
+
+  var oldPage = Page;
+  Page = function (option) {
+
+
+    e(option, "onLoad", function (para) {
+      if (para && _.isObject(para)) {
+        var query = _.extend({}, para);
+        if (para.q) {
+          _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.q)));
+        }
+        var utms = _.getUtm(query, '$', '$latest_');
+        this.sensors_mp_load_utm = utms.pre1;
+      }
+    });
+
+    e(option, "onShow", function () {
+      var router = '系统没有取到值';
+      if (typeof this === 'object') {
+        if (typeof this.route === 'string') {
+          router = this.route;
+        } else if (typeof this.__route__ === 'string') {
+          router = this.__route__;
+        }
+      }
+
+      var prop = {};
+      prop.$referrer = sa_referrer;
+      prop.$url_path = router;
+      if (this.sensors_mp_load_utm) {
+        _.extend(prop, this.sensors_mp_load_utm);
+        this.sensors_mp_load_utm = null;
+      }
+      if (sa.para.onshow) {
+        sa.para.onshow(sa, router, this);
+      } else {
+        sa.autoTrackCustom('pageShow', prop, '$MPViewScreen');
+      }
+      sa_referrer = router;
+    });
+
+    //  e(t, "onHide", pageOnHide);
+
+    //  e(t, "onReady", pageOnReady);
+    //  e(t, "onPullDownRefresh", pageOnPullDownRefresh);
+    //  e(t, "onReachBottom", pageOnReachBottom);
+    if (typeof option.onShareAppMessage === 'function') {
+      var oldMessage = option.onShareAppMessage;
+      option.onShareAppMessage = function () {
+
+        if (sa.para.autoTrack && sa.para.autoTrack.pageShare){
+          sa.autoTrackCustom('pageShare', {
+            $url_path: _.getCurrentPath(),
+            $share_depth: _.getShareDepth()
+          }, '$MPShare');
+        }
+
+        var oldValue = oldMessage.apply(this, arguments);
+
+        if (sa.para.allow_amend_share_path && typeof oldValue.path === 'string' && oldValue.path.indexOf('/') !== -1) {
+          if (oldValue.path.indexOf('?') === -1) {
+            oldValue.path = oldValue.path + '?';
+          } else {
+            if (oldValue.path.slice(-1) !== '&') {
+              oldValue.path = oldValue.path + '&';
+            }
+          }
+          oldValue.path = oldValue.path + 'sampshare=' + encodeURIComponent(_.getShareInfo());
+        }
+
+        return oldValue;
+      };
+    }
+
+    oldPage.apply(this, arguments);
+
+  }
 
 }
 
