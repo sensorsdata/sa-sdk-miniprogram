@@ -14,6 +14,9 @@ if (!sa.para.openid_url) {
   sa.para.openid_url = sa.para.server_url.replace(/\/sa(\.gif){0,1}/, '/mp_login');
 }
 
+if(typeof sa.para.send_timeout !== 'number'){
+  sa.para.send_timeout = 1000;
+}
 
 // 工具函数
 
@@ -23,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.6',
+  LIB_VERSION = '1.9.7',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1172,7 +1175,7 @@ sa.requestQueue.prototype.start = function () {
   var me = this;
   setTimeout(function () {
     me.isEnd();
-  }, 600);
+  }, sa.para.send_timeout);
   wx.request({
     url: this.url,
     method: 'GET',
