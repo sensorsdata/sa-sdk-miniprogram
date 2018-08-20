@@ -26,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.7',
+  LIB_VERSION = '1.9.8',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1121,10 +1121,11 @@ sa.init = function () {
 };
 
 sa.getPresetProperties = function () {
-  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent) {
-    delete _.info.properties.$lib;
-    delete _.info.properties.$user_agent;
-    return _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
+  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent) { 
+    var obj = _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
+    delete obj.$lib;
+    delete obj.$user_agent;
+    return obj;
   } else {
     return {};
   }
@@ -1300,10 +1301,11 @@ if(sa.para.autoTrack !== false){
     if (!_.isEmptyObject(utms.pre2)) {
       sa.registerApp(utms.pre2);
     }
+
+    para.scene = para.scene || '未取到值';
     prop.$scene = _.getMPScene(para.scene);
     sa.registerApp({$latest_scene : prop.$scene});
-
-
+  
     if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
       sa.autoTrackCustom('appLaunch', prop, '$MPLaunch');
     }
@@ -1328,8 +1330,8 @@ if(sa.para.autoTrack !== false){
       sa.registerApp(utms.pre2);
     }
 
+    para.scene = para.scene || '未取到值';
     prop.$scene = _.getMPScene(para.scene);
-
     sa.registerApp({$latest_scene : prop.$scene});
 
     if (sa.para.autoTrack && sa.para.autoTrack.appShow) {
