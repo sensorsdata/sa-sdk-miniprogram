@@ -26,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.8',
+  LIB_VERSION = '1.9.9',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1115,7 +1115,10 @@ sa.initial = function () {
 
 };
 
-sa.init = function () {
+sa.init = function (obj) {
+  if(_.isObject(obj)){
+    sa.para = obj;
+  }
   sa.initialState.storeIsComplete = true;
   sa.initialState.checkIsComplete();
 };
