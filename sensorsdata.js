@@ -26,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.9.9',
+  LIB_VERSION = '1.10.1',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -787,8 +787,7 @@ _.setUtm = function (para, prop) {
 _.info = {
   properties: {
     $lib: LIB_NAME,
-    $lib_version: String(LIB_VERSION),
-    $user_agent: 'SensorsAnalytics MP SDK'
+    $lib_version: String(LIB_VERSION)
   },
   getSystem: function () {
     var e = this.properties;
@@ -1124,10 +1123,9 @@ sa.init = function (obj) {
 };
 
 sa.getPresetProperties = function () {
-  if (_.info && _.info.properties && _.info.properties.$lib && _.info.properties.$user_agent) { 
+  if (_.info && _.info.properties && _.info.properties.$lib) { 
     var obj = _.extend({ $url_path: _.getCurrentPath() }, _.info.properties, sa.store.getProps());
     delete obj.$lib;
-    delete obj.$user_agent;
     return obj;
   } else {
     return {};
@@ -1316,7 +1314,6 @@ if(sa.para.autoTrack !== false){
   };
 
   function appShow(para) {
-    //  console.log('app_show', JSON.stringify(arguments));
     var prop = {};
 
     mpshow_time = (new Date()).getTime();
