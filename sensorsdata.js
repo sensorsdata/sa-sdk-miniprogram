@@ -26,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.10.1',
+  LIB_VERSION = '1.10.2',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -164,8 +164,7 @@ logger.info = function () {
   _.extend = function (obj) {
     each(slice.call(arguments, 1), function (source) {
       for (var prop in source) {
-        if (source[prop] !==
-          void 0) {
+        if (source[prop] !== void 0) {
           obj[prop] = source[prop];
         }
       }
@@ -1116,7 +1115,7 @@ sa.initial = function () {
 
 sa.init = function (obj) {
   if(_.isObject(obj)){
-    sa.para = obj;
+    sa.para = _.extend(sa.para,obj);
   }
   sa.initialState.storeIsComplete = true;
   sa.initialState.checkIsComplete();
@@ -1239,12 +1238,17 @@ sa.setOpenid = function (openid, isCover) {
 };
 
 sa.initWithOpenid = function (options) {
-  options = options || {};
+  if(_.isObject(options)){
+    options = _.extend(sa.para,options);
+  }else{
+    options = {};
+  }
+  //options = options || {};
   sa.openid.getOpenid(function (openid) {
     if (openid) {
       sa.setOpenid(openid, options.isCoverLogin);
     }
-    sa.init();
+    sa.init(options);
   });
 
 };
