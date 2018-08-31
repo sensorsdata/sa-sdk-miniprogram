@@ -26,7 +26,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.10.2',
+  LIB_VERSION = '1.10.3',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -758,6 +758,7 @@ _.setUtm = function (para, prop) {
     query = _.extend({}, para.query);
     var scene = query.scene;
     if (scene) {
+      scene = _.decodeURIComponent(scene);
       if (scene.indexOf("?") !== -1) {
         scene = '?' + scene.replace(/\?/g, '');
       } else {
@@ -1090,15 +1091,9 @@ sa.openid = {
     if (storageId) {
       callback(storageId);
     } else {
-      this.getRequest(function (openid) {
-        if (openid) {
-          callback(openid);
-        }
-      });
+      this.getRequest(callback);
     }
   }
-
-
 };
 
 
@@ -1238,12 +1233,7 @@ sa.setOpenid = function (openid, isCover) {
 };
 
 sa.initWithOpenid = function (options) {
-  if(_.isObject(options)){
-    options = _.extend(sa.para,options);
-  }else{
-    options = {};
-  }
-  //options = options || {};
+  options = options || {};
   sa.openid.getOpenid(function (openid) {
     if (openid) {
       sa.setOpenid(openid, options.isCoverLogin);
@@ -1409,13 +1399,21 @@ if(sa.para.autoTrack !== false){
 
   var oldPage = Page;
   Page = function (option) {
-
-
     e(option, "onLoad", function (para) {
       if (para && _.isObject(para)) {
         var query = _.extend({}, para);
         if (para.q) {
           _.extend(query, _.getObjFromQuery(_.decodeURIComponent(para.q)));
+        }
+        if(para.scene){
+          var scene = para.scene;
+          scene = _.decodeURIComponent(scene);
+          if (scene.indexOf("?") !== -1) {
+            scene = '?' + scene.replace(/\?/g, '');
+          } else {
+            scene = '?' + scene;
+          }
+          _.extend(query, _.getObjFromQuery(scene));
         }
         var utms = _.getUtm(query, '$', '$latest_');
         this.sensors_mp_load_utm = utms.pre1;
