@@ -23,7 +23,9 @@ var conf = {
     appHide:true, //是否采集 $MPHide 事件，true 代表开启。
     pageShow:true, //是否采集 $MPViewScreen 事件，true 代表开启。
     pageShare:true //是否采集 $MPShare 事件，true 代表开启。
-  }
+  },
+  // 是否集成了插件！重要！
+  is_plugin: false
 };
 
 module.exports = conf;
