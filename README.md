@@ -18,8 +18,8 @@ sensorsdata_conf.js 是配置文件
 1.12.1 更新支持插件的小程序 SDK 具体用法参考 https://sensorsdata.cn/manual/mp_sdk_plugin.html  
 1.12.2 修复在开启自动采集分享，且定义空的onShareAppMessage时候，控制台报错的问题   
 1.12.3 小程序identify和login如果传入的是非字符串时候，自动转化字符串类型。增加对onShareAppMessage返回空对象的判断。  
-1.12.4 增加init的多次使用的判断，去掉$MPLaunch,$MPShow中获取到的path带/的异常判断  
-  
+1.12.4 增加init的多次使用的判断，去掉$MPLaunch,$MPShow中获取到的path带/的异常判断    
+1.12.5 修复 autoTrack.pageShow 设置 false 仍然发送 $MPViewScreen 的问题  
 
   
 
