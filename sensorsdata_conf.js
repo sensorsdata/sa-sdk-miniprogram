@@ -2,11 +2,11 @@ var conf = {
   // 神策分析注册在APP全局函数中的变量名，在非app.js中可以通过getApp().sensors(你这里定义的名字来使用)
   name: 'sensors',
   // 如果要通过sdk自动获取openid，需要在神策分析中配置appid和appsercret，并在这里标志appid,不需要的话，不用填。
-  appid: 'wx16ce2f6e06acd4d5',
+  appid: 'xxxxx',
   // 神策分析数据接收地址
   // server_url: 'https://xxxxx.datasink.xxxx/sa.gif?project=default&token=27eeee',
-  server_url:'https://test-syg.datasink.sensorsdata.cn/sa.gif',
-  //请求发送超时时间
+  server_url:'https://test-syg122.datasink.sensorsdata.cn/sa.gif',
+  //默认使用队列发数据时候，两条数据发送间的最大间隔
   send_timeout: 1000,
   // 传入的字符串最大长度限制，防止未知字符串超长
   max_string_length: 300,
@@ -24,8 +24,22 @@ var conf = {
     pageShow:true, //是否采集 $MPViewScreen 事件，true 代表开启。
     pageShare:true //是否采集 $MPShare 事件，true 代表开启。
   },
+  // 触发小程序onLaunch，onShow等事件时，先发送统计数据，还是先执行里面的代码
+  autoTrackIsFirst:{
+    appLaunch: true,
+    appShow: true,
+    appHide: true
+  },
   // 是否集成了插件！重要！
-  is_plugin: false
+  is_plugin: false,
+  // 使用批量发数据模式
+  batch_send: {
+    // 每隔多长时间发送一次数据
+    send_timeout: 6000
+
+  }
+
+
 };
 
 module.exports = conf;
