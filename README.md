@@ -20,7 +20,8 @@ sensorsdata_conf.js 是配置文件
 1.12.3 小程序identify和login如果传入的是非字符串时候，自动转化字符串类型。增加对onShareAppMessage返回空对象的判断。  
 1.12.4 增加init的多次使用的判断，去掉$MPLaunch,$MPShow中获取到的path带/的异常判断    
 1.12.5 修复 autoTrack.pageShow 设置 false 仍然发送 $MPViewScreen 的问题    
-1.12.6 增加 batch_send 批量发数据的配置，设置为空对象或者true，表示开启这个功能。增加 autoTrackIsFirst的配置，不设置默认是先执行onLaunch等事件中的代码，（如果使用动态修改预置属性的功能会有影响！！！），后发送appLaunch的统计数据，可以单独给各个预置事件单独设置先后发送顺序。增加sa.quick('appLaunch',arguments,prop) 等单独发预置事件和属性的功能。
+1.12.6 增加 batch_send 批量发数据的配置，设置为空对象或者true，表示开启这个功能，必须更新神策分析到最新版，否则去重功能无效。增加 autoTrackIsFirst的配置，不设置默认是先执行onLaunch等事件中的代码，（如果使用动态修改预置属性的功能会有影响！！！），后发送appLaunch的统计数据，可以单独给各个预置事件单独设置先后发送顺序。增加sa.quick('appLaunch',arguments,prop) 等单独发预置事件和属性的功能。  
+1.12.7 registerApp 方法不做缓存  
 
   
 

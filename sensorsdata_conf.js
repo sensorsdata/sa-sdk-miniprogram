@@ -24,22 +24,8 @@ var conf = {
     pageShow:true, //是否采集 $MPViewScreen 事件，true 代表开启。
     pageShare:true //是否采集 $MPShare 事件，true 代表开启。
   },
-  // 触发小程序onLaunch，onShow等事件时，先发送统计数据，还是先执行里面的代码
-  autoTrackIsFirst:{
-    appLaunch: true,
-    appShow: true,
-    appHide: true
-  },
   // 是否集成了插件！重要！
-  is_plugin: false,
-  // 使用批量发数据模式
-  batch_send: {
-    // 每隔多长时间发送一次数据
-    send_timeout: 6000
-
-  }
-
-
+  is_plugin: false
 };
 
 module.exports = conf;
