@@ -8,8 +8,6 @@ var conf = {
   server_url:'https://test-syg122.datasink.sensorsdata.cn/sa.gif',
   //默认使用队列发数据时候，两条数据发送间的最大间隔
   send_timeout: 1000,
-  // 传入的字符串最大长度限制，防止未知字符串超长
-  max_string_length: 300,
   // 发送事件的时间使用客户端时间还是服务端时间
   use_client_time: false,
   // 是否允许控制台打印查看埋点数据（建议开启查看）
