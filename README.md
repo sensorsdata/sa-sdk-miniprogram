@@ -28,6 +28,7 @@ sensorsdata_conf.js 是配置文件
 |1.12.9| 增加自动采集$first_visit_time 首次访问时间, 增加 datasend_timeout 配置请求最大链接多久取消。   |
 |1.12.10| 修复$url_query在返回时候取值的错误，修复当没有onShareAppMessage没有return值，且使用allow_amend_share_path时候，自动补全的url只有path没有query的问题。去除了page在show的时候，解析utm参数和scene的功能，统一在app里解析。  |
 |1.12.11| 修复1.12.10的bug，如果更新1.12.10的用户，必须更新到1.12.11|
+|1.13.1|**重大更新**,去除了sensorsdata_conf.js，配置改成在 App.js中，通过 sensors.setPara({})或者在sensors.init({})中加入。另外分成三个文件，sensorsdata.min.js全埋点的非插件版，sensorsdata.plugin.min.js全埋点的插件版，sensorsdata.custom.min.js手动埋点版本支持插件和非插件。具体各个版本的用法参考文档。另外增加es6格式的对应版本。|
 
 
   
