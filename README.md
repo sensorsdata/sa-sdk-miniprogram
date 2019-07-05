@@ -1,18 +1,18 @@
 # sa-sdk-miniprogram
-## 神策微信小程序 SDK
 
-使用文档请参考 https://sensorsdata.cn/manual/mp_sdk.html
+神策微信小程序 SDK
 
-sensorsdata.min.js 是主文件
-sensorsdata_conf.js 是配置文件
+## 使用方法
+完整文档 https://sensorsdata.cn/manual/mp_sdk.html
 
-## 获取发行版
+注意 SDK 可能不完全向前兼容，请查看版本更新说明 [CHANGELOG.md](CHANGELOG.md)。如果有说明不兼容的话，需要升级神策分析对应的版本。  
+请根据需要前往 [Releases](https://github.com/sensorsdata/sa-sdk-miniprogram/releases) 里下载对应的文件
 
-> 注意 SDK 可能不完全向前兼容，请阅读具体的 Release Log。如果不确定是否支持，请联系神策技术支持人员。
-
-请根据需要 [Releases](https://github.com/sensorsdata/sa-sdk-miniprogram/releases) 里下载对应的文件：
+## 长期招聘
+ * 招聘 小程序 SDK 开发工程师，小程序 SDK 技术顾问，简历发送到邮箱 (shengyonggen@sensorsdata.cn)
 
 ## 版本更新记录
+
 | 版本号 | 更新内容 |
 | ------ | ------ |
 |1.10.5|增加 $url_query 2 增加 sa.initWithOpenid(options,callback)  callback(openid) 3 增加sa.status.referrer sa.status.laster_referrer    |
@@ -32,10 +32,4 @@ sensorsdata_conf.js 是配置文件
 |1.13.2| 增加两个 profile的操作 sa.appendProfile({catrgory: ['玉米']}) 喜爱的蔬菜增加玉米 和 sa.incrementProfile({'navClick': 1}) 导航点击次数 +1次 |
 |1.13.3| 获取预置属性方法可获取到 latest 相关属性；增加 appendProfile 与 incrementProfile 缓存|
 |1.13.4| 同步小程序场景值描述；server_url 默认地址为空；存储读取异常时候会重试|
-
-
-
-
-
-
-
+|1.13.5| 增加了获取匿名ID的方法 sensors.quick('getAnonymousID')|
