@@ -1,3 +1,9 @@
+## 1.13.8
+* 新增：支持自定义 utm 参数。通过配置 source_channel:['...','...']  
+* 优化：storage 数据写入失败的话，会打印出失败的原因  
+* 优化：$os的取值增加devtools，优化了$os和$os_version算法
+* 优化：$url_query在$MPViewScreen中没有值时候，从未知改成空
+
 ## 1.13.7
 
 * 新增：$MPViewScreen 增加了 UTM 相关属性的解析
