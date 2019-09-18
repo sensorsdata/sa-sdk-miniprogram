@@ -1,3 +1,6 @@
+## 1.13.10
+* 优化：默认decode了option.query的值。分享时候自动拼接的的query还是保持不变。
+
 ## 1.13.9
 * 新增：增加配置 is_persistent_save ，支持将最近一次站外渠道信息永久保存到 Storage 中  
 * 优化：给未定义 Component 时候一个默认值 
