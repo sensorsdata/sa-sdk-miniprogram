@@ -20,6 +20,7 @@
 
 请参见 [CHANGELOG.md](CHANGELOG.md)
 
-## 招聘信息
-招聘小程序 SDK 开发工程师，小程序 SDK 技术顾问，简历发送到邮箱 (shengyonggen@sensorsdata.cn)<br><br>
-详情可访问官网https://www.sensorsdata.cn/about/joinus.html
+## 开源社区
+神策正在组建开源社区，所以相应的源码也会放在 Github 上，针对微信小程序 SDK 源码的问题请不要在 Github 上提问。
+请加微信 free__dom ,备注开源社区，我会拉你暂时到微信群中讨论。
+在开源社区组建完成后，会转移到开源社区中讨论。
