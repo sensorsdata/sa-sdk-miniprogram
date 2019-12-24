@@ -94,14 +94,15 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.14',
+  LIB_VERSION = '1.13.15',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
 var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', 'latest_sa_utm'];
 
 var mp_scene = {
-  1001: '发现栏小程序主入口，“最近使用”列表',
+  1000: '其他',
+  1001: '发现栏小程序主入口，「最近使用」列表（基础库2.2.4版本起包含「我的小程序」列表）',
   1005: '顶部搜索框的搜索结果页',
   1006: '发现栏小程序主入口搜索框的搜索结果页',
   1007: '单人聊天会话中的小程序消息卡片',
@@ -159,6 +160,7 @@ var mp_scene = {
   1081: '客服消息下发的文字链',
   1082: '公众号会话下发的文字链',
   1084: '朋友圈广告原生页',
+  1088: '会话中查看系统消息，打开小程序',
   1089: '微信聊天主界面下拉',
   1090: '长按小程序右上角菜单唤出最近使用历史',
   1091: '公众号文章商品卡片',
@@ -171,11 +173,16 @@ var mp_scene = {
   1103: '发现栏小程序主入口，“我的小程序”列表',
   1104: '微信聊天主界面下拉，“我的小程序”栏',
   1106: '聊天主界面下拉，从顶部搜索结果页，打开小程序',
+  1107: '订阅消息，打开小程序',
+  1113: '安卓手机负一屏，打开小程序（三星',
+  1114: '安卓手机侧边栏，打开小程序（三星）',
   1124: '扫“一物一码”打开小程序',
   1125: '长按图片识别“一物一码”',
   1126: '扫描手机相册中选取的“一物一码”',
   1129: '微信爬虫访问',
-  1131: '浮窗打开小程序'
+  1131: '浮窗打开小程序',
+  1146: '地理位置信息打开出行类小程序',
+  1148: '卡包-交通卡，打开小程序'
 };
 
 
@@ -669,7 +676,7 @@ _.getObjFromQuery = function(str) {
   var obj = {};
   if (query && query[1]) {
     _.each(query[1].split('&'), function(value) {
-      var arr = value.split('=');
+      arr = value.split('=');
       if (arr[0] && arr[1]) {
         obj[arr[0]] = arr[1];
       }
@@ -1307,6 +1314,14 @@ sa.init = function(obj) {
   this.hasInit = true;
   sa.setPara(obj);
   if (sa.para.batch_send) {
+    wx.getStorage({
+      key: 'sensors_mp_prepare_data',
+      complete(res) {
+        var queue = res.data && _.isArray(res.data) ? res.data : [];
+        sa.store.mem.mdata = queue.concat(sa.store.mem.mdata);
+        sa.sendStrategy.syncStorage = true;
+      }
+    });
     sa.sendStrategy.batchInterval();
   }
   sa.initialState.storeIsComplete = true;
@@ -1388,6 +1403,7 @@ sa.dataQueue = _.autoExeQueue();
 sa.sendStrategy = {
   dataHasSend: true,
   dataHasChange: false,
+  syncStorage: false,
   onAppHide: function() {
     if (sa.para.batch_send) {
       this.batchSend();
@@ -1441,6 +1457,9 @@ sa.sendStrategy = {
         data: 'data_list=' + encodeURIComponent(_.base64Encode(option.data)),
         success: function() {
           option.success(option.len);
+        },
+        fail: function() {
+          option.fail();
         }
       });
     } else {
@@ -1456,10 +1475,14 @@ sa.sendStrategy = {
         this.wxrequest({
           data: data,
           len: len,
-          success: this.batchRemove.bind(this)
+          success: this.batchRemove.bind(this),
+          fail: this.sendFail.bind(this)
         });
       }
     }
+  },
+  sendFail: function() {
+    this.dataHasSend = true;
   },
   batchRemove: function(len) {
     sa.store.mem.clear(len);
@@ -1479,10 +1502,13 @@ sa.sendStrategy = {
       }
 
       this.dataHasChange = false;
-      sa._.setStorageSync('sensors_mp_prepare_data', sa.store.mem.mdata);
+      if (this.syncStorage) {
+        sa._.setStorageSync('sensors_mp_prepare_data', sa.store.mem.mdata);
+      }
     }
   },
   batchInterval: function() {
+
     var _this = this;
 
     function loopWrite() {
@@ -1641,7 +1667,6 @@ sa.autoTrackCustom = {
 
     sa.setLatestChannel(utms.pre2);
 
-    para.scene = para.scene || '未取到值';
     prop.$scene = _.getMPScene(para.scene);
     sa.registerApp({
       $latest_scene: prop.$scene
@@ -1671,7 +1696,6 @@ sa.autoTrackCustom = {
 
     sa.setLatestChannel(utms.pre2);
 
-    para.scene = para.scene || '未取到值';
     prop.$scene = _.getMPScene(para.scene);
     sa.registerApp({
       $latest_scene: prop.$scene
