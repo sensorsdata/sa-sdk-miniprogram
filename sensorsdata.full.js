@@ -94,7 +94,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.15',
+  LIB_VERSION = '1.13.16',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -174,8 +174,8 @@ var mp_scene = {
   1104: '微信聊天主界面下拉，“我的小程序”栏',
   1106: '聊天主界面下拉，从顶部搜索结果页，打开小程序',
   1107: '订阅消息，打开小程序',
-  1113: '安卓手机负一屏，打开小程序（三星',
-  1114: '安卓手机侧边栏，打开小程序（三星）',
+  1113: '安卓手机负一屏，打开小程序(三星)',
+  1114: '安卓手机侧边栏，打开小程序(三星)',
   1124: '扫“一物一码”打开小程序',
   1125: '长按图片识别“一物一码”',
   1126: '扫描手机相册中选取的“一物一码”',
