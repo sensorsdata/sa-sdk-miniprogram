@@ -22,6 +22,20 @@ sa.para = {
   is_persistent_save: false
 };
 
+var mpHook = {
+  "data": 1,
+  "onLoad": 1,
+  "onShow": 1,
+  "onReady": 1,
+  "onPullDownRefresh": 1,
+  "onReachBottom": 1,
+  "onShareAppMessage": 1,
+  "onPageScroll": 1,
+  "onResize": 1,
+  "onTabItemTap": 1,
+  "onHide": 1,
+  "onUnload": 1
+};
 
 var logger = typeof logger === 'object' ? logger : {};
 
@@ -99,7 +113,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.17',
+  LIB_VERSION = '1.13.18',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -626,6 +640,25 @@ _.getPath = function(path) {
   }
   return path;
 };
+
+_.getMethods = function(option) {
+  var methods = [];
+  for (var m in option) {
+    if (typeof(option[m]) === 'function' && !mpHook[m]) {
+      methods.push(m);
+    }
+  }
+  return methods;
+}
+
+_.isClick = function(type) {
+  var mpTaps = {
+    "tap": 1,
+    "longpress": 1,
+    "longtap": 1,
+  };
+  return !!mpTaps[type];
+}
 
 sa.initialState = {
   queue: [],
@@ -1275,6 +1308,20 @@ sa.login = function(id) {
   }
 };
 
+sa.logout = function(isChangeId) {
+  var firstId = sa.store.getFirstId();
+  if (firstId) {
+    sa.store.set('first_id', '');
+    if (isChangeId === true) {
+      sa.store.set('distinct_id', sa.store.getUUID());
+    } else {
+      sa.store.set('distinct_id', firstId);
+    }
+  } else {
+    logger.info('没有first_id，logout失败');
+  }
+};
+
 sa.openid = {
   getRequest: function(callback) {
     wx.login({
@@ -1541,9 +1588,7 @@ sa.sendStrategy = {
     }
     loopWrite();
     loopSend();
-
   }
-
 };
 
 sa.setOpenid = function(openid, isCover) {
@@ -1571,7 +1616,7 @@ sa.initWithOpenid = function(options, callback) {
   });
 };
 
-_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile'], function(method) {
+_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
     if (sa.initialState.isComplete) {

@@ -22,6 +22,20 @@ sa.para = {
   is_persistent_save: false
 };
 
+var mpHook = {
+  "data": 1,
+  "onLoad": 1,
+  "onShow": 1,
+  "onReady": 1,
+  "onPullDownRefresh": 1,
+  "onReachBottom": 1,
+  "onShareAppMessage": 1,
+  "onPageScroll": 1,
+  "onResize": 1,
+  "onTabItemTap": 1,
+  "onHide": 1,
+  "onUnload": 1
+};
 
 var logger = typeof logger === 'object' ? logger : {};
 
@@ -99,7 +113,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.17',
+  LIB_VERSION = '1.13.18',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -626,6 +640,25 @@ _.getPath = function(path) {
   }
   return path;
 };
+
+_.getMethods = function(option) {
+  var methods = [];
+  for (var m in option) {
+    if (typeof(option[m]) === 'function' && !mpHook[m]) {
+      methods.push(m);
+    }
+  }
+  return methods;
+}
+
+_.isClick = function(type) {
+  var mpTaps = {
+    "tap": 1,
+    "longpress": 1,
+    "longtap": 1,
+  };
+  return !!mpTaps[type];
+}
 
 sa.initialState = {
   queue: [],
@@ -1275,6 +1308,20 @@ sa.login = function(id) {
   }
 };
 
+sa.logout = function(isChangeId) {
+  var firstId = sa.store.getFirstId();
+  if (firstId) {
+    sa.store.set('first_id', '');
+    if (isChangeId === true) {
+      sa.store.set('distinct_id', sa.store.getUUID());
+    } else {
+      sa.store.set('distinct_id', firstId);
+    }
+  } else {
+    logger.info('没有first_id，logout失败');
+  }
+};
+
 sa.openid = {
   getRequest: function(callback) {
     wx.login({
@@ -1541,9 +1588,7 @@ sa.sendStrategy = {
     }
     loopWrite();
     loopSend();
-
   }
-
 };
 
 sa.setOpenid = function(openid, isCover) {
@@ -1571,7 +1616,7 @@ sa.initWithOpenid = function(options, callback) {
   });
 };
 
-_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile'], function(method) {
+_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
     if (sa.initialState.isComplete) {
@@ -1639,6 +1684,30 @@ function mp_proxy(option, method, identifier) {
     };
   }
 }
+
+function click_proxy(option, method) {
+  var oldFunc = option[method];
+
+  option[method] = function() {
+    var prop = {},
+      type = '';
+
+    if (typeof arguments[0] === 'object') {
+      var target = arguments[0].currentTarget || {};
+      var dataset = target.dataset || {};
+      type = arguments[0]['type'];
+      prop['$url_path'] = _.getCurrentPath();
+      prop['$element_id'] = target.id;
+      prop['$element_type'] = dataset['type'];
+      prop['$element_content'] = dataset['content'];
+      prop['$element_name'] = dataset['name'];
+    }
+    if (type && _.isClick(type)) {
+      sa.track('$MPClick', prop);
+    }
+    return oldFunc && oldFunc.apply(this, arguments);
+  }
+};
 
 
 sa.autoTrackCustom = {
@@ -1845,6 +1914,13 @@ App = function(option) {
 
 var oldPage = Page;
 Page = function(option) {
+
+  var methods = _.getMethods(option);
+
+  for (let i = 0, len = methods.length; i < len; i++) {
+    click_proxy(option, methods[i]);
+  }
+
   mp_proxy(option, "onLoad", 'pageLoad');
   mp_proxy(option, "onShow", 'pageShow');
   if (typeof option.onShareAppMessage === 'function') {
@@ -1857,6 +1933,12 @@ var oldComponent = Component;
 Component = function(option) {
   try {
     option.methods = option.methods || {};
+    var methods = _.getMethods(option.methods);
+
+    for (let i = 0, len = methods.length; i < len; i++) {
+      click_proxy(option.methods, methods[i]);
+    }
+
     mp_proxy(option.methods, 'onLoad', 'pageLoad');
     mp_proxy(option.methods, 'onShow', 'pageShow');
     if (typeof option.methods.onShareAppMessage === 'function') {
