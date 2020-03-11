@@ -17,7 +17,8 @@ sa.para = {
     appShow: true,
     appHide: true,
     pageShow: true,
-    pageShare: true
+    pageShare: true,
+    mpClick: false,
   },
   is_persistent_save: false
 };
@@ -113,7 +114,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.18',
+  LIB_VERSION = '1.13.19',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1466,6 +1467,7 @@ sa.sendStrategy = {
   dataHasSend: true,
   dataHasChange: false,
   syncStorage: false,
+  failTime: 0,
   onAppHide: function() {
     if (sa.para.batch_send) {
       this.batchSend();
@@ -1545,12 +1547,14 @@ sa.sendStrategy = {
   },
   sendFail: function() {
     this.dataHasSend = true;
+    this.failTime++;
   },
   batchRemove: function(len) {
     sa.store.mem.clear(len);
     this.dataHasSend = true;
     this.dataHasChange = true;
     this.batchWrite();
+    this.failTime = 0;
   },
   is_first_batch_write: true,
   batchWrite: function() {
@@ -1584,7 +1588,7 @@ sa.sendStrategy = {
       setTimeout(function() {
         _this.batchSend();
         loopSend();
-      }, sa.para.batch_send.send_timeout);
+      }, sa.para.batch_send.send_timeout * Math.pow(2, _this.failTime));
     }
     loopWrite();
     loopSend();
