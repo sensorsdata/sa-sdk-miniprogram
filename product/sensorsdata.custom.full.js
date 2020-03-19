@@ -114,7 +114,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.19',
+  LIB_VERSION = '1.13.20',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -265,8 +265,7 @@ sa.lib_version = LIB_VERSION;
   _.extend2Lev = function(obj) {
     each(slice.call(arguments, 1), function(source) {
       for (var prop in source) {
-        if (source[prop] !==
-          void 0) {
+        if (source[prop] !== void 0 && source[prop] !== null) {
           if (_.isObject(source[prop]) && _.isObject(obj[prop])) {
             _.extend(obj[prop], source[prop]);
           } else {

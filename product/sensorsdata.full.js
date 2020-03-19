@@ -114,7 +114,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.19',
+  LIB_VERSION = '1.13.20',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -265,8 +265,7 @@ sa.lib_version = LIB_VERSION;
   _.extend2Lev = function(obj) {
     each(slice.call(arguments, 1), function(source) {
       for (var prop in source) {
-        if (source[prop] !==
-          void 0) {
+        if (source[prop] !== void 0 && source[prop] !== null) {
           if (_.isObject(source[prop]) && _.isObject(obj[prop])) {
             _.extend(obj[prop], source[prop]);
           } else {
@@ -1696,7 +1695,7 @@ function click_proxy(option, method) {
     var prop = {},
       type = '';
 
-    if (typeof arguments[0] === 'object') {
+    if (_.isObject(arguments[0])) {
       var target = arguments[0].currentTarget || {};
       var dataset = target.dataset || {};
       type = arguments[0]['type'];
@@ -1920,8 +1919,10 @@ var oldPage = Page;
 Page = function(option) {
   var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
 
-  for (var i = 0, len = methods.length; i < len; i++) {
-    click_proxy(option, methods[i]);
+  if (!!methods) {
+    for (var i = 0, len = methods.length; i < len; i++) {
+      click_proxy(option, methods[i]);
+    }
   }
 
   mp_proxy(option, "onLoad", 'pageLoad');
@@ -1937,8 +1938,10 @@ Component = function(option) {
   try {
     var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
 
-    for (var i = 0, len = methods.length; i < len; i++) {
-      click_proxy(option.methods, methods[i]);
+    if (!!methods) {
+      for (var i = 0, len = methods.length; i < len; i++) {
+        click_proxy(option.methods, methods[i]);
+      }
     }
 
     mp_proxy(option.methods, 'onLoad', 'pageLoad');
