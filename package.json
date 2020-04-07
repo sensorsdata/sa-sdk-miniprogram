@@ -1,6 +1,6 @@
 {
   "name": "sa-sdk-miniprogram",
-  "version": "1.13.20",
+  "version": "1.13.21",
   "description": "sensorsdata miniprogram sdk",
   "main": "sensorsdata.min.js",
   "scripts": {

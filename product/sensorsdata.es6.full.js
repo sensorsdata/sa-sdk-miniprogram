@@ -20,7 +20,10 @@ sa.para = {
     pageShare: true,
     mpClick: false,
   },
-  is_persistent_save: false
+  is_persistent_save: {
+    share: false,
+    utm: false
+  }
 };
 
 var mpHook = {
@@ -92,9 +95,21 @@ sa.setPara = function(para) {
   if (sa.para.batch_send === true) {
     sa.para.batch_send = _.extend({}, batch_send_default);
     sa.para.use_client_time = true;
-  } else if (typeof sa.para.batch_send === 'object') {
+  } else if (_.isObject(sa.para.batch_send)) {
     sa.para.use_client_time = true;
     sa.para.batch_send = _.extend({}, batch_send_default, sa.para.batch_send);
+  }
+
+  var is_persistent_save_default = {
+    share: false,
+    utm: false
+  };
+
+  if (sa.para.is_persistent_save === true) {
+    sa.para.is_persistent_save = _.extend({}, is_persistent_save_default);
+    sa.para.is_persistent_save.utm = true;
+  } else if (_.isObject(sa.para.is_persistent_save)) {
+    sa.para.is_persistent_save = _.extend({}, is_persistent_save_default, sa.para.is_persistent_save);
   }
 
   if (!sa.para.server_url) {
@@ -114,11 +129,12 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.20',
+  LIB_VERSION = '1.13.21',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
 var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', 'latest_sa_utm'];
+var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth'];
 
 var mp_scene = {
   1000: '其他',
@@ -212,7 +228,7 @@ sa.status.referrer = '直接打开';
 
 var mpshow_time = null;
 
-var share_depth = 0;
+var query_share_depth = 0;
 var share_distinct_id = '';
 
 var is_first_launch = false;
@@ -764,23 +780,11 @@ _.getMPScene = function(key) {
   }
 };
 
-_.getShareDepth = function() {
-  if (typeof share_depth === 'number' && share_depth !== 0) {
-    var current_id = sa.store.getDistinctId();
-    var current_first_id = sa.store.getFirstId();
-    var latest_id = share_distinct_id;
-    if (latest_id && (latest_id === current_id || latest_id === current_first_id)) {
-      return share_depth;
-    } else {
-      return (share_depth + 1);
-    }
-  } else {
-    return 1;
-  }
-};
-
 _.setShareInfo = function(para, prop) {
   var share = {};
+  var obj = {};
+  var current_id = sa.store.getDistinctId();
+  var current_first_id = sa.store.getFirstId();
   if (para && _.isObject(para.query) && para.query.sampshare) {
     share = _.decodeURIComponent(para.query.sampshare);
     if (_.isJSONString(share)) {
@@ -797,27 +801,41 @@ _.setShareInfo = function(para, prop) {
   if (typeof id === 'string') {
     prop.$share_distinct_id = id;
     share_distinct_id = id;
+    obj.$latest_share_distinct_id = id;
   } else {
     prop.$share_distinct_id = '取值异常';
   }
+
+
   if (typeof depth === 'number') {
-    prop.$share_depth = depth;
-    share_depth = depth;
+    if (share_distinct_id && (share_distinct_id === current_id || share_distinct_id === current_first_id)) {
+      prop.$share_depth = depth;
+      query_share_depth = depth;
+      obj.$latest_share_depth = depth;
+    } else if (share_distinct_id && (share_distinct_id !== current_id || share_distinct_id !== current_first_id)) {
+      prop.$share_depth = depth + 1;
+      query_share_depth = depth + 1;
+      obj.$latest_share_depth = depth + 1;
+    } else {
+      prop.$share_depth = '-1';
+    }
   } else {
     prop.$share_depth = '-1';
   }
   if (typeof path === 'string') {
     prop.$share_url_path = path;
+    obj.$latest_share_url_path = path;
   } else {
     prop.$share_url_path = '取值异常';
   }
+  _.setLatestShare(obj);
 };
 
 _.getShareInfo = function() {
   return JSON.stringify({
     i: sa.store.getDistinctId() || '取值异常',
     p: _.getCurrentPath(),
-    d: _.getShareDepth()
+    d: query_share_depth
   });
 };
 
@@ -1271,13 +1289,13 @@ sa.clearAppRegister = function(arr) {
   }
 };
 
-sa.setLatestChannel = function(channel) {
+_.setLatestChannel = function(channel) {
   if (!_.isEmptyObject(channel)) {
     if (includeChannel(channel, latest_source_channel)) {
       sa.clearAppRegister(latest_source_channel);
       sa.clearAllProps(latest_source_channel);
     }
-    sa.para.is_persistent_save ? sa.register(channel) : sa.registerApp(channel);
+    sa.para.is_persistent_save.utm ? sa.register(channel) : sa.registerApp(channel);
   }
 
   function includeChannel(channel, arr) {
@@ -1289,7 +1307,16 @@ sa.setLatestChannel = function(channel) {
     }
     return found;
   }
-}
+};
+
+_.setLatestShare = function(share) {
+  if (share.$latest_share_depth || share.$latest_share_distinct_id || share.$latest_share_url_path) {
+    sa.clearAppRegister(latest_share_info);
+    sa.clearAllProps(latest_share_info);
+
+    sa.para.is_persistent_save.share ? sa.register(share) : sa.registerApp(share);
+  }
+};
 
 sa.login = function(id) {
   if (typeof id !== 'string' && typeof id !== 'number') {
@@ -1752,7 +1779,7 @@ sa.autoTrackCustom = {
       prop.$is_first_time = false;
     }
 
-    sa.setLatestChannel(utms.pre2);
+    _.setLatestChannel(utms.pre2);
 
     prop.$scene = _.getMPScene(para.scene);
     sa.registerApp({
@@ -1781,7 +1808,7 @@ sa.autoTrackCustom = {
 
     var utms = _.setUtm(para, prop);
 
-    sa.setLatestChannel(utms.pre2);
+    _.setLatestChannel(utms.pre2);
 
     prop.$scene = _.getMPScene(para.scene);
     sa.registerApp({
@@ -1845,7 +1872,7 @@ sa.autoTrackCustom = {
       if (sa.para.autoTrack && sa.para.autoTrack.pageShare) {
         sa.autoTrackCustom.trackCustom('pageShare', {
           $url_path: _.getCurrentPath(),
-          $share_depth: _.getShareDepth()
+          $share_depth: query_share_depth
         }, '$MPShare');
       }
 
