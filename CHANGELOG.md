@@ -1,3 +1,6 @@
+## 1.13.22（2020-04-13）
+* 优化：优化点击预置事件中 $url_path 预置属性的采集逻辑；
+
 ## 1.13.21（2020-04-07）
 * 优化：优化预置事件 $MPLaunch、 $MPShow 中 $share_depth 的计算逻辑；
 * 新增：新增所有事件都有的预置属性 $latest_share_depth、 $latest_share_distinct_id、 $lastest_share_url_path,神策分析系统需升级到 1.14.745 1.16.1414 1.15.1413 1.13.5875 及以上版本；

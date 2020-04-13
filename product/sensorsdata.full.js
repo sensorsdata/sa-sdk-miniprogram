@@ -129,7 +129,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.21',
+  LIB_VERSION = '1.13.22',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1726,13 +1726,13 @@ function click_proxy(option, method) {
       var target = arguments[0].currentTarget || {};
       var dataset = target.dataset || {};
       type = arguments[0]['type'];
-      prop['$url_path'] = _.getCurrentPath();
       prop['$element_id'] = target.id;
       prop['$element_type'] = dataset['type'];
       prop['$element_content'] = dataset['content'];
       prop['$element_name'] = dataset['name'];
     }
     if (type && _.isClick(type)) {
+      prop['$url_path'] = _.getCurrentPath();
       sa.track('$MPClick', prop);
     }
     return oldFunc && oldFunc.apply(this, arguments);
