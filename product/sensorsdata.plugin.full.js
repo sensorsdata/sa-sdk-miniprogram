@@ -129,7 +129,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.22',
+  LIB_VERSION = '1.13.23',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1405,7 +1405,7 @@ sa.init = function(obj) {
   if (sa.para.batch_send) {
     wx.getStorage({
       key: 'sensors_mp_prepare_data',
-      complete(res) {
+      complete: function(res) {
         var queue = res.data && _.isArray(res.data) ? res.data : [];
         sa.store.mem.mdata = queue.concat(sa.store.mem.mdata);
         sa.sendStrategy.syncStorage = true;
