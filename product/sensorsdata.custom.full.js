@@ -129,7 +129,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.23',
+  LIB_VERSION = '1.13.24',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -143,6 +143,7 @@ var mp_scene = {
   1006: '发现栏小程序主入口搜索框的搜索结果页',
   1007: '单人聊天会话中的小程序消息卡片',
   1008: '群聊会话中的小程序消息卡片',
+  1010: '收藏夹',
   1011: '扫描二维码',
   1012: '长按图片识别二维码',
   1013: '手机相册选取二维码',
@@ -217,8 +218,11 @@ var mp_scene = {
   1126: '扫描手机相册中选取的“一物一码”',
   1129: '微信爬虫访问',
   1131: '浮窗打开小程序',
+  1133: '硬件设备打开小程序',
   1146: '地理位置信息打开出行类小程序',
-  1148: '卡包-交通卡，打开小程序'
+  1148: '卡包-交通卡，打开小程序',
+  1150: '扫一扫商品条码结果页打开小程序',
+  1153: '“识物”结果页打开小程序'
 };
 
 
@@ -916,6 +920,16 @@ _.wxrequest = function(obj) {
   }, sa.para.datasend_timeout);
 };
 
+_.getAppId = function() {
+  var info;
+  if (wx.getAccountInfoSync) {
+    info = wx.getAccountInfoSync();
+  }
+  if (_.isObject(info) && _.isObject(info.miniProgram)) {
+    return info.miniProgram.appId;
+  }
+};
+
 
 _.info = {
   currentProps: {},
@@ -958,6 +972,14 @@ _.info = {
           e.$os_version = t["system"].indexOf(' ') > -1 ? t["system"].split(' ')[1] : t["system"];
         },
         "complete": function() {
+          var timeZoneOffset = new Date().getTimezoneOffset();
+          var appId = _.getAppId();
+          if (_.isNumber(timeZoneOffset)) {
+            e.$timezone_offset = timeZoneOffset;
+          }
+          if (appId) {
+            e.$app_id = appId;
+          }
           sa.initialState.systemIsComplete = true;
           sa.initialState.checkIsComplete();
         }
