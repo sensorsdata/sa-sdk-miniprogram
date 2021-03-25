@@ -6,8 +6,8 @@ sa.para = {
   name: 'sensors',
   server_url: '',
   send_timeout: 1000,
-  use_client_time: false,
   show_log: true,
+  launched: false,
   allow_amend_share_path: true,
   max_string_length: 300,
   datasend_timeout: 3000,
@@ -19,11 +19,17 @@ sa.para = {
     pageShow: true,
     pageShare: true,
     mpClick: false,
+    mpFavorite: true
+  },
+  autotrack_exclude_page: {
+    pageShow: [],
   },
   is_persistent_save: {
     share: false,
     utm: false
-  }
+  },
+
+  preset_properties: {}
 };
 
 var mpHook = {
@@ -47,7 +53,17 @@ logger.info = function() {
   if (sa.para.show_log) {
     if (typeof console === 'object' && console.log) {
       try {
-        return console.log.apply(console, arguments);
+        if (arguments.length === 3) {
+          return console.log(arguments[0], arguments[1], arguments[2]);
+        }
+
+        if (arguments.length === 2) {
+          return console.log(arguments[0], arguments[1]);
+        }
+
+        if (arguments.length === 1) {
+          return console.log(arguments[0]);
+        }
       } catch (e) {
         console.log(arguments[0]);
       }
@@ -94,9 +110,7 @@ sa.setPara = function(para) {
 
   if (sa.para.batch_send === true) {
     sa.para.batch_send = _.extend({}, batch_send_default);
-    sa.para.use_client_time = true;
   } else if (_.isObject(sa.para.batch_send)) {
-    sa.para.use_client_time = true;
     sa.para.batch_send = _.extend({}, batch_send_default, sa.para.batch_send);
   }
 
@@ -116,6 +130,8 @@ sa.setPara = function(para) {
     logger.info('请使用 setPara() 方法设置 server_url 数据接收地址,详情可查看https://www.sensorsdata.cn/manual/mp_sdk_new.html#112-%E5%BC%95%E5%85%A5%E5%B9%B6%E9%85%8D%E7%BD%AE%E5%8F%82%E6%95%B0');
     return;
   }
+
+  sa.para.preset_properties = _.isObject(sa.para.preset_properties) ? sa.para.preset_properties : {};
 };
 
 
@@ -129,102 +145,12 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.13.24',
+  LIB_VERSION = '1.14.7',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
-var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', 'latest_sa_utm'];
-var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth'];
-
-var mp_scene = {
-  1000: '其他',
-  1001: '发现栏小程序主入口，「最近使用」列表（基础库2.2.4版本起包含「我的小程序」列表）',
-  1005: '顶部搜索框的搜索结果页',
-  1006: '发现栏小程序主入口搜索框的搜索结果页',
-  1007: '单人聊天会话中的小程序消息卡片',
-  1008: '群聊会话中的小程序消息卡片',
-  1010: '收藏夹',
-  1011: '扫描二维码',
-  1012: '长按图片识别二维码',
-  1013: '手机相册选取二维码',
-  1014: '小程序模版消息',
-  1017: '前往体验版的入口页',
-  1019: '微信钱包',
-  1020: '公众号 profile 页相关小程序列表',
-  1022: '聊天顶部置顶小程序入口',
-  1023: '安卓系统桌面图标',
-  1024: '小程序 profile 页',
-  1025: '扫描一维码',
-  1026: '附近小程序列表',
-  1027: '顶部搜索框搜索结果页“使用过的小程序”列表',
-  1028: '我的卡包',
-  1029: '卡券详情页',
-  1030: '自动化测试下打开小程序',
-  1031: '长按图片识别一维码',
-  1032: '手机相册选取一维码',
-  1034: '微信支付完成页',
-  1035: '公众号自定义菜单',
-  1036: 'App 分享消息卡片',
-  1037: '小程序打开小程序',
-  1038: '从另一个小程序返回',
-  1039: '摇电视',
-  1042: '添加好友搜索框的搜索结果页',
-  1043: '公众号模板消息',
-  1044: '带 shareTicket 的小程序消息卡片（详情)',
-  1045: '朋友圈广告',
-  1046: '朋友圈广告详情页',
-  1047: '扫描小程序码',
-  1048: '长按图片识别小程序码',
-  1049: '手机相册选取小程序码',
-  1052: '卡券的适用门店列表',
-  1053: '搜一搜的结果页',
-  1054: '顶部搜索框小程序快捷入口',
-  1056: '音乐播放器菜单',
-  1057: '钱包中的银行卡详情页',
-  1058: '公众号文章',
-  1059: '体验版小程序绑定邀请页',
-  1064: '微信连Wi-Fi状态栏',
-  1067: '公众号文章广告',
-  1068: '附近小程序列表广告',
-  1069: '移动应用',
-  1071: '钱包中的银行卡列表页',
-  1072: '二维码收款页面',
-  1073: '客服消息列表下发的小程序消息卡片',
-  1074: '公众号会话下发的小程序消息卡片',
-  1077: '摇周边',
-  1078: '连Wi-Fi成功页',
-  1079: '微信游戏中心',
-  1081: '客服消息下发的文字链',
-  1082: '公众号会话下发的文字链',
-  1084: '朋友圈广告原生页',
-  1088: '会话中查看系统消息，打开小程序',
-  1089: '微信聊天主界面下拉',
-  1090: '长按小程序右上角菜单唤出最近使用历史',
-  1091: '公众号文章商品卡片',
-  1092: '城市服务入口',
-  1095: '小程序广告组件',
-  1096: '聊天记录',
-  1097: '微信支付签约页',
-  1099: '页面内嵌插件',
-  1102: '公众号 profile 页服务预览',
-  1103: '发现栏小程序主入口，“我的小程序”列表',
-  1104: '微信聊天主界面下拉，“我的小程序”栏',
-  1106: '聊天主界面下拉，从顶部搜索结果页，打开小程序',
-  1107: '订阅消息，打开小程序',
-  1113: '安卓手机负一屏，打开小程序(三星)',
-  1114: '安卓手机侧边栏，打开小程序(三星)',
-  1124: '扫“一物一码”打开小程序',
-  1125: '长按图片识别“一物一码”',
-  1126: '扫描手机相册中选取的“一物一码”',
-  1129: '微信爬虫访问',
-  1131: '浮窗打开小程序',
-  1133: '硬件设备打开小程序',
-  1146: '地理位置信息打开出行类小程序',
-  1148: '卡包-交通卡，打开小程序',
-  1150: '扫一扫商品条码结果页打开小程序',
-  1153: '“识物”结果页打开小程序'
-};
-
+var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', '$latest_sa_utm'];
+var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth', '$latest_share_method'];
 
 var sa_referrer = '直接打开';
 
@@ -234,10 +160,14 @@ var mpshow_time = null;
 
 var query_share_depth = 0;
 var share_distinct_id = '';
+var share_method = '';
+var current_scene = '';
 
 var is_first_launch = false;
-
+var wxSDKVersion = '';
 sa.lib_version = LIB_VERSION;
+
+var globalTitle = {};
 
 
 (function() {
@@ -489,6 +419,26 @@ _.searchObjString = function(o) {
   }
 };
 
+_.parseSuperProperties = function(obj) {
+  if (_.isObject(obj)) {
+    _.each(obj, function(value, key) {
+      if (_.isFunction(value)) {
+        try {
+          obj[key] = value();
+          if (_.isFunction(obj[key])) {
+            logger.info("您的属性- " + key + ' 格式不满足要求，我们已经将其删除');
+            delete obj[key];
+          }
+        } catch (e) {
+          delete obj[key];
+          logger.info("您的属性- " + key + ' 抛出了异常，我们已经将其删除');
+        }
+      }
+    });
+    _.strip_sa_properties(obj);
+  }
+};
+
 _.unique = function(ar) {
   var temp,
     n = [],
@@ -639,6 +589,14 @@ _.getCurrentPath = function() {
   return url;
 };
 
+_.getIsFirstDay = function() {
+  if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > (new Date()).getTime()) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
 _.getCurrentUrl = function(me) {
   var path = _.getCurrentPath();
   var query = '';
@@ -777,8 +735,8 @@ _.getStorageSync = function(key) {
 
 _.getMPScene = function(key) {
   if (typeof key === "number" || (typeof key === "string" && key !== "")) {
-    key = String(key);
-    return mp_scene[key] || key;
+    key = 'wx-' + String(key);
+    return key;
   } else {
     return "未取到值";
   }
@@ -802,6 +760,7 @@ _.setShareInfo = function(para, prop) {
   var depth = share.d;
   var path = share.p;
   var id = share.i;
+  var method = share.m;
   if (typeof id === 'string') {
     prop.$share_distinct_id = id;
     share_distinct_id = id;
@@ -809,7 +768,6 @@ _.setShareInfo = function(para, prop) {
   } else {
     prop.$share_distinct_id = '取值异常';
   }
-
 
   if (typeof depth === 'number') {
     if (share_distinct_id && (share_distinct_id === current_id || share_distinct_id === current_first_id)) {
@@ -832,6 +790,12 @@ _.setShareInfo = function(para, prop) {
   } else {
     prop.$share_url_path = '取值异常';
   }
+  if (typeof method === 'string') {
+    prop.$share_method = method;
+    obj.$latest_share_method = method;
+  } else {
+    prop.$share_method = '取值异常';
+  }
   _.setLatestShare(obj);
 };
 
@@ -839,7 +803,8 @@ _.getShareInfo = function() {
   return JSON.stringify({
     i: sa.store.getDistinctId() || '取值异常',
     p: _.getCurrentPath(),
-    d: query_share_depth
+    d: query_share_depth,
+    m: share_method
   });
 };
 
@@ -911,13 +876,90 @@ _.setUtm = function(para, prop) {
   return utms;
 };
 
-_.wxrequest = function(obj) {
-  var rq = wx.request(obj);
-  setTimeout(function() {
-    if (_.isObject(rq) && _.isFunction(rq.abort)) {
-      rq.abort();
+_.setSfSource = function(para, prop) {
+  if (!_.isEmptyObject(para.query) && para.query._sfs) {
+    prop.$sf_source = para.query._sfs;
+    sa.registerApp({
+      $latest_sf_source: prop.$sf_source
+    });
+  }
+};
+
+_.setPageSfSource = function(prop) {
+  try {
+    var allpages = getCurrentPages();
+    var myvar = JSON.parse(JSON.stringify(allpages[allpages.length - 1].options));
+    for (var i in myvar) {
+      myvar[i] = _.decodeURIComponent(myvar[i]);
     }
-  }, sa.para.datasend_timeout);
+
+    if (!_.isEmptyObject(myvar) && myvar._sfs) {
+      prop.$sf_source = myvar._sfs;
+    }
+  } catch (e) {
+    logger.info(e);
+  }
+};
+
+try {
+  var oldSetNavigationBarTitle = wx.setNavigationBarTitle;
+  Object.defineProperty(wx, "setNavigationBarTitle", {
+    get: function() {
+      return function(titleObj) {
+        var pages = getCurrentPages();
+        var currentPagePath = pages[pages.length - 1].route || '';
+        titleObj = _.isObject(titleObj) ? titleObj : {};
+        globalTitle[currentPagePath] = titleObj.title;
+        oldSetNavigationBarTitle.call(this, titleObj);
+      }
+    }
+  })
+} catch (err) {
+  logger.info(err);
+}
+
+_.getPageTitle = function(e) {
+  var title = '';
+  var route = e.route;
+  try {
+    if (__wxConfig) {
+      var wxConfig = __wxConfig;
+      var currentPageConfig = wxConfig.page[route] || wxConfig.page[route + '.html'];
+      var globalConfigTitle = {
+        titleVal: wxConfig.global.window.navigationBarTitleText
+      };
+      var pageConfigTitle = {
+        titleVal: currentPageConfig.window.navigationBarTitleText
+      };
+      _.each(globalTitle, function(v, k) {
+        if (k === route) {
+          return title = v;
+        }
+      })
+      if (title.length === 0) {
+        var finalTitle = _.extend(globalConfigTitle, pageConfigTitle);
+        title = finalTitle.titleVal;
+      }
+    }
+  } catch (err) {
+    logger.info(err);
+  }
+  return title;
+};
+
+
+_.wxrequest = function(obj) {
+  if (_.compareSDKVersion(wxSDKVersion, '2.10.0') >= 0) {
+    obj.timeout = sa.para.datasend_timeout;
+    wx.request(obj);
+  } else {
+    var rq = wx.request(obj);
+    setTimeout(function() {
+      if (_.isObject(rq) && _.isFunction(rq.abort)) {
+        rq.abort();
+      }
+    }, sa.para.datasend_timeout);
+  }
 };
 
 _.getAppId = function() {
@@ -930,6 +972,46 @@ _.getAppId = function() {
   }
 };
 
+_.validId = function(id) {
+  if ((typeof id !== 'string' && typeof id !== 'number') || id === '') {
+    logger.info('输入 ID 类型错误');
+    return false;
+  }
+  if (typeof id === 'number') {
+    id = String(id);
+    if (!/^\d+$/.test(id)) {
+      logger.info('输入 ID 类型错误');
+      return false;
+    }
+  }
+  return id;
+}
+
+_.compareSDKVersion = function(v1, v2) {
+  v1 = v1.split('.');
+  v2 = v2.split('.');
+  var len = Math.max(v1.length, v2.length);
+
+  while (v1.length < len) {
+    v1.push('0');
+  }
+  while (v2.length < len) {
+    v2.push('0');
+  }
+
+  for (var i = 0; i < len; i++) {
+    var num1 = parseInt(v1[i]);
+    var num2 = parseInt(v2[i]);
+
+    if (num1 > num2) {
+      return 1;
+    } else if (num1 < num2) {
+      return -1;
+    }
+  }
+
+  return 0;
+};
 
 _.info = {
   currentProps: {},
@@ -970,6 +1052,7 @@ _.info = {
           e.$screen_height = Number(t["screenHeight"]);
           e.$os = formatSystem(t["platform"]);
           e.$os_version = t["system"].indexOf(' ') > -1 ? t["system"].split(' ')[1] : t["system"];
+          wxSDKVersion = t["SDKVersion"];
         },
         "complete": function() {
           var timeZoneOffset = new Date().getTimezoneOffset();
@@ -992,9 +1075,74 @@ _.info = {
 
 sa._ = _;
 
+_.eventEmitter = function() {
+  this.sub = [];
+};
+_.eventEmitter.prototype = {
+  add: function(item) {
+    this.sub.push(item);
+  },
+  emit: function(event, data) {
+    this.sub.forEach(function(temp) {
+      temp.on(event, data);
+    })
+  },
+};
+
+_.eventSub = function(handle) {
+  sa.events.add(this);
+  this._events = [];
+  this.handle = handle;
+  this.ready = false;
+};
+
+_.eventSub.prototype = {
+  on: function(event, data) {
+    if (this.ready) {
+      if (_.isFunction(this.handle)) {
+        try {
+          this.handle(event, data);
+        } catch (error) {
+          logger.info(error);
+        }
+      }
+    } else {
+      this._events.push({
+        event,
+        data
+      })
+    }
+  },
+  isReady: function() {
+    var that = this;
+    that.ready = true;
+    that._events.forEach(function(item) {
+      if (_.isFunction(that.handle)) {
+        try {
+          that.handle(item.event, item.data);
+        } catch (error) {
+          logger.info(error);
+        }
+      }
+    });
+  },
+};
+
+sa.eventSub = _.eventSub;
+
+sa.events = new _.eventEmitter();
+
+sa.usePlugin = function(plugin, para) {
+  if (typeof plugin.init === "function") {
+    plugin.init(sa, para);
+  }
+};
 
 
 sa.prepareData = function(p, callback) {
+  if (current_scene && current_scene === 1154) {
+    return false;
+  }
 
   var data = {
     distinct_id: this.store.getDistinctId(),
@@ -1013,48 +1161,31 @@ sa.prepareData = function(p, callback) {
   }
 
   if (!p.type || p.type.slice(0, 7) !== 'profile') {
-    if (sa.para.batch_send) {
-      data._track_id = Number(String(Math.random()).slice(2, 5) + String(Math.random()).slice(2, 4) + String(Date.now()).slice(-4));
-    }
+    data._track_id = Number(String(Math.random()).slice(2, 5) + String(Math.random()).slice(2, 4) + String(Date.now()).slice(-4));
     data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
 
-    if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > (new Date()).getTime()) {
-      data.properties.$is_first_day = true;
-    } else {
-      data.properties.$is_first_day = false;
-    }
+    data.properties.$is_first_day = _.getIsFirstDay();
+
   }
   if (data.properties.$time && _.isDate(data.properties.$time)) {
     data.time = data.properties.$time * 1;
     delete data.properties.$time;
   } else {
-    if (sa.para.use_client_time) {
-      data.time = (new Date()) * 1;
-    }
+    data.time = (new Date()) * 1;
   }
 
+  _.parseSuperProperties(data.properties);
 
   _.searchObjDate(data);
   _.searchObjString(data);
 
   logger.info(data);
+  sa.events.emit('send', data);
 
   sa.sendStrategy.send(data);
 };
 
 sa.store = {
-  verifyDistinctId: function(id) {
-    if (typeof id === 'number') {
-      id = String(id);
-      if (!/^\d+$/.test(id)) {
-        id = 'unexpected_id';
-      }
-    }
-    if (typeof id !== 'string' || id === '') {
-      id = 'unexpected_id';
-    }
-    return id;
-  },
   storageInfo: null,
   getUUID: function() {
     return "" + Date.now() + '-' + Math.floor(1e7 * Math.random()) + '-' + Math.random().toString(16).replace('.', '') + '-' + String(Math.random() * 31242).replace('.', '').slice(0, 8);
@@ -1145,6 +1276,7 @@ sa.store = {
         delete this._state._first_id;
       } else if (i === 'distinct_id') {
         delete this._state._distinct_id;
+        sa.events.emit('changeDistinctId');
       }
     }
     this.save();
@@ -1239,22 +1371,21 @@ sa.track = function(e, p, c) {
 };
 
 sa.identify = function(id, isSave) {
-  if (typeof id !== 'string' && typeof id !== 'number') {
-    return false;
-  }
-  id = sa.store.verifyDistinctId(id);
-  var firstId = sa.store.getFirstId();
-  if (isSave === true) {
-    if (firstId) {
-      sa.store.set('first_id', id);
+  id = _.validId(id);
+  if (id) {
+    var firstId = sa.store.getFirstId();
+    if (isSave === true) {
+      if (firstId) {
+        sa.store.set('first_id', id);
+      } else {
+        sa.store.set('distinct_id', id);
+      }
     } else {
-      sa.store.set('distinct_id', id);
-    }
-  } else {
-    if (firstId) {
-      sa.store.change('first_id', id);
-    } else {
-      sa.store.change('distinct_id', id);
+      if (firstId) {
+        sa.store.change('first_id', id);
+      } else {
+        sa.store.change('distinct_id', id);
+      }
     }
   }
 };
@@ -1332,7 +1463,7 @@ _.setLatestChannel = function(channel) {
 };
 
 _.setLatestShare = function(share) {
-  if (share.$latest_share_depth || share.$latest_share_distinct_id || share.$latest_share_url_path) {
+  if (share.$latest_share_depth || share.$latest_share_distinct_id || share.$latest_share_url_path || share.$latest_share_method) {
     sa.clearAppRegister(latest_share_info);
     sa.clearAllProps(latest_share_info);
 
@@ -1341,19 +1472,26 @@ _.setLatestShare = function(share) {
 };
 
 sa.login = function(id) {
-  if (typeof id !== 'string' && typeof id !== 'number') {
-    return false;
-  }
-  id = sa.store.verifyDistinctId(id);
-  var firstId = sa.store.getFirstId();
-  var distinctId = sa.store.getDistinctId();
-  if (id !== distinctId) {
-    if (firstId) {
-      sa.trackSignup(id, '$SignUp');
-    } else {
-      sa.store.set('first_id', distinctId);
-      sa.trackSignup(id, '$SignUp');
+  id = _.validId(id);
+  if (id) {
+    var firstId = sa.store.getFirstId();
+    var distinctId = sa.store.getDistinctId();
+    if (id !== distinctId) {
+      if (firstId) {
+        sa.trackSignup(id, '$SignUp');
+      } else {
+        sa.store.set('first_id', distinctId);
+        sa.trackSignup(id, '$SignUp');
+      }
     }
+  }
+};
+
+sa.getAnonymousID = function() {
+  if (_.isEmptyObject(sa.store._state)) {
+    logger.info('请先初始化SDK');
+  } else {
+    return sa.store._state._first_id || sa.store._state.first_id || sa.store._state._distinct_id || sa.store._state.distinct_id;
   }
 };
 
@@ -1369,6 +1507,29 @@ sa.logout = function(isChangeId) {
   } else {
     logger.info('没有first_id，logout失败');
   }
+};
+
+sa.getLocation = function() {
+  wx.getSetting({
+    success: function(res) {
+      if (res.authSetting['scope.userLocation']) {
+        wx.getLocation({
+          type: sa.para.preset_properties.location.type,
+          success: function(res) {
+            sa.registerApp({
+              $latitude: res.latitude * Math.pow(10, 6),
+              $longitude: res.longitude * Math.pow(10, 6)
+            })
+          },
+          fail: function(err) {
+            console.log('获取位置失败', err)
+          }
+        })
+      } else {
+        return false;
+      }
+    }
+  })
 };
 
 sa.openid = {
@@ -1448,7 +1609,8 @@ sa.getPresetProperties = function() {
       }
     });
     var obj = _.extend(builtinProps, {
-      $url_path: _.getCurrentPath()
+      $url_path: _.getCurrentPath(),
+      $is_first_day: _.getIsFirstDay()
     }, _.info.properties, sa.store.getProps());
     delete obj.$lib;
     return obj;
@@ -1497,9 +1659,6 @@ sa.requestQueue.prototype.isEnd = function() {
 };
 sa.requestQueue.prototype.start = function() {
   var me = this;
-  setTimeout(function() {
-    me.isEnd();
-  }, sa.para.send_timeout);
   _.wxrequest({
     url: this.url,
     method: 'GET',
@@ -1540,6 +1699,7 @@ sa.sendStrategy = {
     }
   },
   queueSend: function(url) {
+    url._flush_time = Date.now();
     url = JSON.stringify(url);
     if (sa.para.server_url.indexOf('?') !== -1) {
       url = sa.para.server_url + '&data=' + encodeURIComponent(_.base64Encode(url));
@@ -1668,7 +1828,7 @@ sa.initWithOpenid = function(options, callback) {
   });
 };
 
-_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout'], function(method) {
+_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
     if (sa.initialState.isComplete) {
@@ -1702,7 +1862,12 @@ _.getUtmFromPage = function() {
   var newObj = {};
   try {
     var allpages = getCurrentPages();
-    var myvar = allpages[allpages.length - 1].options;
+    var myvar = JSON.parse(JSON.stringify(allpages[allpages.length - 1].options));
+
+    for (var i in myvar) {
+      myvar[i] = _.decodeURIComponent(myvar[i]);
+    }
+
     newObj = _.getCustomUtmFromQuery(myvar, '$', '_', '$');
   } catch (e) {
     logger.info(e);
@@ -1735,13 +1900,27 @@ sa.autoTrackCustom = {
       this[sa.para.name] = sa;
     }
 
-
     var prop = {};
+    if (para && para.scene) {
+      current_scene = para.scene;
+      prop.$scene = _.getMPScene(para.scene);
+    } else {
+      prop.$scene = '未取到值';
+    }
+    if (para && para.scene && para.scene === 1010 && para.query && para.query.sampshare) {
+      delete para.query.sampshare
+    }
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
+      if (sa.para.preset_properties.url_path === true) {
+        sa.registerApp({
+          $url_path: prop.$url_path
+        });
+      }
     }
     _.setShareInfo(para, prop);
     var utms = _.setUtm(para, prop);
+
     if (is_first_launch) {
       prop.$is_first_time = true;
       if (!_.isEmptyObject(utms.pre1)) {
@@ -1752,8 +1931,7 @@ sa.autoTrackCustom = {
     }
 
     _.setLatestChannel(utms.pre2);
-
-    prop.$scene = _.getMPScene(para.scene);
+    _.setSfSource(para, prop);
     sa.registerApp({
       $latest_scene: prop.$scene
     });
@@ -1773,16 +1951,34 @@ sa.autoTrackCustom = {
 
     mpshow_time = (new Date()).getTime();
 
+    if (para && para.scene) {
+      current_scene = para.scene;
+      prop.$scene = _.getMPScene(para.scene);
+    } else {
+      prop.$scene = '未取到值';
+    }
+
+    if (para && para.scene && para.scene === 1010 && para.query && para.query.sampshare) {
+      delete para.query.sampshare
+    }
+
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
+      if (sa.para.preset_properties.url_path === true) {
+        sa.registerApp({
+          $url_path: prop.$url_path
+        });
+      }
+    }
+    if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
+      sa.getLocation();
     }
     _.setShareInfo(para, prop);
 
     var utms = _.setUtm(para, prop);
 
     _.setLatestChannel(utms.pre2);
-
-    prop.$scene = _.getMPScene(para.scene);
+    _.setSfSource(para, prop);
     sa.registerApp({
       $latest_scene: prop.$scene
     });
@@ -1837,7 +2033,131 @@ sa.quick = function() {
     sa.autoTrackCustom[arg0](prop);
   }
 };
+sa.appLaunch = function(option, prop) {
+  var obj = {};
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop)
+  }
+  if (option && option.scene) {
+    current_scene = option.scene;
+    obj.$scene = _.getMPScene(option.scene);
+  } else {
+    obj.$scene = '未取到值';
+  }
+  if (option && option.scene && option.scene === 1010 && option.query && option.query.sampshare) {
+    delete option.query.sampshare
+  }
+  if (option && option.path) {
+    obj.$url_path = _.getPath(option.path);
+    if (sa.para.preset_properties.url_path === true) {
+      sa.registerApp({
+        $url_path: obj.$url_path
+      });
+    }
+  }
+  _.setShareInfo(option, obj);
+  var utms = _.setUtm(option, obj);
 
+  if (is_first_launch) {
+    obj.$is_first_time = true;
+    if (!_.isEmptyObject(utms.pre1)) {
+      sa.setOnceProfile(utms.pre1);
+    }
+  } else {
+    obj.$is_first_time = false;
+  }
+
+  _.setLatestChannel(utms.pre2);
+  _.setSfSource(option, obj);
+  sa.registerApp({
+    $latest_scene: obj.$scene
+  });
+
+  obj.$url_query = _.setQuery(option.query);
+
+  sa.track('$MPLaunch', obj);
+}
+sa.appShow = function(option, prop) {
+  var obj = {};
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop)
+  }
+  mpshow_time = (new Date()).getTime();
+  if (option && option.scene) {
+    current_scene = option.scene;
+    obj.$scene = _.getMPScene(option.scene);
+  } else {
+    obj.$scene = '未取到值';
+  }
+  if (option && option.scene && option.scene === 1010 && option.query && option.query.sampshare) {
+    delete option.query.sampshare
+  }
+
+  if (option && option.path) {
+    obj.$url_path = _.getPath(option.path);
+    if (sa.para.preset_properties.url_path === true) {
+      sa.registerApp({
+        $url_path: obj.$url_path
+      });
+    }
+  }
+  if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
+    sa.getLocation();
+  }
+  _.setShareInfo(option, obj);
+  var utms = _.setUtm(option, obj);
+  _.setLatestChannel(utms.pre2);
+  _.setSfSource(option, obj);
+  sa.registerApp({
+    $latest_scene: obj.$scene
+  });
+  obj.$url_query = _.setQuery(option.query);
+  sa.track('$MPShow', obj);
+}
+
+sa.appHide = function(prop) {
+  var current_time = (new Date()).getTime();
+  var obj = {};
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  }
+  obj.$url_path = _.getCurrentPath();
+  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
+    obj.event_duration = (current_time - mpshow_time) / 1000;
+  }
+  sa.track('$MPHide', obj);
+  sa.sendStrategy.onAppHide();
+}
+
+
+sa.pageShow = function(prop) {
+  var obj = {};
+  var router = _.getCurrentPath();
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  }
+  var currentPage = {};
+  try {
+    var pages = getCurrentPages();
+    currentPage = pages[pages.length - 1];
+  } catch (error) {
+    logger.info(error)
+  }
+  if (sa.para.preset_properties.url_path === true) {
+    sa.registerApp({
+      $url_path: router
+    });
+  }
+  obj.$referrer = sa_referrer;
+  obj.$url_path = router;
+  sa.status.last_referrer = sa_referrer;
+  obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
+  obj = _.extend(obj, _.getUtmFromPage());
+  _.setPageSfSource(obj);
+  sa.track('$MPViewScreen', obj)
+  sa_referrer = router;
+  sa.status.referrer = router;
+}
 
 
 
