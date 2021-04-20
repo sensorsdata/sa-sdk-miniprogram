@@ -6,6 +6,7 @@ declare namespace sensors {
   function identify(id: string, isSave?: boolean): void;
   function login(id: string): void;
   function logout(isChangeId?: boolean): void;
+  function setOpenid(id: string, isCover?: boolean): void;
 
   function setOnceProfile(prop: object): void;
   function setProfile(prop: object): void;

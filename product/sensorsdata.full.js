@@ -145,7 +145,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.7',
+  LIB_VERSION = '1.14.8',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1844,7 +1844,7 @@ _.setQuery = function(params, isEncode) {
   if (params && _.isObject(params) && !_.isEmptyObject(params)) {
     var arr = [];
     _.each(params, function(value, key) {
-      if (!(key === 'q' && _.isString(value) && value.indexOf('http') === 0) && key !== 'scene') {
+      if (!(key === 'q' && _.isString(value) && value.indexOf('http') === 0)) {
         if (isEncode) {
           arr.push(key + '=' + value);
         } else {
@@ -2045,7 +2045,6 @@ sa.autoTrackCustom = {
     sa.registerApp({
       $latest_scene: prop.$scene
     });
-
     prop.$url_query = _.setQuery(para.query);
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
