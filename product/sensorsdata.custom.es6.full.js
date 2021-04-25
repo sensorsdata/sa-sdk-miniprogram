@@ -72,9 +72,7 @@ logger.info = function() {
 };
 
 sa.setPara = function(para) {
-
   sa.para = _.extend2Lev(sa.para, para);
-
   var channel = [];
   if (_.isArray(sa.para.source_channel)) {
     var len = sa.para.source_channel.length;
@@ -145,7 +143,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.8',
+  LIB_VERSION = '1.14.9',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -575,6 +573,31 @@ _.base64Encode = function(data) {
   }
 
   return enc;
+};
+
+_.rot13obfs = function(str, key) {
+  str = String(str);
+  key = typeof key === 'number' ? key : 13;
+  var n = 126;
+
+  var chars = str.split('');
+
+  for (var i = 0, len = chars.length; i < len; i++) {
+    var c = chars[i].charCodeAt(0);
+
+    if (c < n) {
+      chars[i] = String.fromCharCode((chars[i].charCodeAt(0) + key) % n);
+    }
+  }
+
+  return chars.join('');
+};
+
+_.rot13defs = function(str) {
+  var key = 13,
+    n = 126,
+    str = String(str);
+  return _.rot13obfs(str, n - key);
 };
 
 _.getCurrentPath = function() {
@@ -1284,15 +1307,38 @@ sa.store = {
   change: function(name, value) {
     this._state['_' + name] = value;
   },
+  encryptStorage: function() {
+    let copyState = this.getStorage();
+    const flag = 'data:enc;';
+    if (_.isObject(copyState)) {
+      copyState = flag + _.rot13obfs(JSON.stringify(copyState));
+    } else if (_.isString(copyState)) {
+      if (copyState.indexOf(flag) === -1) {
+        copyState = flag + _.rot13obfs(copyState);
+      }
+    }
+    sa._.setStorageSync("sensorsdata2015_wechat", copyState);
+  },
   save: function() {
     var copyState = JSON.parse(JSON.stringify(this._state));
     delete copyState._first_id;
     delete copyState._distinct_id;
+    if (sa.para.encrypt_storage) {
+      const flag = 'data:enc;';
+      copyState = flag + _.rot13obfs(JSON.stringify(copyState));
+    }
     sa._.setStorageSync("sensorsdata2015_wechat", copyState);
   },
   init: function() {
     var info = this.getStorage();
+    const flag = 'data:enc;';
     if (info) {
+      if (_.isString(info)) {
+        if (info.indexOf(flag) !== -1) {
+          info = info.substring(flag.length);
+          info = JSON.parse(_.rot13defs(info));
+        }
+      }
       this.toState(info);
     } else {
       is_first_launch = true;
@@ -1585,6 +1631,9 @@ sa.init = function(obj) {
   }
   this.hasInit = true;
   sa.setPara(obj);
+  if (sa.para.encrypt_storage) {
+    this.store.encryptStorage();
+  }
   if (sa.para.batch_send) {
     wx.getStorage({
       key: 'sensors_mp_prepare_data',
@@ -1920,7 +1969,6 @@ sa.autoTrackCustom = {
     }
     _.setShareInfo(para, prop);
     var utms = _.setUtm(para, prop);
-
     if (is_first_launch) {
       prop.$is_first_time = true;
       if (!_.isEmptyObject(utms.pre1)) {
