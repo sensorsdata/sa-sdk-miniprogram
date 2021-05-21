@@ -143,7 +143,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.9',
+  LIB_VERSION = '1.14.10',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -941,19 +941,23 @@ try {
   logger.info(err);
 }
 
-_.getPageTitle = function(e) {
+_.getPageTitle = function(route) {
+  if (route === '未取到' || !route) {
+    return false;
+  }
   var title = '';
-  var route = e.route;
   try {
     if (__wxConfig) {
       var wxConfig = __wxConfig;
       var currentPageConfig = wxConfig.page[route] || wxConfig.page[route + '.html'];
-      var globalConfigTitle = {
-        titleVal: wxConfig.global.window.navigationBarTitleText
-      };
-      var pageConfigTitle = {
-        titleVal: currentPageConfig.window.navigationBarTitleText
-      };
+      var globalConfigTitle = {},
+        pageConfigTitle = {};
+      if (wxConfig.global && wxConfig.global.window && wxConfig.global.window.navigationBarTitleText) {
+        globalConfigTitle.titleVal = wxConfig.global.window.navigationBarTitleText;
+      }
+      if (currentPageConfig && currentPageConfig.window && currentPageConfig.window.navigationBarTitleText) {
+        pageConfigTitle.titleVal = currentPageConfig.window.navigationBarTitleText
+      }
       _.each(globalTitle, function(v, k) {
         if (k === route) {
           return title = v;
@@ -1036,6 +1040,13 @@ _.compareSDKVersion = function(v1, v2) {
   return 0;
 };
 
+_.setUpperCase = function(value) {
+  if (_.isString(value)) {
+    return value.toLocaleUpperCase()
+  }
+  return value
+}
+
 _.info = {
   currentProps: {},
   properties: {
@@ -1049,7 +1060,7 @@ _.info = {
     function getNetwork() {
       wx.getNetworkType({
         "success": function(t) {
-          e.$network_type = t["networkType"]
+          e.$network_type = _.setUpperCase(t["networkType"])
         },
         "complete": getSystemInfo
       })
@@ -1069,6 +1080,7 @@ _.info = {
     function getSystemInfo() {
       wx.getSystemInfo({
         "success": function(t) {
+          e.$brand = _.setUpperCase(t["brand"]);
           e.$manufacturer = t["brand"];
           e.$model = t["model"];
           e.$screen_width = Number(t["screenWidth"]);
@@ -1564,7 +1576,8 @@ sa.getLocation = function() {
           success: function(res) {
             sa.registerApp({
               $latitude: res.latitude * Math.pow(10, 6),
-              $longitude: res.longitude * Math.pow(10, 6)
+              $longitude: res.longitude * Math.pow(10, 6),
+              $geo_coordinate_system: _.setUpperCase(sa.para.preset_properties.location.type)
             })
           },
           fail: function(err) {
@@ -2128,7 +2141,7 @@ sa.autoTrackCustom = {
   pageShow: function() {
     var prop = {};
     var router = _.getCurrentPath();
-    var title = _.getPageTitle(this);
+    var title = _.getPageTitle(router);
     prop.$referrer = sa_referrer;
     prop.$url_path = router;
     sa.status.last_referrer = sa_referrer;
@@ -2365,6 +2378,7 @@ sa.appHide = function(prop) {
 sa.pageShow = function(prop) {
   var obj = {};
   var router = _.getCurrentPath();
+  var title = _.getPageTitle(router);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
@@ -2379,6 +2393,9 @@ sa.pageShow = function(prop) {
     sa.registerApp({
       $url_path: router
     });
+  }
+  if (title) {
+    obj.$title = title;
   }
   obj.$referrer = sa_referrer;
   obj.$url_path = router;
