@@ -29,7 +29,9 @@ sa.para = {
     utm: false
   },
 
-  preset_properties: {}
+  preset_properties: {},
+
+  batch_send: true
 };
 
 var mpHook = {
@@ -132,6 +134,9 @@ sa.setPara = function(para) {
   sa.para.preset_properties = _.isObject(sa.para.preset_properties) ? sa.para.preset_properties : {};
 };
 
+sa.getServerUrl = function() {
+  return sa.para.server_url;
+};
 
 sa.status = {};
 
@@ -143,7 +148,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.10',
+  LIB_VERSION = '1.14.11',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -166,7 +171,6 @@ var wxSDKVersion = '';
 sa.lib_version = LIB_VERSION;
 
 var globalTitle = {};
-
 
 (function() {
   var nativeBind = FuncProto.bind,
@@ -1320,8 +1324,8 @@ sa.store = {
     this._state['_' + name] = value;
   },
   encryptStorage: function() {
-    let copyState = this.getStorage();
-    const flag = 'data:enc;';
+    var copyState = this.getStorage();
+    var flag = 'data:enc;';
     if (_.isObject(copyState)) {
       copyState = flag + _.rot13obfs(JSON.stringify(copyState));
     } else if (_.isString(copyState)) {
@@ -1336,14 +1340,14 @@ sa.store = {
     delete copyState._first_id;
     delete copyState._distinct_id;
     if (sa.para.encrypt_storage) {
-      const flag = 'data:enc;';
+      var flag = 'data:enc;';
       copyState = flag + _.rot13obfs(JSON.stringify(copyState));
     }
     sa._.setStorageSync("sensorsdata2015_wechat", copyState);
   },
   init: function() {
     var info = this.getStorage();
-    const flag = 'data:enc;';
+    var flag = 'data:enc;';
     if (info) {
       if (_.isString(info)) {
         if (info.indexOf(flag) !== -1) {
