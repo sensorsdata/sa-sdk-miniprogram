@@ -30,7 +30,9 @@ sa.para = {
   },
 
   preset_properties: {},
-
+  preset_events: {
+    moments_page: false,
+  },
   batch_send: true
 };
 
@@ -148,7 +150,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.11',
+  LIB_VERSION = '1.14.12',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -577,6 +579,80 @@ _.base64Encode = function(data) {
   }
 
   return enc;
+};
+
+_.urlSafeBase64 = (function() {
+  var ENC = {
+    '+': '-',
+    '/': '_',
+    '=': '.'
+  };
+  var DEC = {
+    '-': '+',
+    _: '/',
+    '.': '='
+  };
+
+  var encode = function(base64) {
+    return base64.replace(/[+/=]/g, function(m) {
+      return ENC[m];
+    });
+  };
+
+  var decode = function(safe) {
+    return safe.replace(/[-_.]/g, function(m) {
+      return DEC[m];
+    });
+  };
+
+  var trim = function(string) {
+    return string.replace(/[.=]{1,2}$/, '');
+  };
+
+  var isBase64 = function(string) {
+    return /^[A-Za-z0-9+/]*[=]{0,2}$/.test(string);
+  };
+
+  var isUrlSafeBase64 = function(string) {
+    return /^[A-Za-z0-9_-]*[.]{0,2}$/.test(string);
+  };
+
+  return {
+    encode: encode,
+    decode: decode,
+    trim: trim,
+    isBase64: isBase64,
+    isUrlSafeBase64: isUrlSafeBase64
+  };
+})();
+
+_.btoa = function(string) {
+  var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  string = String(string)
+  var bitmap,
+    a,
+    b,
+    c,
+    result = '',
+    i = 0,
+    rest = string.length % 3;
+
+  for (; i < string.length;) {
+    if ((a = string.charCodeAt(i++)) > 255 || (b = string.charCodeAt(i++)) > 255 || (c = string.charCodeAt(i++)) > 255) {
+      logger.info("Failed to execute 'btoa' : The string to be encoded contains characters outside of the Latin1 range.");
+    };
+    bitmap = (a << 16) | (b << 8) | c;
+    result += b64.charAt((bitmap >> 18) & 63) + b64.charAt((bitmap >> 12) & 63) + b64.charAt((bitmap >> 6) & 63) + b64.charAt(bitmap & 63);
+  }
+
+  return rest ? result.slice(0, rest - 3) + '==='.substring(rest) : result;
+}
+
+
+_.urlBase64Encode = function(data) {
+  return _.btoa(encodeURIComponent(data).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+    return String.fromCharCode('0x' + p1);
+  }));
 };
 
 _.rot13obfs = function(str, key) {
@@ -1179,9 +1255,9 @@ sa.usePlugin = function(plugin, para) {
 
 
 sa.prepareData = function(p, callback) {
-  if (current_scene && current_scene === 1154) {
+  if (current_scene && current_scene === 1154 && !sa.para.preset_events.moments_page) {
     return false;
-  }
+  };
 
   var data = {
     distinct_id: this.store.getDistinctId(),
@@ -1893,6 +1969,64 @@ sa.initWithOpenid = function(options, callback) {
     sa.init(options);
   });
 };
+
+
+
+sa.setWebViewUrl = function(url, after_hash) {
+  if (!_.isString(url) || url === '') {
+    logger.info('error:请传入正确的 URL 格式');
+    return false;
+  }
+
+  url = decodeURIComponent(url);
+  var reg = /([^?#]+)(\?[^#]*)?(#.*)?/,
+    arr = reg.exec(url);
+
+  var host = arr[1] || '',
+    search = arr[2] || '',
+    hash = arr[3] || '',
+    nurl = '';
+  var distinct_id = sa.store.getDistinctId() || "",
+    first_id = sa.store.getFirstId() || "",
+    name = '_sasdk',
+    idIndex;
+
+  if (_.urlSafeBase64 && _.urlSafeBase64.encode) {
+    distinct_id = distinct_id ? _.urlSafeBase64.trim(_.urlSafeBase64.encode(_.urlBase64Encode(distinct_id))) : '';
+  } else if (this._.rot13obfs) {
+    distinct_id = distinct_id ? _.rot13obfs(distinct_id) : '';
+  }
+  distinct_id = encodeURIComponent(distinct_id);
+  var value = first_id ? 'f' + distinct_id : 'd' + distinct_id;
+
+  if (after_hash) {
+    idIndex = hash.indexOf('_sasdk');
+    var queryIndex = hash.indexOf('?');
+    if (queryIndex > -1) {
+      if (idIndex > -1) {
+        nurl = host + search + '#' + hash.substring(1, idIndex) + '_sasdk=' + value;
+      } else {
+        nurl = host + search + '#' + hash.substring(1) + '&_sasdk=' + value;
+      }
+    } else {
+      nurl = host + search + '#' + hash.substring(1) + '?_sasdk=' + value;
+    }
+  } else {
+    idIndex = search.indexOf('_sasdk');
+    var hasQuery = /^\?(\w)+/.test(search);
+    if (hasQuery) {
+      if (idIndex > -1) {
+        nurl = host + '?' + search.substring(1, idIndex) + '_sasdk=' + value + hash;
+      } else {
+        nurl = host + '?' + search.substring(1) + '&_sasdk=' + value + hash;
+      }
+    } else {
+      nurl = host + '?' + search.substring(1) + '_sasdk=' + value + hash;
+    }
+  }
+
+  return nurl;
+}
 
 _.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister'], function(method) {
   var temp = sa[method];
