@@ -1,0 +1,48 @@
+<style lang="less">
+
+</style>
+
+<script>
+import sensors from 'sa-sdk-miniprogram';
+import wepy from '@wepy/core';
+import vuex from '@wepy/x';
+
+wepy.use(vuex);
+
+// SDK 初始化配置
+sensors.setPara({
+	name: 'sensors',
+	server_url: 'https://jssdkdata.debugbox.sensorsdata.cn/sa?project=beiyong3',
+	autoTrack: {
+		mpClick: true
+	},
+})
+sensors.init();
+
+wepy.app({
+  hooks: {
+  },
+  globalData: {
+    userInfo: null
+  },
+
+  onLaunch() {
+  },
+
+  methods: {
+  }
+});
+</script>
+<config>
+{
+    pages: [
+      'pages/index'
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#fff',
+      navigationBarTitleText: 'WeChat',
+      navigationBarTextStyle: 'black'
+    }
+}
+</config>

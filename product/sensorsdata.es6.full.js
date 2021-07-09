@@ -29,7 +29,9 @@ sa.para = {
     utm: false
   },
 
-  preset_properties: {},
+  preset_properties: {
+    url_path: true
+  },
   preset_events: {
     moments_page: false,
   },
@@ -44,6 +46,9 @@ var mpHook = {
   "onPullDownRefresh": 1,
   "onReachBottom": 1,
   "onShareAppMessage": 1,
+  "onShareTimeline": 1,
+  "onPullDownRefresh": 1,
+  "onReachBottom": 1,
   "onPageScroll": 1,
   "onResize": 1,
   "onTabItemTap": 1,
@@ -150,7 +155,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.12',
+  LIB_VERSION = '1.14.13',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2104,20 +2109,10 @@ function mp_proxy(option, method, identifier) {
 
 function click_proxy(option, method) {
   var oldFunc = option[method];
-
   option[method] = function() {
     var res = oldFunc.apply(this, arguments);
-
     var prop = {},
       type = '';
-
-    if (
-      sa.para.preset_events &&
-      sa.para.preset_events.collect_element &&
-      sa.para.preset_events.collect_element(arguments[0])
-    ) {
-      return res;
-    };
 
     if (_.isObject(arguments[0])) {
       var current_target = arguments[0].currentTarget || {};
@@ -2141,6 +2136,13 @@ function click_proxy(option, method) {
     }
 
     if (type && _.isClick(type)) {
+      if (
+        sa.para.preset_events &&
+        sa.para.preset_events.collect_element &&
+        !sa.para.preset_events.collect_element(arguments[0])
+      ) {
+        return res;
+      };
       prop['$url_path'] = _.getCurrentPath();
       sa.track('$MPClick', prop);
     }
@@ -2544,28 +2546,28 @@ sa.pageShow = function(prop) {
   var obj = {};
   var router = _.getCurrentPath();
   var title = _.getPageTitle(router);
-  if (_.isObject(prop)) {
-    obj = _.extend(obj, prop);
-  }
   var currentPage = {};
   try {
     var pages = getCurrentPages();
     currentPage = pages[pages.length - 1];
   } catch (error) {
     logger.info(error)
-  }
+  };
   if (sa.para.preset_properties.url_path === true) {
     sa.registerApp({
       $url_path: router
     });
-  }
+  };
   if (title) {
     obj.$title = title;
-  }
+  };
   obj.$referrer = sa_referrer;
   obj.$url_path = router;
   sa.status.last_referrer = sa_referrer;
   obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  };
   obj = _.extend(obj, _.getUtmFromPage());
   _.setPageSfSource(obj);
   sa.track('$MPViewScreen', obj)
