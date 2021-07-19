@@ -34,6 +34,7 @@ sa.para = {
   },
   preset_events: {
     moments_page: false,
+    defer_track: false
   },
   batch_send: true
 };
@@ -155,7 +156,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.13',
+  LIB_VERSION = '1.14.14',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1975,8 +1976,6 @@ sa.initWithOpenid = function(options, callback) {
   });
 };
 
-
-
 sa.setWebViewUrl = function(url, after_hash) {
   if (!_.isString(url) || url === '') {
     logger.info('error:请传入正确的 URL 格式');
@@ -1993,7 +1992,6 @@ sa.setWebViewUrl = function(url, after_hash) {
     nurl = '';
   var distinct_id = sa.store.getDistinctId() || "",
     first_id = sa.store.getFirstId() || "",
-    name = '_sasdk',
     idIndex;
 
   if (_.urlSafeBase64 && _.urlSafeBase64.encode) {
@@ -2238,9 +2236,6 @@ sa.quick = function() {
 };
 sa.appLaunch = function(option, prop) {
   var obj = {};
-  if (_.isObject(prop)) {
-    obj = _.extend(obj, prop)
-  }
   if (option && option.scene) {
     current_scene = option.scene;
     obj.$scene = _.getMPScene(option.scene);
@@ -2278,13 +2273,13 @@ sa.appLaunch = function(option, prop) {
 
   obj.$url_query = _.setQuery(option.query);
 
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  }
   sa.track('$MPLaunch', obj);
 }
 sa.appShow = function(option, prop) {
   var obj = {};
-  if (_.isObject(prop)) {
-    obj = _.extend(obj, prop)
-  }
   mpshow_time = (new Date()).getTime();
   if (option && option.scene) {
     current_scene = option.scene;
@@ -2315,18 +2310,21 @@ sa.appShow = function(option, prop) {
     $latest_scene: obj.$scene
   });
   obj.$url_query = _.setQuery(option.query);
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  }
   sa.track('$MPShow', obj);
 }
 
 sa.appHide = function(prop) {
   var current_time = (new Date()).getTime();
   var obj = {};
-  if (_.isObject(prop)) {
-    obj = _.extend(obj, prop);
-  }
   obj.$url_path = _.getCurrentPath();
   if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
     obj.event_duration = (current_time - mpshow_time) / 1000;
+  }
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
   }
   sa.track('$MPHide', obj);
   sa.sendStrategy.onAppHide();
@@ -2356,12 +2354,12 @@ sa.pageShow = function(prop) {
   obj.$url_path = router;
   sa.status.last_referrer = sa_referrer;
   obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
-  if (_.isObject(prop)) {
-    obj = _.extend(obj, prop);
-  };
   obj = _.extend(obj, _.getUtmFromPage());
   _.setPageSfSource(obj);
-  sa.track('$MPViewScreen', obj)
+  if (_.isObject(prop)) {
+    obj = _.extend(obj, prop);
+  }
+  sa.track('$MPViewScreen', obj);
   sa_referrer = router;
   sa.status.referrer = router;
 }
