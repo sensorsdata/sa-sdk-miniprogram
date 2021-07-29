@@ -156,7 +156,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.14',
+  LIB_VERSION = '1.14.15',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1834,9 +1834,9 @@ sa.sendStrategy = {
     }
     if (sa.para.batch_send) {
       this.dataHasChange = true;
-      if (sa.store.mem.getLength() >= 300) {
+      if (sa.store.mem.getLength() >= 500) {
         logger.info('数据量存储过大，有异常');
-        return false;
+        sa.store.mem.mdata.shift();
       }
       sa.store.mem.add(data);
       if (sa.store.mem.getLength() >= sa.para.batch_send.max_length) {
@@ -1888,8 +1888,15 @@ sa.sendStrategy = {
   },
   batchSend: function() {
     if (this.dataHasSend) {
-      var data = sa.store.mem.mdata;
-      var len = data.length;
+      var data,
+        len,
+        mdata = sa.store.mem.mdata;
+      if (mdata.length >= 100) {
+        data = mdata.slice(0, 100);
+      } else {
+        data = mdata;
+      }
+      len = data.length;
       if (len > 0) {
         this.dataHasSend = false;
         this.wxrequest({

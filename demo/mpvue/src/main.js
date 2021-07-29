@@ -5,7 +5,7 @@ import App from './App'
 
 sensors.setPara({
 	name: 'sensors',
-	server_url: 'https://jssdkdata.debugbox.sensorsdata.cn/sa?project=beiyong3',
+	server_url: '您的数据接收地址',
 	autoTrack: {
 		mpClick: true
 	},

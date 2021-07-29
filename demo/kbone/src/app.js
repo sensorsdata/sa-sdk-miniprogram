@@ -2,7 +2,7 @@
 import sensors from 'sa-sdk-miniprogram';
 sensors.setPara({
 	name: 'sensors',
-	server_url: 'https://jssdkdata.debugbox.sensorsdata.cn/sa?project=beiyong3',
+	server_url: '您的数据接收地址',
 	// 全埋点控制开关
 	autoTrack: {
     appLaunch: true, // 默认为 true，false 则关闭 $MPLaunch 事件采集

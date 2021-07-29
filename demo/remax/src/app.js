@@ -3,7 +3,7 @@ import './app.css';
 import sensors from './utils/sensorsdata.min.es6'
 sensors.setPara({
 	name: 'sensors',
-	server_url: 'https://jssdkdata.debugbox.sensorsdata.cn/sa?project=beiyong3',
+	server_url: '您的数据接收地址',
 	// 全埋点控制开关
 	autoTrack: {
 		mpClick: true
