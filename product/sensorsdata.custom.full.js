@@ -156,7 +156,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.15',
+  LIB_VERSION = '1.14.16',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1035,7 +1035,8 @@ _.getPageTitle = function(route) {
   try {
     if (__wxConfig) {
       var wxConfig = __wxConfig;
-      var currentPageConfig = wxConfig.page[route] || wxConfig.page[route + '.html'];
+      var page_list = __wxConfig.page || {};
+      var currentPageConfig = page_list[route] || page_list[route + '.html'];
       var globalConfigTitle = {},
         pageConfigTitle = {};
       if (wxConfig.global && wxConfig.global.window && wxConfig.global.window.navigationBarTitleText) {
@@ -1044,6 +1045,14 @@ _.getPageTitle = function(route) {
       if (currentPageConfig && currentPageConfig.window && currentPageConfig.window.navigationBarTitleText) {
         pageConfigTitle.titleVal = currentPageConfig.window.navigationBarTitleText
       }
+
+      if (!pageConfigTitle.titleVal && __wxAppCode__) {
+        var page_config = __wxAppCode__[route + '.json'];
+        if (page_config && page_config['navigationBarTitleText']) {
+          pageConfigTitle.titleVal = page_config['navigationBarTitleText'];
+        }
+      }
+
       _.each(globalTitle, function(v, k) {
         if (k === route) {
           return title = v;
