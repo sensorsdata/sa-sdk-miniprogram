@@ -156,16 +156,12 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.16',
+  LIB_VERSION = '1.14.17',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
 var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', '$latest_sa_utm'];
 var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth', '$latest_share_method'];
-
-var sa_referrer = '直接打开';
-
-sa.status.referrer = '直接打开';
 
 var mpshow_time = null;
 
@@ -179,6 +175,7 @@ var wxSDKVersion = '';
 sa.lib_version = LIB_VERSION;
 
 var globalTitle = {};
+var page_route_map = [];
 
 (function() {
   var nativeBind = FuncProto.bind,
@@ -686,11 +683,22 @@ _.rot13defs = function(str) {
   return _.rot13obfs(str, n - key);
 };
 
+_.getCurrentPage = function() {
+  var obj = {}
+  try {
+    var pages = getCurrentPages();
+    obj = pages[pages.length - 1]
+  } catch (error) {
+    logger.info(error);
+  }
+
+  return obj
+};
+
 _.getCurrentPath = function() {
   var url = '未取到';
   try {
-    var pages = getCurrentPages();
-    var currentPage = pages[pages.length - 1];
+    var currentPage = _.getCurrentPage()
     url = currentPage.route;
   } catch (e) {
     logger.info(e);
@@ -1025,7 +1033,79 @@ try {
   })
 } catch (err) {
   logger.info(err);
+};
+
+_.setRefPage = function() {
+  var _refInfo = {
+    route: '',
+    title: ''
+  };
+
+  try {
+
+    var pages = getCurrentPages();
+    if (pages && pages.length === 1) {
+
+      var current_path = pages[pages.length - 1].route;
+      var current_title = _.getPageTitle(current_path);
+      var currentPageInfo = {
+        title: current_title,
+        route: current_path
+      };
+
+      if (page_route_map.length >= 2) {
+        if (page_route_map[page_route_map.length - 1].route !== currentPageInfo.route) {
+          page_route_map.push(currentPageInfo);
+          page_route_map.shift();
+        };
+      } else {
+        page_route_map.push(currentPageInfo);
+      }
+    }
+
+  } catch (error) {
+    logger.info(error);
+  }
 }
+
+_.getRefPage = function() {
+  var _refInfo = {
+    route: '直接打开',
+    title: ''
+  };
+
+  try {
+    var pages = getCurrentPages();
+    if (pages && pages.length >= 2) {
+      _refInfo.route = pages[pages.length - 2].route;
+      _refInfo.title = _.getPageTitle(_refInfo.route);
+    } else if (pages && pages.length >= 1) {
+      if (page_route_map.length >= 2) {
+        var refPages = page_route_map;
+        _refInfo.route = refPages[refPages.length - 2].route;
+        _refInfo.title = _.getPageTitle(_refInfo.route);
+      };
+
+      if (_refInfo.route === pages[pages.length - 1].route) {
+        _refInfo = {
+          title: '',
+          route: '直接打开'
+        };
+      };
+    }
+  } catch (error) {
+    logger.info(error);
+  }
+  return _refInfo;
+};
+
+_.setPageRefData = function(prop) {
+  var refPage = _.getRefPage();
+  if (_.isObject(prop)) {
+    prop.$referrer = refPage.route;
+    prop.$referrer_title = refPage.title;
+  };
+};
 
 _.getPageTitle = function(route) {
   if (route === '未取到' || !route) {
@@ -1172,6 +1252,7 @@ _.info = {
       }
     }
 
+
     function getSystemInfo() {
       wx.getSystemInfo({
         "success": function(t) {
@@ -1296,13 +1377,22 @@ sa.prepareData = function(p, callback) {
 
     data.properties.$is_first_day = _.getIsFirstDay();
 
-  }
+    var refPage = _.getRefPage();
+    if (!data.properties.hasOwnProperty('$referrer')) {
+      data.properties.$referrer = refPage.route;
+    };
+
+    if (!data.properties.hasOwnProperty('$referrer_title')) {
+      data.properties.$referrer_title = refPage.title;
+    };
+
+  };
   if (data.properties.$time && _.isDate(data.properties.$time)) {
     data.time = data.properties.$time * 1;
     delete data.properties.$time;
   } else {
     data.time = (new Date()) * 1;
-  }
+  };
 
   _.parseSuperProperties(data.properties);
 
@@ -2155,12 +2245,11 @@ sa.autoTrackCustom = {
     });
 
     prop.$url_query = _.setQuery(para.query);
-
+    _.setPageRefData(prop);
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
       sa.track('$MPLaunch', prop);
     } else if (sa.para.autoTrack && sa.para.autoTrack.appLaunch) {
-
       sa.autoTrackCustom.trackCustom('appLaunch', prop, '$MPLaunch');
     }
   },
@@ -2197,6 +2286,7 @@ sa.autoTrackCustom = {
 
     _.setLatestChannel(utms.pre2);
     _.setSfSource(para, prop);
+    _.setPageRefData(prop);
     sa.registerApp({
       $latest_scene: prop.$scene
     });
@@ -2214,7 +2304,8 @@ sa.autoTrackCustom = {
     prop.$url_path = _.getCurrentPath();
     if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
       prop.event_duration = (current_time - mpshow_time) / 1000;
-    }
+    };
+    _.setPageRefData(prop);
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
       sa.track('$MPHide', prop);
@@ -2288,7 +2379,7 @@ sa.appLaunch = function(option, prop) {
   });
 
   obj.$url_query = _.setQuery(option.query);
-
+  _.setPageRefData(prop);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
@@ -2326,6 +2417,7 @@ sa.appShow = function(option, prop) {
     $latest_scene: obj.$scene
   });
   obj.$url_query = _.setQuery(option.query);
+  _.setPageRefData(obj);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
@@ -2338,7 +2430,8 @@ sa.appHide = function(prop) {
   obj.$url_path = _.getCurrentPath();
   if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
     obj.event_duration = (current_time - mpshow_time) / 1000;
-  }
+  };
+  _.setPageRefData(obj);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
@@ -2366,18 +2459,15 @@ sa.pageShow = function(prop) {
   if (title) {
     obj.$title = title;
   };
-  obj.$referrer = sa_referrer;
   obj.$url_path = router;
-  sa.status.last_referrer = sa_referrer;
   obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
   obj = _.extend(obj, _.getUtmFromPage());
   _.setPageSfSource(obj);
+  _.setPageRefData(obj);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPViewScreen', obj);
-  sa_referrer = router;
-  sa.status.referrer = router;
 }
 
 
