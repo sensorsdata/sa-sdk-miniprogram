@@ -36,7 +36,9 @@ sa.para = {
     moments_page: false,
     defer_track: false
   },
-  batch_send: true
+  batch_send: true,
+  storage_store_key: 'sensorsdata2015_wechat',
+  storage_prepare_data_key: 'sensors_mp_prepare_data'
 };
 
 var mpHook = {
@@ -156,7 +158,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.17',
+  LIB_VERSION = '1.14.18',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -198,9 +200,9 @@ var page_route_map = [];
         }
       }
     } else {
-      for (var key in obj) {
-        if (hasOwnProperty.call(obj, key)) {
-          if (iterator.call(context, obj[key], key, obj) === breaker) {
+      for (var item in obj) {
+        if (hasOwnProperty.call(obj, item)) {
+          if (iterator.call(context, obj[item], item, obj) === breaker) {
             return false;
           }
         }
@@ -322,8 +324,8 @@ _.isObject = function(obj) {
 
 _.isEmptyObject = function(obj) {
   if (_.isObject(obj)) {
-    for (var key in obj) {
-      if (hasOwnProperty.call(obj, key)) {
+    for (var item in obj) {
+      if (hasOwnProperty.call(obj, item)) {
         return false;
       }
     }
@@ -428,17 +430,17 @@ _.searchObjString = function(o) {
 
 _.parseSuperProperties = function(obj) {
   if (_.isObject(obj)) {
-    _.each(obj, function(value, key) {
+    _.each(obj, function(value, item) {
       if (_.isFunction(value)) {
         try {
-          obj[key] = value();
-          if (_.isFunction(obj[key])) {
-            logger.info("您的属性- " + key + ' 格式不满足要求，我们已经将其删除');
-            delete obj[key];
+          obj[item] = value();
+          if (_.isFunction(obj[item])) {
+            logger.info("您的属性- " + item + ' 格式不满足要求，我们已经将其删除');
+            delete obj[item];
           }
         } catch (e) {
-          delete obj[key];
-          logger.info("您的属性- " + key + ' 抛出了异常，我们已经将其删除');
+          delete obj[item];
+          logger.info("您的属性- " + item + ' 抛出了异常，我们已经将其删除');
         }
       }
     });
@@ -658,9 +660,9 @@ _.urlBase64Encode = function(data) {
   }));
 };
 
-_.rot13obfs = function(str, key) {
+_.rot13obfs = function(str, code_len) {
   str = String(str);
-  key = typeof key === 'number' ? key : 13;
+  code_len = typeof code_len === 'number' ? code_len : 13;
   var n = 126;
 
   var chars = str.split('');
@@ -669,7 +671,7 @@ _.rot13obfs = function(str, key) {
     var c = chars[i].charCodeAt(0);
 
     if (c < n) {
-      chars[i] = String.fromCharCode((chars[i].charCodeAt(0) + key) % n);
+      chars[i] = String.fromCharCode((chars[i].charCodeAt(0) + code_len) % n);
     }
   }
 
@@ -677,10 +679,10 @@ _.rot13obfs = function(str, key) {
 };
 
 _.rot13defs = function(str) {
-  var key = 13,
+  var code_len = 13,
     n = 126,
     str = String(str);
-  return _.rot13obfs(str, n - key);
+  return _.rot13obfs(str, n - code_len);
 };
 
 _.getCurrentPage = function() {
@@ -820,9 +822,9 @@ _.getObjFromQuery = function(str) {
   return obj;
 };
 
-_.setStorageSync = function(key, value) {
+_.setStorageSync = function(storage_key, value) {
   var fn = function() {
-    wx.setStorageSync(key, value);
+    wx.setStorageSync(storage_key, value);
   };
   try {
     fn();
@@ -836,13 +838,13 @@ _.setStorageSync = function(key, value) {
   }
 };
 
-_.getStorageSync = function(key) {
+_.getStorageSync = function(storage_key) {
   var store = '';
   try {
-    store = wx.getStorageSync(key);
+    store = wx.getStorageSync(storage_key);
   } catch (e) {
     try {
-      store = wx.getStorageSync(key);
+      store = wx.getStorageSync(storage_key);
     } catch (e2) {
       logger.info('getStorage fail');
     }
@@ -850,10 +852,10 @@ _.getStorageSync = function(key) {
   return store;
 };
 
-_.getMPScene = function(key) {
-  if (typeof key === "number" || (typeof key === "string" && key !== "")) {
-    key = 'wx-' + String(key);
-    return key;
+_.getMPScene = function(scene_value) {
+  if (typeof scene_value === "number" || (typeof scene_value === "string" && scene_value !== "")) {
+    scene_value = 'wx-' + String(scene_value);
+    return scene_value;
   } else {
     return "未取到值";
   }
@@ -1415,7 +1417,7 @@ sa.store = {
     if (this.storageInfo) {
       return this.storageInfo;
     } else {
-      this.storageInfo = sa._.getStorageSync("sensorsdata2015_wechat") || '';
+      this.storageInfo = sa._.getStorageSync(sa.para.storage_store_key) || '';
       return this.storageInfo;
     }
   },
@@ -1514,7 +1516,7 @@ sa.store = {
         copyState = flag + _.rot13obfs(copyState);
       }
     }
-    sa._.setStorageSync("sensorsdata2015_wechat", copyState);
+    sa._.setStorageSync(sa.para.storage_store_key, copyState);
   },
   save: function() {
     var copyState = JSON.parse(JSON.stringify(this._state));
@@ -1524,7 +1526,7 @@ sa.store = {
       var flag = 'data:enc;';
       copyState = flag + _.rot13obfs(JSON.stringify(copyState));
     }
-    sa._.setStorageSync("sensorsdata2015_wechat", copyState);
+    sa._.setStorageSync(sa.para.storage_store_key, copyState);
   },
   init: function() {
     var info = this.getStorage();
@@ -1574,13 +1576,13 @@ sa.appendProfile = function(p, c) {
   if (!_.isObject(p)) {
     return false;
   }
-  _.each(p, function(value, key) {
+  _.each(p, function(value, item) {
     if (_.isString(value)) {
-      p[key] = [value];
+      p[item] = [value];
     } else if (_.isArray(value)) {
 
     } else {
-      delete p[key];
+      delete p[item];
       logger.info('appendProfile属性的值必须是字符串或者数组');
     }
   });
@@ -1666,9 +1668,9 @@ sa.clearAllProps = function(arr) {
   var obj = sa.store.getProps();
   var props = {};
   if (_.isArray(arr)) {
-    _.each(obj, function(value, key) {
-      if (!_.include(arr, key)) {
-        props[key] = value;
+    _.each(obj, function(value, item) {
+      if (!_.include(arr, item)) {
+        props[item] = value;
       }
     });
     sa.store.setProps(props, true);
@@ -1677,9 +1679,9 @@ sa.clearAllProps = function(arr) {
 
 sa.clearAppRegister = function(arr) {
   if (_.isArray(arr)) {
-    _.each(_.info.currentProps, function(value, key) {
-      if (_.include(arr, key)) {
-        delete _.info.currentProps[key];
+    _.each(_.info.currentProps, function(value, item) {
+      if (_.include(arr, item)) {
+        delete _.info.currentProps[item];
       }
     });
   }
@@ -1834,7 +1836,7 @@ sa.init = function(obj) {
   }
   if (sa.para.batch_send) {
     wx.getStorage({
-      key: 'sensors_mp_prepare_data',
+      key: sa.para.storage_prepare_data_key,
       complete: function(res) {
         var queue = res.data && _.isArray(res.data) ? res.data : [];
         sa.store.mem.mdata = queue.concat(sa.store.mem.mdata);
@@ -1850,9 +1852,9 @@ sa.init = function(obj) {
 sa.getPresetProperties = function() {
   if (_.info && _.info.properties && _.info.properties.$lib) {
     var builtinProps = {};
-    _.each(_.info.currentProps, function(value, key) {
-      if (key.indexOf('$') === 0) {
-        builtinProps[key] = value;
+    _.each(_.info.currentProps, function(value, item) {
+      if (item.indexOf('$') === 0) {
+        builtinProps[item] = value;
       }
     });
     var obj = _.extend(builtinProps, {
@@ -2031,7 +2033,7 @@ sa.sendStrategy = {
 
       this.dataHasChange = false;
       if (this.syncStorage) {
-        sa._.setStorageSync('sensors_mp_prepare_data', sa.store.mem.mdata);
+        sa._.setStorageSync(sa.para.storage_prepare_data_key, sa.store.mem.mdata);
       }
     }
   },
@@ -2152,12 +2154,12 @@ _.setQuery = function(params, isEncode) {
   var url_query = '';
   if (params && _.isObject(params) && !_.isEmptyObject(params)) {
     var arr = [];
-    _.each(params, function(value, key) {
-      if (!(key === 'q' && _.isString(value) && value.indexOf('http') === 0)) {
+    _.each(params, function(value, item) {
+      if (!(item === 'q' && _.isString(value) && value.indexOf('http') === 0)) {
         if (isEncode) {
-          arr.push(key + '=' + value);
+          arr.push(item + '=' + value);
         } else {
-          arr.push(key + '=' + _.decodeURIComponent(value));
+          arr.push(item + '=' + _.decodeURIComponent(value));
         }
       }
     });
