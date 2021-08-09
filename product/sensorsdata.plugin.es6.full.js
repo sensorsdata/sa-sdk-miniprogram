@@ -34,7 +34,8 @@ sa.para = {
   },
   preset_events: {
     moments_page: false,
-    defer_track: false
+    defer_track: false,
+    share_info_use_string: false
   },
   batch_send: true,
   storage_store_key: 'sensorsdata2015_wechat',
@@ -158,12 +159,13 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.18',
+  LIB_VERSION = '1.14.19',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
 var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', '$latest_sa_utm'];
 var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth', '$latest_share_method'];
+var share_info_key = ['sensors_share_d', 'sensors_share_p', 'sensors_share_i', 'sensors_share_m'];
 
 var mpshow_time = null;
 
@@ -861,25 +863,94 @@ _.getMPScene = function(scene_value) {
   }
 };
 
+_.objToParam = function(param, isEncode) {
+  if (Object.prototype.toString.call(param) !== '[object Object]') {
+    logger.info('请传入有效对象');
+    return '';
+  };
+  var queryParam = [];
+  for (var key in param) {
+    if (param.hasOwnProperty(key)) {
+      var value = param[key];
+      if (typeof value == 'undefined') {
+        queryParam.push(key + '=');
+      } else {
+        value = isEncode ? encodeURIComponent(value) : value;
+        queryParam.push(key + '=' + value);
+      }
+    }
+  };
+  return queryParam.join('&');
+};
+
+_.delObjectKey = function(obj) {
+  if (Object.prototype.toString.call(obj) !== '[object Object]') {
+    logger.info('请传入有效对象');
+    return;
+  };
+  for (let i = 0; i < share_info_key.length; i++) {
+    delete obj[share_info_key[i]]
+  }
+};
+
+_.shareInfoData = function(para) {
+  var shareData = {};
+  var share = {};
+  if (!sa.para.preset_events.share_info_use_string) {
+    if (para.query.sampshare) {
+      share = _.decodeURIComponent(para.query.sampshare);
+      if (_.isJSONString(share)) {
+        share = JSON.parse(share);
+      } else {
+        return {};
+      }
+    } else {
+      return {};
+    };
+
+    shareData = {
+      depth: share.d,
+      path: share.p,
+      id: share.i,
+      method: share.m
+    };
+  } else {
+    share = para.query;
+    for (var i = 0; i < share_info_key.length; i++) {
+      if (!share.hasOwnProperty(share_info_key[i])) {
+        return {};
+      }
+      share[share_info_key[i]] = _.decodeURIComponent(share[share_info_key[i]])
+    };
+
+    shareData = {
+      depth: Number(share.sensors_share_d),
+      path: share.sensors_share_p || '',
+      id: share.sensors_share_i || '',
+      method: share.sensors_share_m || ''
+    };
+  };
+
+  return shareData;
+}
+
 _.setShareInfo = function(para, prop) {
   var share = {};
   var obj = {};
   var current_id = sa.store.getDistinctId();
   var current_first_id = sa.store.getFirstId();
-  if (para && _.isObject(para.query) && para.query.sampshare) {
-    share = _.decodeURIComponent(para.query.sampshare);
-    if (_.isJSONString(share)) {
-      share = JSON.parse(share);
+  if (para && _.isObject(para.query)) {
+    share = _.shareInfoData(para);
+    if (!_.isEmptyObject(share)) {
+      var depth = share.depth,
+        path = share.path,
+        id = share.id,
+        method = share.method;
     } else {
-      return {};
+      return {}
     }
-  } else {
-    return {};
-  }
-  var depth = share.d;
-  var path = share.p;
-  var id = share.i;
-  var method = share.m;
+  };
+
   if (typeof id === 'string') {
     prop.$share_distinct_id = id;
     share_distinct_id = id;
@@ -919,12 +990,25 @@ _.setShareInfo = function(para, prop) {
 };
 
 _.getShareInfo = function() {
-  return JSON.stringify({
+  if (sa.para.preset_events.share_info_use_string) {
+    var param = {
+      sensors_share_i: sa.store.getDistinctId() || '取值异常',
+      sensors_share_p: _.getCurrentPath(),
+      sensors_share_d: query_share_depth,
+      sensors_share_m: share_method
+    };
+
+    return _.objToParam(param, true);
+  };
+
+  var share_info = JSON.stringify({
     i: sa.store.getDistinctId() || '取值异常',
     p: _.getCurrentPath(),
     d: query_share_depth,
     m: share_method
   });
+
+  return 'sampshare=' + encodeURIComponent(share_info)
 };
 
 _.detectOptionQuery = function(para) {
@@ -1376,7 +1460,6 @@ sa.prepareData = function(p, callback) {
   if (!p.type || p.type.slice(0, 7) !== 'profile') {
     data._track_id = Number(String(Math.random()).slice(2, 5) + String(Math.random()).slice(2, 4) + String(Date.now()).slice(-4));
     data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
-
     data.properties.$is_first_day = _.getIsFirstDay();
 
     var refPage = _.getRefPage();
@@ -2317,8 +2400,11 @@ sa.autoTrackCustom = {
     } else {
       prop.$scene = '未取到值';
     }
-    if (para && para.scene && para.scene === 1010 && para.query && para.query.sampshare) {
-      delete para.query.sampshare
+    if (para && para.scene && para.scene === 1010 && para.query) {
+      if (para.query.sampshare) {
+        delete para.query.sampshare
+      }
+      _.delObjectKey(para.query);
     }
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
@@ -2366,8 +2452,11 @@ sa.autoTrackCustom = {
       prop.$scene = '未取到值';
     }
 
-    if (para && para.scene && para.scene === 1010 && para.query && para.query.sampshare) {
-      delete para.query.sampshare
+    if (para && para.scene && para.scene === 1010 && para.query) {
+      if (para.query.sampshare) {
+        delete para.query.sampshare
+      };
+      _.delObjectKey(para.query)
     }
 
     if (para && para.path) {
@@ -2416,8 +2505,11 @@ sa.autoTrackCustom = {
     sa.sendStrategy.onAppHide();
   },
   pageLoad: function(para) {
-    if (current_scene && current_scene === 1010 && para && para.sampshare) {
-      delete para.sampshare;
+    if (current_scene && current_scene === 1010 && para) {
+      if (para.sampshare) {
+        delete para.sampshare;
+      };
+      _.delObjectKey(para);
     }
     if (para && _.isObject(para)) {
       this.sensors_mp_url_query = _.setQuery(para);
@@ -2488,8 +2580,10 @@ sa.autoTrackCustom = {
           }
         }
 
-        oldValue.path = oldValue.path + 'sampshare=' + encodeURIComponent(_.getShareInfo());
-      }
+        oldValue.path = oldValue.path + _.getShareInfo();
+
+      };
+
       return oldValue;
     }
   },
@@ -2523,9 +2617,8 @@ sa.autoTrackCustom = {
           }
         }
 
-        oldValue.query = oldValue.query + 'sampshare=' + encodeURIComponent(_.getShareInfo());
+        oldValue.query = oldValue.query + _.getShareInfo();
       }
-
       return oldValue;
     }
   },
@@ -2573,8 +2666,11 @@ sa.appLaunch = function(option, prop) {
   } else {
     obj.$scene = '未取到值';
   }
-  if (option && option.scene && option.scene === 1010 && option.query && option.query.sampshare) {
-    delete option.query.sampshare
+  if (option && option.scene && option.scene === 1010 && option.query) {
+    if (option.query.sampshare) {
+      delete option.query.sampshare
+    };
+    _.delObjectKey(option.query);
   }
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
@@ -2618,8 +2714,11 @@ sa.appShow = function(option, prop) {
   } else {
     obj.$scene = '未取到值';
   }
-  if (option && option.scene && option.scene === 1010 && option.query && option.query.sampshare) {
-    delete option.query.sampshare
+  if (option && option.scene && option.scene === 1010 && option.query) {
+    if (option.query.sampshare) {
+      delete option.query.sampshare
+    };
+    _.delObjectKey(option.query);
   }
 
   if (option && option.path) {
