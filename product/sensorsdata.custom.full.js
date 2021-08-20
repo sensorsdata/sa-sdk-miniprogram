@@ -19,7 +19,8 @@ sa.para = {
     pageShow: true,
     pageShare: true,
     mpClick: false,
-    mpFavorite: true
+    mpFavorite: true,
+    pageLeave: false
   },
   autotrack_exclude_page: {
     pageShow: [],
@@ -159,13 +160,14 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.19',
+  LIB_VERSION = '1.14.20',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
 var latest_source_channel = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', '$latest_sa_utm'];
 var latest_share_info = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth', '$latest_share_method'];
 var share_info_key = ['sensors_share_d', 'sensors_share_p', 'sensors_share_i', 'sensors_share_m'];
+var page_show_time = Date.now();
 
 var mpshow_time = null;
 
@@ -2268,6 +2270,28 @@ _.getUtmFromPage = function() {
   }
   return newObj;
 };
+
+_.sendPageLeave = function() {
+  var currentPage = {};
+  try {
+    var pages = getCurrentPages();
+    currentPage = pages[pages.length - 1];
+  } catch (error) {
+    logger.info(error)
+  };
+  var router = currentPage.route;
+  if (page_show_time >= 0 && router !== '') {
+    var prop = {};
+    var title = _.getPageTitle(router);
+    var page_stay_time = (Date.now() - page_show_time) / 1000;
+    prop.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
+    prop.$url_path = router;
+    prop.$title = title;
+    prop.event_duration = page_stay_time;
+    sa.track('$MPPageLeave', prop);
+    page_show_time = -1
+  }
+}
 
 
 
