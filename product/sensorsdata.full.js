@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = {};
 
 var sa = {};
@@ -23,7 +25,7 @@ sa.para = {
     pageLeave: false
   },
   autotrack_exclude_page: {
-    pageShow: [],
+    pageShow: []
   },
   is_persistent_save: {
     share: false,
@@ -44,21 +46,21 @@ sa.para = {
 };
 
 var mpHook = {
-  "data": 1,
-  "onLoad": 1,
-  "onShow": 1,
-  "onReady": 1,
-  "onPullDownRefresh": 1,
-  "onReachBottom": 1,
-  "onShareAppMessage": 1,
-  "onShareTimeline": 1,
-  "onPullDownRefresh": 1,
-  "onReachBottom": 1,
-  "onPageScroll": 1,
-  "onResize": 1,
-  "onTabItemTap": 1,
-  "onHide": 1,
-  "onUnload": 1
+  data: 1,
+  onLoad: 1,
+  onShow: 1,
+  onReady: 1,
+  onPullDownRefresh: 1,
+  onReachBottom: 1,
+  onShareAppMessage: 1,
+  onShareTimeline: 1,
+  onPullDownRefresh: 1,
+  onReachBottom: 1,
+  onPageScroll: 1,
+  onResize: 1,
+  onTabItemTap: 1,
+  onHide: 1,
+  onUnload: 1
 };
 
 var logger = typeof logger === 'object' ? logger : {};
@@ -116,7 +118,8 @@ sa.setPara = function(para) {
     max_length: 6
   };
 
-  if (para && para.datasend_timeout) {} else if (!!sa.para.batch_send) {
+  if (para && para.datasend_timeout);
+  else if (!!sa.para.batch_send) {
     sa.para.datasend_timeout = 10000;
   }
 
@@ -153,14 +156,12 @@ sa.getServerUrl = function() {
 sa.status = {};
 
 
-
 var ArrayProto = Array.prototype,
-  FuncProto = Function.prototype,
   ObjProto = Object.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.20',
+  LIB_VERSION = '1.14.21',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -184,21 +185,19 @@ var globalTitle = {};
 var page_route_map = [];
 
 (function() {
-  var nativeBind = FuncProto.bind,
-    nativeForEach = ArrayProto.forEach,
+  var nativeForEach = ArrayProto.forEach,
     nativeIndexOf = ArrayProto.indexOf,
     nativeIsArray = Array.isArray,
     breaker = {};
 
-  var each = _.each = function(obj, iterator, context) {
+  var each = (_.each = function(obj, iterator, context) {
     if (obj == null) {
       return false;
     }
     if (nativeForEach && obj.forEach === nativeForEach) {
       obj.forEach(iterator, context);
     } else if (obj.length === +obj.length) {
-      for (var i = 0,
-          l = obj.length; i < l; i++) {
+      for (var i = 0, l = obj.length; i < l; i++) {
         if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) {
           return false;
         }
@@ -212,7 +211,7 @@ var page_route_map = [];
         }
       }
     }
-  };
+  });
 
   _.logger = logger;
   _.extend = function(obj) {
@@ -242,9 +241,7 @@ var page_route_map = [];
   _.coverExtend = function(obj) {
     each(slice.call(arguments, 1), function(source) {
       for (var prop in source) {
-        if (source[prop] !==
-          void 0 && obj[prop] ===
-          void 0) {
+        if (source[prop] !== void 0 && obj[prop] === void 0) {
           obj[prop] = source[prop];
         }
       }
@@ -252,7 +249,8 @@ var page_route_map = [];
     return obj;
   };
 
-  _.isArray = nativeIsArray ||
+  _.isArray =
+    nativeIsArray ||
     function(obj) {
       return toString.call(obj) === '[object Array]';
     };
@@ -305,13 +303,12 @@ var page_route_map = [];
       return obj.indexOf(target) != -1;
     }
     each(obj, function(value) {
-      if (found || (found = (value === target))) {
+      if (found || (found = value === target)) {
         return breaker;
       }
     });
     return found;
   };
-
 })();
 
 _.trim = function(str) {
@@ -322,7 +319,7 @@ _.isObject = function(obj) {
   if (obj === undefined || obj === null) {
     return false;
   } else {
-    return (toString.call(obj) == '[object Object]');
+    return toString.call(obj) == '[object Object]';
   }
 };
 
@@ -339,8 +336,7 @@ _.isEmptyObject = function(obj) {
 };
 
 _.isUndefined = function(obj) {
-  return obj ===
-    void 0;
+  return obj === void 0;
 };
 
 _.isString = function(obj) {
@@ -356,7 +352,7 @@ _.isBoolean = function(obj) {
 };
 
 _.isNumber = function(obj) {
-  return (toString.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj)));
+  return toString.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj));
 };
 
 _.isJSONString = function(str) {
@@ -373,7 +369,7 @@ _.decodeURIComponent = function(val) {
     result = decodeURIComponent(val);
   } catch (e) {
     result = val;
-  };
+  }
   return result;
 };
 
@@ -439,12 +435,12 @@ _.parseSuperProperties = function(obj) {
         try {
           obj[item] = value();
           if (_.isFunction(obj[item])) {
-            logger.info("您的属性- " + item + ' 格式不满足要求，我们已经将其删除');
+            logger.info('您的属性- ' + item + ' 格式不满足要求，我们已经将其删除');
             delete obj[item];
           }
         } catch (e) {
           delete obj[item];
-          logger.info("您的属性- " + item + ' 抛出了异常，我们已经将其删除');
+          logger.info('您的属性- ' + item + ' 抛出了异常，我们已经将其删除');
         }
       }
     });
@@ -523,7 +519,7 @@ _.utf8Encode = function(string) {
 
     if (c1 < 128) {
       end++;
-    } else if ((c1 > 127) && (c1 < 2048)) {
+    } else if (c1 > 127 && c1 < 2048) {
       enc = String.fromCharCode((c1 >> 6) | 192, (c1 & 63) | 128);
     } else {
       enc = String.fromCharCode((c1 >> 12) | 224, ((c1 >> 6) & 63) | 128, (c1 & 63) | 128);
@@ -567,11 +563,11 @@ _.base64Encode = function(data) {
     o2 = data.charCodeAt(i++);
     o3 = data.charCodeAt(i++);
 
-    bits = o1 << 16 | o2 << 8 | o3;
+    bits = (o1 << 16) | (o2 << 8) | o3;
 
-    h1 = bits >> 18 & 0x3f;
-    h2 = bits >> 12 & 0x3f;
-    h3 = bits >> 6 & 0x3f;
+    h1 = (bits >> 18) & 0x3f;
+    h2 = (bits >> 12) & 0x3f;
+    h3 = (bits >> 6) & 0x3f;
     h4 = bits & 0x3f;
     tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
   } while (i < data.length);
@@ -637,7 +633,7 @@ _.urlSafeBase64 = (function() {
 
 _.btoa = function(string) {
   var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-  string = String(string)
+  string = String(string);
   var bitmap,
     a,
     b,
@@ -649,19 +645,20 @@ _.btoa = function(string) {
   for (; i < string.length;) {
     if ((a = string.charCodeAt(i++)) > 255 || (b = string.charCodeAt(i++)) > 255 || (c = string.charCodeAt(i++)) > 255) {
       logger.info("Failed to execute 'btoa' : The string to be encoded contains characters outside of the Latin1 range.");
-    };
+    }
     bitmap = (a << 16) | (b << 8) | c;
     result += b64.charAt((bitmap >> 18) & 63) + b64.charAt((bitmap >> 12) & 63) + b64.charAt((bitmap >> 6) & 63) + b64.charAt(bitmap & 63);
   }
 
   return rest ? result.slice(0, rest - 3) + '==='.substring(rest) : result;
-}
-
+};
 
 _.urlBase64Encode = function(data) {
-  return _.btoa(encodeURIComponent(data).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-    return String.fromCharCode('0x' + p1);
-  }));
+  return _.btoa(
+    encodeURIComponent(data).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      return String.fromCharCode('0x' + p1);
+    })
+  );
 };
 
 _.rot13obfs = function(str, code_len) {
@@ -690,30 +687,30 @@ _.rot13defs = function(str) {
 };
 
 _.getCurrentPage = function() {
-  var obj = {}
+  var obj = {};
   try {
     var pages = getCurrentPages();
-    obj = pages[pages.length - 1]
+    obj = pages[pages.length - 1];
   } catch (error) {
     logger.info(error);
   }
 
-  return obj
+  return obj;
 };
 
 _.getCurrentPath = function() {
   var url = '未取到';
   try {
-    var currentPage = _.getCurrentPage()
+    var currentPage = _.getCurrentPage();
     url = currentPage.route;
   } catch (e) {
     logger.info(e);
-  };
+  }
   return url;
 };
 
 _.getIsFirstDay = function() {
-  if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > (new Date()).getTime()) {
+  if (typeof sa.store._state === 'object' && typeof sa.store._state.first_visit_day_time === 'number' && sa.store._state.first_visit_day_time > new Date().getTime()) {
     return true;
   } else {
     return false;
@@ -727,7 +724,7 @@ _.getCurrentUrl = function(me) {
     query = me.sensors_mp_encode_url_query;
   }
   if (path) {
-    return (query ? path + '?' + query : path);
+    return query ? path + '?' + query : path;
   } else {
     return '未取到';
   }
@@ -745,21 +742,21 @@ _.getPath = function(path) {
 _.getMethods = function(option) {
   var methods = [];
   for (var m in option) {
-    if (typeof(option[m]) === 'function' && !mpHook[m]) {
+    if (typeof option[m] === 'function' && !mpHook[m]) {
       methods.push(m);
     }
   }
   return methods;
-}
+};
 
 _.isClick = function(type) {
   var mpTaps = {
-    "tap": 1,
-    "longpress": 1,
-    "longtap": 1,
+    tap: 1,
+    longpress: 1,
+    longtap: 1
   };
   return !!mpTaps[type];
-}
+};
 
 sa.initialState = {
   queue: [],
@@ -857,11 +854,11 @@ _.getStorageSync = function(storage_key) {
 };
 
 _.getMPScene = function(scene_value) {
-  if (typeof scene_value === "number" || (typeof scene_value === "string" && scene_value !== "")) {
+  if (typeof scene_value === 'number' || (typeof scene_value === 'string' && scene_value !== '')) {
     scene_value = 'wx-' + String(scene_value);
     return scene_value;
   } else {
-    return "未取到值";
+    return '未取到值';
   }
 };
 
@@ -869,7 +866,7 @@ _.objToParam = function(param, isEncode) {
   if (Object.prototype.toString.call(param) !== '[object Object]') {
     logger.info('请传入有效对象');
     return '';
-  };
+  }
   var queryParam = [];
   for (var key in param) {
     if (param.hasOwnProperty(key)) {
@@ -881,7 +878,7 @@ _.objToParam = function(param, isEncode) {
         queryParam.push(key + '=' + value);
       }
     }
-  };
+  }
   return queryParam.join('&');
 };
 
@@ -889,9 +886,9 @@ _.delObjectKey = function(obj) {
   if (Object.prototype.toString.call(obj) !== '[object Object]') {
     logger.info('请传入有效对象');
     return;
-  };
+  }
   for (let i = 0; i < share_info_key.length; i++) {
-    delete obj[share_info_key[i]]
+    delete obj[share_info_key[i]];
   }
 };
 
@@ -908,7 +905,7 @@ _.shareInfoData = function(para) {
       }
     } else {
       return {};
-    };
+    }
 
     shareData = {
       depth: share.d,
@@ -922,8 +919,8 @@ _.shareInfoData = function(para) {
       if (!share.hasOwnProperty(share_info_key[i])) {
         return {};
       }
-      share[share_info_key[i]] = _.decodeURIComponent(share[share_info_key[i]])
-    };
+      share[share_info_key[i]] = _.decodeURIComponent(share[share_info_key[i]]);
+    }
 
     shareData = {
       depth: Number(share.sensors_share_d),
@@ -931,10 +928,10 @@ _.shareInfoData = function(para) {
       id: share.sensors_share_i || '',
       method: share.sensors_share_m || ''
     };
-  };
+  }
 
   return shareData;
-}
+};
 
 _.setShareInfo = function(para, prop) {
   var share = {};
@@ -949,9 +946,9 @@ _.setShareInfo = function(para, prop) {
         id = share.id,
         method = share.method;
     } else {
-      return {}
+      return {};
     }
-  };
+  }
 
   if (typeof id === 'string') {
     prop.$share_distinct_id = id;
@@ -1001,7 +998,7 @@ _.getShareInfo = function() {
     };
 
     return _.objToParam(param, true);
-  };
+  }
 
   var share_info = JSON.stringify({
     i: sa.store.getDistinctId() || '取值异常',
@@ -1010,7 +1007,7 @@ _.getShareInfo = function() {
     m: share_method
   });
 
-  return 'sampshare=' + encodeURIComponent(share_info)
+  return 'sampshare=' + encodeURIComponent(share_info);
 };
 
 _.detectOptionQuery = function(para) {
@@ -1054,7 +1051,7 @@ _.getMixedQuery = function(para) {
   }
   if (scene) {
     scene = _.decodeURIComponent(scene);
-    if (scene.indexOf("?") !== -1) {
+    if (scene.indexOf('?') !== -1) {
       scene = '?' + scene.replace(/\?/g, '');
     } else {
       scene = '?' + scene;
@@ -1065,7 +1062,6 @@ _.getMixedQuery = function(para) {
   if (q) {
     _.extend(query, _.getObjFromQuery(_.decodeURIComponent(q)));
   }
-
 
   return query;
 };
@@ -1108,7 +1104,7 @@ _.setPageSfSource = function(prop) {
 
 try {
   var oldSetNavigationBarTitle = wx.setNavigationBarTitle;
-  Object.defineProperty(wx, "setNavigationBarTitle", {
+  Object.defineProperty(wx, 'setNavigationBarTitle', {
     get: function() {
       return function(titleObj) {
         var pages = getCurrentPages();
@@ -1116,24 +1112,18 @@ try {
         titleObj = _.isObject(titleObj) ? titleObj : {};
         globalTitle[currentPagePath] = titleObj.title;
         oldSetNavigationBarTitle.call(this, titleObj);
-      }
+      };
     }
-  })
+  });
 } catch (err) {
   logger.info(err);
-};
+}
 
 _.setRefPage = function() {
-  var _refInfo = {
-    route: '',
-    title: ''
-  };
 
   try {
-
     var pages = getCurrentPages();
     if (pages && pages.length === 1) {
-
       var current_path = pages[pages.length - 1].route;
       var current_title = _.getPageTitle(current_path);
       var currentPageInfo = {
@@ -1145,16 +1135,15 @@ _.setRefPage = function() {
         if (page_route_map[page_route_map.length - 1].route !== currentPageInfo.route) {
           page_route_map.push(currentPageInfo);
           page_route_map.shift();
-        };
+        }
       } else {
         page_route_map.push(currentPageInfo);
       }
     }
-
   } catch (error) {
     logger.info(error);
   }
-}
+};
 
 _.getRefPage = function() {
   var _refInfo = {
@@ -1172,14 +1161,14 @@ _.getRefPage = function() {
         var refPages = page_route_map;
         _refInfo.route = refPages[refPages.length - 2].route;
         _refInfo.title = _.getPageTitle(_refInfo.route);
-      };
+      }
 
       if (_refInfo.route === pages[pages.length - 1].route) {
         _refInfo = {
           title: '',
           route: '直接打开'
         };
-      };
+      }
     }
   } catch (error) {
     logger.info(error);
@@ -1192,7 +1181,7 @@ _.setPageRefData = function(prop) {
   if (_.isObject(prop)) {
     prop.$referrer = refPage.route;
     prop.$referrer_title = refPage.title;
-  };
+  }
 };
 
 _.getPageTitle = function(route) {
@@ -1211,7 +1200,7 @@ _.getPageTitle = function(route) {
         globalConfigTitle.titleVal = wxConfig.global.window.navigationBarTitleText;
       }
       if (currentPageConfig && currentPageConfig.window && currentPageConfig.window.navigationBarTitleText) {
-        pageConfigTitle.titleVal = currentPageConfig.window.navigationBarTitleText
+        pageConfigTitle.titleVal = currentPageConfig.window.navigationBarTitleText;
       }
 
       if (!pageConfigTitle.titleVal && __wxAppCode__) {
@@ -1223,9 +1212,9 @@ _.getPageTitle = function(route) {
 
       _.each(globalTitle, function(v, k) {
         if (k === route) {
-          return title = v;
+          return (title = v);
         }
-      })
+      });
       if (title.length === 0) {
         var finalTitle = _.extend(globalConfigTitle, pageConfigTitle);
         title = finalTitle.titleVal;
@@ -1236,7 +1225,6 @@ _.getPageTitle = function(route) {
   }
   return title;
 };
-
 
 _.wxrequest = function(obj) {
   if (_.compareSDKVersion(wxSDKVersion, '2.10.0') >= 0) {
@@ -1275,7 +1263,7 @@ _.validId = function(id) {
     }
   }
   return id;
-}
+};
 
 _.compareSDKVersion = function(v1, v2) {
   v1 = v1.split('.');
@@ -1305,10 +1293,10 @@ _.compareSDKVersion = function(v1, v2) {
 
 _.setUpperCase = function(value) {
   if (_.isString(value)) {
-    return value.toLocaleUpperCase()
+    return value.toLocaleUpperCase();
   }
-  return value
-}
+  return value;
+};
 
 _.info = {
   currentProps: {},
@@ -1318,15 +1306,14 @@ _.info = {
   },
   getSystem: function() {
     var e = this.properties;
-    var that = this;
 
     function getNetwork() {
       wx.getNetworkType({
-        "success": function(t) {
-          e.$network_type = _.setUpperCase(t["networkType"])
+        success: function(t) {
+          e.$network_type = _.setUpperCase(t['networkType']);
         },
-        "complete": getSystemInfo
-      })
+        complete: getSystemInfo
+      });
     }
 
     function formatSystem(system) {
@@ -1340,20 +1327,19 @@ _.info = {
       }
     }
 
-
     function getSystemInfo() {
       wx.getSystemInfo({
-        "success": function(t) {
-          e.$brand = _.setUpperCase(t["brand"]);
-          e.$manufacturer = t["brand"];
-          e.$model = t["model"];
-          e.$screen_width = Number(t["screenWidth"]);
-          e.$screen_height = Number(t["screenHeight"]);
-          e.$os = formatSystem(t["platform"]);
-          e.$os_version = t["system"].indexOf(' ') > -1 ? t["system"].split(' ')[1] : t["system"];
-          wxSDKVersion = t["SDKVersion"];
+        success: function(t) {
+          e.$brand = _.setUpperCase(t['brand']);
+          e.$manufacturer = t['brand'];
+          e.$model = t['model'];
+          e.$screen_width = Number(t['screenWidth']);
+          e.$screen_height = Number(t['screenHeight']);
+          e.$os = formatSystem(t['platform']);
+          e.$os_version = t['system'].indexOf(' ') > -1 ? t['system'].split(' ')[1] : t['system'];
+          wxSDKVersion = t['SDKVersion'];
         },
-        "complete": function() {
+        complete: function() {
           var timeZoneOffset = new Date().getTimezoneOffset();
           var appId = _.getAppId();
           if (_.isNumber(timeZoneOffset)) {
@@ -1365,7 +1351,7 @@ _.info = {
           sa.initialState.systemIsComplete = true;
           sa.initialState.checkIsComplete();
         }
-      })
+      });
     }
 
     getNetwork();
@@ -1384,8 +1370,8 @@ _.eventEmitter.prototype = {
   emit: function(event, data) {
     this.sub.forEach(function(temp) {
       temp.on(event, data);
-    })
-  },
+    });
+  }
 };
 
 _.eventSub = function(handle) {
@@ -1409,7 +1395,7 @@ _.eventSub.prototype = {
       this._events.push({
         event,
         data
-      })
+      });
     }
   },
   isReady: function() {
@@ -1424,7 +1410,7 @@ _.eventSub.prototype = {
         }
       }
     });
-  },
+  }
 };
 
 sa.eventSub = _.eventSub;
@@ -1432,16 +1418,15 @@ sa.eventSub = _.eventSub;
 sa.events = new _.eventEmitter();
 
 sa.usePlugin = function(plugin, para) {
-  if (typeof plugin.init === "function") {
+  if (typeof plugin.init === 'function') {
     plugin.init(sa, para);
   }
 };
 
-
 sa.prepareData = function(p, callback) {
   if (current_scene && current_scene === 1154 && !sa.para.preset_events.moments_page) {
     return false;
-  };
+  }
 
   var data = {
     distinct_id: this.store.getDistinctId(),
@@ -1462,24 +1447,25 @@ sa.prepareData = function(p, callback) {
   if (!p.type || p.type.slice(0, 7) !== 'profile') {
     data._track_id = Number(String(Math.random()).slice(2, 5) + String(Math.random()).slice(2, 4) + String(Date.now()).slice(-4));
     data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
-    data.properties.$is_first_day = _.getIsFirstDay();
+    if (p.type === 'track') {
+      data.properties.$is_first_day = _.getIsFirstDay();
+    }
 
     var refPage = _.getRefPage();
     if (!data.properties.hasOwnProperty('$referrer')) {
       data.properties.$referrer = refPage.route;
-    };
+    }
 
     if (!data.properties.hasOwnProperty('$referrer_title')) {
       data.properties.$referrer_title = refPage.title;
-    };
-
-  };
+    }
+  }
   if (data.properties.$time && _.isDate(data.properties.$time)) {
     data.time = data.properties.$time * 1;
     delete data.properties.$time;
   } else {
-    data.time = (new Date()) * 1;
-  };
+    data.time = new Date() * 1;
+  }
 
   _.parseSuperProperties(data.properties);
 
@@ -1495,8 +1481,18 @@ sa.prepareData = function(p, callback) {
 sa.store = {
   storageInfo: null,
   getUUID: function() {
-    return "" + Date.now() + '-' + Math.floor(1e7 * Math.random()) + '-' + Math.random().toString(16).replace('.', '') + '-' + String(Math.random() * 31242).replace('.', '').slice(0, 8);
-
+    return (
+      '' +
+      Date.now() +
+      '-' +
+      Math.floor(1e7 * Math.random()) +
+      '-' +
+      Math.random().toString(16).replace('.', '') +
+      '-' +
+      String(Math.random() * 31242)
+      .replace('.', '')
+      .slice(0, 8)
+    );
   },
   getStorage: function() {
     if (this.storageInfo) {
@@ -1626,7 +1622,7 @@ sa.store = {
       this.toState(info);
     } else {
       is_first_launch = true;
-      var time = (new Date());
+      var time = new Date();
       var visit_time = time.getTime();
       time.setHours(23);
       time.setMinutes(59);
@@ -1635,9 +1631,9 @@ sa.store = {
         $first_visit_time: new Date()
       });
       this.set({
-        'distinct_id': this.getUUID(),
-        'first_visit_time': visit_time,
-        'first_visit_day_time': time.getTime()
+        distinct_id: this.getUUID(),
+        first_visit_time: visit_time,
+        first_visit_day_time: time.getTime()
       });
     }
   }
@@ -1645,16 +1641,20 @@ sa.store = {
 
 sa.setProfile = function(p, c) {
   sa.prepareData({
-    type: 'profile_set',
-    properties: p
-  }, c);
+      type: 'profile_set',
+      properties: p
+    },
+    c
+  );
 };
 
 sa.setOnceProfile = function(p, c) {
   sa.prepareData({
-    type: 'profile_set_once',
-    properties: p
-  }, c);
+      type: 'profile_set_once',
+      properties: p
+    },
+    c
+  );
 };
 
 sa.appendProfile = function(p, c) {
@@ -1664,17 +1664,18 @@ sa.appendProfile = function(p, c) {
   _.each(p, function(value, item) {
     if (_.isString(value)) {
       p[item] = [value];
-    } else if (_.isArray(value)) {
-
-    } else {
+    } else if (_.isArray(value));
+    else {
       delete p[item];
       logger.info('appendProfile属性的值必须是字符串或者数组');
     }
   });
   sa.prepareData({
-    type: 'profile_append',
-    properties: p
-  }, c);
+      type: 'profile_append',
+      properties: p
+    },
+    c
+  );
 };
 
 sa.incrementProfile = function(p, c) {
@@ -1683,21 +1684,25 @@ sa.incrementProfile = function(p, c) {
   }
   var str = p;
   if (_.isString(p)) {
-    p = {}
+    p = {};
     p[str] = 1;
   }
   sa.prepareData({
-    type: 'profile_increment',
-    properties: p
-  }, c);
+      type: 'profile_increment',
+      properties: p
+    },
+    c
+  );
 };
 
 sa.track = function(e, p, c) {
   this.prepareData({
-    type: 'track',
-    event: e,
-    properties: p
-  }, c);
+      type: 'track',
+      event: e,
+      properties: p
+    },
+    c
+  );
 };
 
 sa.identify = function(id, isSave) {
@@ -1724,14 +1729,15 @@ sa.trackSignup = function(id, e, p, c) {
   var original_id = sa.store.getFirstId() || sa.store.getDistinctId();
   sa.store.set('distinct_id', id);
   sa.prepareData({
-    original_id: original_id,
-    distinct_id: id,
-    type: 'track_signup',
-    event: e,
-    properties: p
-  }, c);
+      original_id: original_id,
+      distinct_id: id,
+      type: 'track_signup',
+      event: e,
+      properties: p
+    },
+    c
+  );
 };
-
 
 sa.registerApp = function(obj) {
   if (_.isObject(obj) && !_.isEmptyObject(obj)) {
@@ -1850,17 +1856,17 @@ sa.getLocation = function() {
               $latitude: res.latitude * Math.pow(10, 6),
               $longitude: res.longitude * Math.pow(10, 6),
               $geo_coordinate_system: _.setUpperCase(sa.para.preset_properties.location.type)
-            })
+            });
           },
           fail: function(err) {
-            console.log('获取位置失败', err)
+            console.log('获取位置失败', err);
           }
-        })
+        });
       } else {
         return false;
       }
     }
-  })
+  });
 };
 
 sa.openid = {
@@ -2123,7 +2129,6 @@ sa.sendStrategy = {
     }
   },
   batchInterval: function() {
-
     var _this = this;
 
     function loopWrite() {
@@ -2183,8 +2188,8 @@ sa.setWebViewUrl = function(url, after_hash) {
     search = arr[2] || '',
     hash = arr[3] || '',
     nurl = '';
-  var distinct_id = sa.store.getDistinctId() || "",
-    first_id = sa.store.getFirstId() || "",
+  var distinct_id = sa.store.getDistinctId() || '',
+    first_id = sa.store.getFirstId() || '',
     idIndex;
 
   if (_.urlSafeBase64 && _.urlSafeBase64.encode) {
@@ -2222,7 +2227,7 @@ sa.setWebViewUrl = function(url, after_hash) {
   }
 
   return nurl;
-}
+};
 
 _.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister'], function(method) {
   var temp = sa[method];
@@ -2277,8 +2282,8 @@ _.sendPageLeave = function() {
     var pages = getCurrentPages();
     currentPage = pages[pages.length - 1];
   } catch (error) {
-    logger.info(error)
-  };
+    logger.info(error);
+  }
   var router = currentPage.route;
   if (page_show_time >= 0 && router !== '') {
     var prop = {};
@@ -2289,127 +2294,123 @@ _.sendPageLeave = function() {
     prop.$title = title;
     prop.event_duration = page_stay_time;
     sa.track('$MPPageLeave', prop);
-    page_show_time = -1
-  }
-}
-
-
-function mp_proxy(option, method, identifier) {
-  var newFunc = sa.autoTrackCustom[identifier];
-  if (option[method]) {
-    var oldFunc = option[method];
-    option[method] = function() {
-      if (method === 'onLaunch') {
-        this[sa.para.name] = sa;
-      }
-      if (!sa.para.autoTrackIsFirst || (_.isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])) {
-        oldFunc.apply(this, arguments);
-        newFunc.apply(this, arguments);
-      } else if (sa.para.autoTrackIsFirst === true || (_.isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])) {
-        newFunc.apply(this, arguments);
-        oldFunc.apply(this, arguments);
-      }
-    };
-  } else {
-    option[method] = function() {
-      if (method === 'onLaunch') {
-        this[sa.para.name] = sa;
-      }
-      newFunc.apply(this, arguments);
-    };
-  }
-}
-
-function clickTrack(events) {
-  var prop = {},
-    event_prop = {},
-    type = '';
-  var current_target = events.currentTarget || {};
-  var target = events.target || {};
-  if (_.isObject(sa.para.framework) && _.isObject(sa.para.framework.taro) && !sa.para.framework.taro.createApp) {
-    if (target.id && current_target.id && target.id !== current_target.id) {
-      return false;
-    }
-  }
-
-  var dataset = current_target.dataset || {};
-  type = events['type'];
-  prop['$element_id'] = current_target.id;
-  prop['$element_type'] = dataset['type'];
-  prop['$element_content'] = dataset['content'];
-  prop['$element_name'] = dataset['name'];
-  if (_.isObject(events.event_prop)) {
-    event_prop = events.event_prop;
-  }
-  if (type && _.isClick(type)) {
-    if (
-      sa.para.preset_events &&
-      sa.para.preset_events.collect_element &&
-      sa.para.preset_events.collect_element(arguments[0]) === false
-    ) {
-      return false;
-    };
-    prop['$url_path'] = _.getCurrentPath();
-    _.setPageRefData(prop);
-    prop = _.extend(prop, event_prop);
-    sa.track('$MPClick', prop);
-  }
-}
-
-function click_proxy(option, method) {
-  var oldFunc = option[method];
-  option[method] = function() {
-    var res = oldFunc.apply(this, arguments);
-    var args = arguments[0];
-
-    if (_.isObject(args)) {
-      if (sa.para.preset_events.defer_track) {
-        setTimeout(function() {
-          clickTrack(args);
-        }, 0);
-      } else {
-        clickTrack(args);
-      }
-    }
-    return res;
+    page_show_time = -1;
   }
 };
 
-function tabProxy(option) {
-  var oldTab = option['onTabItemTap'];
-  option['onTabItemTap'] = function(item) {
-    if (oldTab) {
-      oldTab.apply(this, arguments);
+{
+  var mp_proxy = function mpProxy(option, method, identifier) {
+    var newFunc = sa.autoTrackCustom[identifier];
+    if (option[method]) {
+      var oldFunc = option[method];
+      option[method] = function() {
+        if (method === 'onLaunch') {
+          this[sa.para.name] = sa;
+        }
+        if (!sa.para.autoTrackIsFirst || (_.isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])) {
+          oldFunc.apply(this, arguments);
+          newFunc.apply(this, arguments);
+        } else if (sa.para.autoTrackIsFirst === true || (_.isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])) {
+          newFunc.apply(this, arguments);
+          oldFunc.apply(this, arguments);
+        }
+      };
+    } else {
+      option[method] = function() {
+        if (method === 'onLaunch') {
+          this[sa.para.name] = sa;
+        }
+        newFunc.apply(this, arguments);
+      };
     }
-    var prop = {};
-
-    if (item) {
-      prop['$element_content'] = item.text;
-    }
-    prop['$element_type'] = 'tabBar';
-    prop['$url_path'] = _.getCurrentPath();
-    _.setPageRefData(prop);
-    sa.track('$MPClick', prop);
-  }
-}
-
-function pageLeaveProxy(option) {
-  var oldHide = option['onHide'];
-  option['onHide'] = function() {
-    if (oldHide) {
-      oldHide.apply(this, arguments);
-    }
-    _.sendPageLeave();
   };
-  var oldUnload = option['onUnload'];
-  option['onUnload'] = function() {
-    if (oldUnload) {
-      oldUnload.apply(this, arguments);
-    }
-    _.sendPageLeave();
-  }
-}
 
+  function clickTrack(events) {
+    var prop = {},
+      event_prop = {},
+      type = '';
+    var current_target = events.currentTarget || {};
+    var target = events.target || {};
+    if (_.isObject(sa.para.framework) && _.isObject(sa.para.framework.taro) && !sa.para.framework.taro.createApp) {
+      if (target.id && current_target.id && target.id !== current_target.id) {
+        return false;
+      }
+    }
+
+    var dataset = current_target.dataset || {};
+    type = events['type'];
+    prop['$element_id'] = current_target.id;
+    prop['$element_type'] = dataset['type'];
+    prop['$element_content'] = dataset['content'];
+    prop['$element_name'] = dataset['name'];
+    if (_.isObject(events.event_prop)) {
+      event_prop = events.event_prop;
+    }
+    if (type && _.isClick(type)) {
+      if (sa.para.preset_events && sa.para.preset_events.collect_element && sa.para.preset_events.collect_element(arguments[0]) === false) {
+        return false;
+      }
+      prop['$url_path'] = _.getCurrentPath();
+      _.setPageRefData(prop);
+      prop = _.extend(prop, event_prop);
+      sa.track('$MPClick', prop);
+    }
+  }
+
+  var click_proxy = function clickProxy(option, method) {
+    var oldFunc = option[method];
+    option[method] = function() {
+      var res = oldFunc.apply(this, arguments);
+      var args = arguments[0];
+
+      if (_.isObject(args)) {
+        if (sa.para.preset_events.defer_track) {
+          setTimeout(function() {
+            clickTrack(args);
+          }, 0);
+        } else {
+          clickTrack(args);
+        }
+      }
+      return res;
+    };
+  };
+
+  var tabProxy = function tabProxy(option) {
+    var oldTab = option['onTabItemTap'];
+    option['onTabItemTap'] = function(item) {
+      if (oldTab) {
+        oldTab.apply(this, arguments);
+      }
+      var prop = {};
+
+      if (item) {
+        prop['$element_content'] = item.text;
+      }
+      prop['$element_type'] = 'tabBar';
+      prop['$url_path'] = _.getCurrentPath();
+      _.setPageRefData(prop);
+      sa.track('$MPClick', prop);
+    };
+  };
+
+  var pageLeaveProxy = function pageLeaveProxy(option) {
+    var oldHide = option['onHide'];
+    option['onHide'] = function() {
+      if (oldHide) {
+        oldHide.apply(this, arguments);
+      }
+      _.sendPageLeave();
+    };
+    var oldUnload = option['onUnload'];
+    option['onUnload'] = function() {
+      if (oldUnload) {
+        oldUnload.apply(this, arguments);
+      }
+      _.sendPageLeave();
+    };
+  };
+}
 
 sa.autoTrackCustom = {
   trackCustom: function(api, prop, event) {
@@ -2443,7 +2444,7 @@ sa.autoTrackCustom = {
     }
     if (para && para.scene && para.scene === 1010 && para.query) {
       if (para.query.sampshare) {
-        delete para.query.sampshare
+        delete para.query.sampshare;
       }
       _.delObjectKey(para.query);
     }
@@ -2484,7 +2485,7 @@ sa.autoTrackCustom = {
   appShow: function(para, not_use_auto_track) {
     var prop = {};
 
-    mpshow_time = (new Date()).getTime();
+    mpshow_time = new Date().getTime();
 
     if (para && para.scene) {
       current_scene = para.scene;
@@ -2495,9 +2496,9 @@ sa.autoTrackCustom = {
 
     if (para && para.scene && para.scene === 1010 && para.query) {
       if (para.query.sampshare) {
-        delete para.query.sampshare
-      };
-      _.delObjectKey(para.query)
+        delete para.query.sampshare;
+      }
+      _.delObjectKey(para.query);
     }
 
     if (para && para.path) {
@@ -2530,12 +2531,12 @@ sa.autoTrackCustom = {
     }
   },
   appHide: function(not_use_auto_track) {
-    var current_time = (new Date()).getTime();
+    var current_time = new Date().getTime();
     var prop = {};
     prop.$url_path = _.getCurrentPath();
-    if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
+    if (mpshow_time && current_time - mpshow_time > 0 && (current_time - mpshow_time) / 3600000 < 24) {
       prop.event_duration = (current_time - mpshow_time) / 1000;
-    };
+    }
     _.setPageRefData(prop);
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
@@ -2549,7 +2550,7 @@ sa.autoTrackCustom = {
     if (current_scene && current_scene === 1010 && para) {
       if (para.sampshare) {
         delete para.sampshare;
-      };
+      }
       _.delObjectKey(para);
     }
     if (para && _.isObject(para)) {
@@ -2573,11 +2574,7 @@ sa.autoTrackCustom = {
     }
     if (sa.para.onshow) {
       sa.para.onshow(sa, router, this);
-    } else if (
-      !(_.isObject(sa.para.autotrack_exclude_page) &&
-        _.isArray(sa.para.autotrack_exclude_page.pageShow) &&
-        sa.para.autotrack_exclude_page.pageShow.indexOf(router) !== -1)
-    ) {
+    } else if (!(_.isObject(sa.para.autotrack_exclude_page) && _.isArray(sa.para.autotrack_exclude_page.pageShow) && sa.para.autotrack_exclude_page.pageShow.indexOf(router) !== -1)) {
       sa.autoTrackCustom.trackCustom('pageShow', prop, '$MPViewScreen');
     }
     if (sa.para.preset_properties.url_path === true) {
@@ -2587,7 +2584,6 @@ sa.autoTrackCustom = {
     }
   },
   pageShare: function(option) {
-
     var oldMessage = option.onShareAppMessage;
 
     option.onShareAppMessage = function() {
@@ -2623,11 +2619,10 @@ sa.autoTrackCustom = {
         }
 
         oldValue.path = oldValue.path + _.getShareInfo();
-
-      };
+      }
 
       return oldValue;
-    }
+    };
   },
   pageShareTimeline: function(option) {
     var oldMessage = option.onShareTimeline;
@@ -2649,11 +2644,10 @@ sa.autoTrackCustom = {
         if (typeof oldValue !== 'object') {
           oldValue = {};
         }
-        if (typeof oldValue === 'object' && (typeof oldValue.query === 'undefined')) {
+        if (typeof oldValue === 'object' && typeof oldValue.query === 'undefined') {
           oldValue.query = '';
         }
         if (typeof oldValue === 'object' && typeof oldValue.query === 'string' && oldValue.query !== '') {
-
           if (oldValue.query.slice(-1) !== '&') {
             oldValue.query = oldValue.query + '&';
           }
@@ -2662,7 +2656,7 @@ sa.autoTrackCustom = {
         oldValue.query = oldValue.query + _.getShareInfo();
       }
       return oldValue;
-    }
+    };
   },
   pageAddFavorites: function() {
     var prop = {};
@@ -2671,11 +2665,7 @@ sa.autoTrackCustom = {
       sa.autoTrackCustom.trackCustom('mpFavorite', prop, '$MPAddFavorites');
     }
   }
-
-
 };
-
-
 
 sa.quick = function() {
   var arg0 = arguments[0];
@@ -2710,8 +2700,8 @@ sa.appLaunch = function(option, prop) {
   }
   if (option && option.scene && option.scene === 1010 && option.query) {
     if (option.query.sampshare) {
-      delete option.query.sampshare
-    };
+      delete option.query.sampshare;
+    }
     _.delObjectKey(option.query);
   }
   if (option && option.path) {
@@ -2746,10 +2736,10 @@ sa.appLaunch = function(option, prop) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPLaunch', obj);
-}
+};
 sa.appShow = function(option, prop) {
   var obj = {};
-  mpshow_time = (new Date()).getTime();
+  mpshow_time = new Date().getTime();
   if (option && option.scene) {
     current_scene = option.scene;
     obj.$scene = _.getMPScene(option.scene);
@@ -2758,8 +2748,8 @@ sa.appShow = function(option, prop) {
   }
   if (option && option.scene && option.scene === 1010 && option.query) {
     if (option.query.sampshare) {
-      delete option.query.sampshare
-    };
+      delete option.query.sampshare;
+    }
     _.delObjectKey(option.query);
   }
 
@@ -2787,23 +2777,22 @@ sa.appShow = function(option, prop) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPShow', obj);
-}
+};
 
 sa.appHide = function(prop) {
-  var current_time = (new Date()).getTime();
+  var current_time = new Date().getTime();
   var obj = {};
   obj.$url_path = _.getCurrentPath();
-  if (mpshow_time && (current_time - mpshow_time > 0) && ((current_time - mpshow_time) / 3600000 < 24)) {
+  if (mpshow_time && current_time - mpshow_time > 0 && (current_time - mpshow_time) / 3600000 < 24) {
     obj.event_duration = (current_time - mpshow_time) / 1000;
-  };
+  }
   _.setPageRefData(obj);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPHide', obj);
   sa.sendStrategy.onAppHide();
-}
-
+};
 
 sa.pageShow = function(prop) {
   var obj = {};
@@ -2814,16 +2803,16 @@ sa.pageShow = function(prop) {
     var pages = getCurrentPages();
     currentPage = pages[pages.length - 1];
   } catch (error) {
-    logger.info(error)
-  };
+    logger.info(error);
+  }
   if (sa.para.preset_properties.url_path === true) {
     sa.registerApp({
       $url_path: router
     });
-  };
+  }
   if (title) {
     obj.$title = title;
-  };
+  }
   obj.$url_path = router;
   obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
   obj = _.extend(obj, _.getUtmFromPage());
@@ -2833,99 +2822,92 @@ sa.pageShow = function(prop) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPViewScreen', obj);
-}
-
-
-
-
-
-
-var oldApp = App;
-App = function(option) {
-  option[sa.para.name] = sa;
-  oldApp.apply(this, arguments);
 };
 
-wx.onAppShow(function(para) {
-  if (!sa.para.launched) {
-    var option = wx.getLaunchOptionsSync() || {};
-    sa.autoTrackCustom.appLaunch(option);
-    sa.para.launched = true;
-  }
-  sa.autoTrackCustom.appShow(para);
-});
+{
+  var oldApp = App;
+  App = function(option) {
+    option[sa.para.name] = sa;
+    oldApp.apply(this, arguments);
+  };
 
-wx.onAppHide(function() {
-  sa.autoTrackCustom.appHide();
-});
-
-var oldPage = Page;
-Page = function(option) {
-  var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
-
-  if (!!methods) {
-    for (var i = 0, len = methods.length; i < len; i++) {
-      click_proxy(option, methods[i]);
+  wx.onAppShow(function(para) {
+    if (!sa.para.launched) {
+      var option = wx.getLaunchOptionsSync() || {};
+      sa.autoTrackCustom.appLaunch(option);
+      sa.para.launched = true;
     }
-  }
+    sa.autoTrackCustom.appShow(para);
+  });
 
-  if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
-    tabProxy(option);
-  }
+  wx.onAppHide(function() {
+    sa.autoTrackCustom.appHide();
+  });
 
-  if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-    pageLeaveProxy(option)
-  }
-
-  mp_proxy(option, "onLoad", 'pageLoad');
-  mp_proxy(option, "onShow", 'pageShow');
-  mp_proxy(option, "onAddToFavorites", 'pageAddFavorites');
-  if (typeof option.onShareAppMessage === 'function') {
-    sa.autoTrackCustom.pageShare(option);
-  }
-  if (typeof option.onShareTimeline === 'function') {
-    sa.autoTrackCustom.pageShareTimeline(option);
-  }
-  oldPage.apply(this, arguments);
-};
-
-var oldComponent = Component;
-Component = function(option) {
-  try {
-    var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
+  var oldPage = Page;
+  Page = function(option) {
+    var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
 
     if (!!methods) {
       for (var i = 0, len = methods.length; i < len; i++) {
-        click_proxy(option.methods, methods[i]);
+        click_proxy(option, methods[i]);
       }
     }
 
     if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
-      tabProxy(option.methods);
+      tabProxy(option);
     }
 
     if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-      pageLeaveProxy(option.methods)
+      pageLeaveProxy(option);
     }
 
-    mp_proxy(option.methods, 'onLoad', 'pageLoad');
-    mp_proxy(option.methods, 'onShow', 'pageShow');
-    mp_proxy(option.methods, "onAddToFavorites", 'pageAddFavorites');
-    if (typeof option.methods.onShareAppMessage === 'function') {
-      sa.autoTrackCustom.pageShare(option.methods);
+    mp_proxy(option, 'onLoad', 'pageLoad');
+    mp_proxy(option, 'onShow', 'pageShow');
+    mp_proxy(option, 'onAddToFavorites', 'pageAddFavorites');
+    if (typeof option.onShareAppMessage === 'function') {
+      sa.autoTrackCustom.pageShare(option);
     }
-    if (typeof option.methods.onShareTimeline === 'function') {
-      sa.autoTrackCustom.pageShareTimeline(option.methods);
+    if (typeof option.onShareTimeline === 'function') {
+      sa.autoTrackCustom.pageShareTimeline(option);
     }
-    oldComponent.apply(this, arguments);
-  } catch (e) {
-    oldComponent.apply(this, arguments);
-  }
-};
+    oldPage.apply(this, arguments);
+  };
 
+  var oldComponent = Component;
+  Component = function(option) {
+    try {
+      var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
 
+      if (!!methods) {
+        for (var i = 0, len = methods.length; i < len; i++) {
+          click_proxy(option.methods, methods[i]);
+        }
+      }
 
+      if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
+        tabProxy(option.methods);
+      }
+
+      if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
+        pageLeaveProxy(option.methods);
+      }
+
+      mp_proxy(option.methods, 'onLoad', 'pageLoad');
+      mp_proxy(option.methods, 'onShow', 'pageShow');
+      mp_proxy(option.methods, 'onAddToFavorites', 'pageAddFavorites');
+      if (typeof option.methods.onShareAppMessage === 'function') {
+        sa.autoTrackCustom.pageShare(option.methods);
+      }
+      if (typeof option.methods.onShareTimeline === 'function') {
+        sa.autoTrackCustom.pageShareTimeline(option.methods);
+      }
+      oldComponent.apply(this, arguments);
+    } catch (e) {
+      oldComponent.apply(this, arguments);
+    }
+  };
+}
 sa.initial();
-
 
 module.exports = sa;
