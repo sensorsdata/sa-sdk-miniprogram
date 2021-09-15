@@ -6,10 +6,10 @@ sa.para = {
   name: 'sensors',
   server_url: '',
   send_timeout: 1000,
-  show_log: true,
+  show_log: false,
   launched: false,
   allow_amend_share_path: true,
-  max_string_length: 300,
+  max_string_length: 500,
   datasend_timeout: 3000,
   source_channel: [],
   autoTrack: {
@@ -159,7 +159,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.21',
+  LIB_VERSION = '1.14.22',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -885,7 +885,7 @@ _.delObjectKey = function(obj) {
     logger.info('请传入有效对象');
     return;
   }
-  for (let i = 0; i < share_info_key.length; i++) {
+  for (var i = 0; i < share_info_key.length; i++) {
     delete obj[share_info_key[i]];
   }
 };
