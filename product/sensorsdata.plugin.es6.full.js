@@ -7,7 +7,6 @@ sa.para = {
   server_url: '',
   send_timeout: 1000,
   show_log: false,
-  launched: false,
   allow_amend_share_path: true,
   max_string_length: 500,
   datasend_timeout: 3000,
@@ -41,6 +40,10 @@ sa.para = {
   batch_send: true,
   storage_store_key: 'sensorsdata2015_wechat',
   storage_prepare_data_key: 'sensors_mp_prepare_data'
+};
+
+var deploy_para = {
+  launched: false
 };
 
 var mpHook = {
@@ -159,7 +162,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.22',
+  LIB_VERSION = '1.14.23',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -700,7 +703,7 @@ _.getCurrentPath = function() {
   var url = '未取到';
   try {
     var currentPage = _.getCurrentPage();
-    url = currentPage.route;
+    url = currentPage ? currentPage.route : url;
   } catch (e) {
     logger.info(e);
   }
@@ -1857,7 +1860,7 @@ sa.getLocation = function() {
             });
           },
           fail: function(err) {
-            console.log('获取位置失败', err);
+            logger.info('获取位置失败', err);
           }
         });
       } else {
@@ -2186,6 +2189,7 @@ sa.setWebViewUrl = function(url, after_hash) {
     search = arr[2] || '',
     hash = arr[3] || '',
     nurl = '';
+
   var distinct_id = sa.store.getDistinctId() || '',
     first_id = sa.store.getFirstId() || '',
     idIndex;
@@ -2215,7 +2219,8 @@ sa.setWebViewUrl = function(url, after_hash) {
     var hasQuery = /^\?(\w)+/.test(search);
     if (hasQuery) {
       if (idIndex > -1) {
-        nurl = host + '?' + search.substring(1, idIndex) + '_sasdk=' + value + hash;
+        var newSearch = search.replace(/(_sasdk=)([^&]*)/gi, '_sasdk=' + value);
+        nurl = host + newSearch + hash;
       } else {
         nurl = host + '?' + search.substring(1) + '&_sasdk=' + value + hash;
       }
@@ -2830,10 +2835,10 @@ sa.pageShow = function(prop) {
   };
 
   wx.onAppShow(function(para) {
-    if (!sa.para.launched) {
+    if (!deploy_para.launched) {
       var option = wx.getLaunchOptionsSync() || {};
       sa.autoTrackCustom.appLaunch(option);
-      sa.para.launched = true;
+      deploy_para.launched = true;
     }
     sa.autoTrackCustom.appShow(para);
   });
