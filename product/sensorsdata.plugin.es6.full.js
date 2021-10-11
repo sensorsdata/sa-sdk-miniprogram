@@ -1,3 +1,42 @@
+function isObject(obj) {
+  if (obj === undefined || obj === null) {
+    return false;
+  } else {
+    return toString.call(obj) == '[object Object]';
+  }
+}
+
+var getRandomBasic = (function() {
+  var today = new Date();
+  var seed = today.getTime();
+
+  function rnd() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280.0;
+  }
+  return function rand(number) {
+    return Math.ceil(rnd() * number);
+  };
+})();
+
+function getRandom() {
+  if (typeof Uint32Array === 'function') {
+    var cry = '';
+    if (typeof crypto !== 'undefined') {
+      cry = crypto;
+    } else if (typeof msCrypto !== 'undefined') {
+      cry = msCrypto;
+    }
+    if (isObject(cry) && cry.getRandomValues) {
+      var typedArray = new Uint32Array(1);
+      var randomNumber = cry.getRandomValues(typedArray)[0];
+      var integerLimit = Math.pow(2, 32);
+      return randomNumber / integerLimit;
+    }
+  }
+  return getRandomBasic(10000000000000000000) / 10000000000000000000;
+}
+
 var _ = {};
 
 var sa = {};
@@ -160,9 +199,9 @@ sa.status = {};
 var ArrayProto = Array.prototype,
   ObjProto = Object.prototype,
   slice = ArrayProto.slice,
-  toString = ObjProto.toString,
+  toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.23',
+  LIB_VERSION = '1.14.24',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -253,7 +292,7 @@ var page_route_map = [];
   _.isArray =
     nativeIsArray ||
     function(obj) {
-      return toString.call(obj) === '[object Array]';
+      return toString$1.call(obj) === '[object Array]';
     };
 
   _.isFunction = function(f) {
@@ -320,7 +359,7 @@ _.isObject = function(obj) {
   if (obj === undefined || obj === null) {
     return false;
   } else {
-    return toString.call(obj) == '[object Object]';
+    return toString$1.call(obj) == '[object Object]';
   }
 };
 
@@ -341,19 +380,19 @@ _.isUndefined = function(obj) {
 };
 
 _.isString = function(obj) {
-  return toString.call(obj) == '[object String]';
+  return toString$1.call(obj) == '[object String]';
 };
 
 _.isDate = function(obj) {
-  return toString.call(obj) == '[object Date]';
+  return toString$1.call(obj) == '[object Date]';
 };
 
 _.isBoolean = function(obj) {
-  return toString.call(obj) == '[object Boolean]';
+  return toString$1.call(obj) == '[object Boolean]';
 };
 
 _.isNumber = function(obj) {
-  return toString.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj));
+  return toString$1.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj));
 };
 
 _.isJSONString = function(str) {
@@ -1089,11 +1128,12 @@ _.setSfSource = function(para, prop) {
 
 _.setPageSfSource = function(prop) {
   try {
-    var allpages = getCurrentPages();
-    var myvar = JSON.parse(JSON.stringify(allpages[allpages.length - 1].options));
+    var allpages = _.getCurrentPage();
+    var options = allpages ? allpages.options : '';
+    var myvar = JSON.parse(JSON.stringify(options));
     for (var i in myvar) {
       myvar[i] = _.decodeURIComponent(myvar[i]);
-    }
+    };
 
     if (!_.isEmptyObject(myvar) && myvar._sfs) {
       prop.$sf_source = myvar._sfs;
@@ -1108,8 +1148,7 @@ try {
   Object.defineProperty(wx, 'setNavigationBarTitle', {
     get: function() {
       return function(titleObj) {
-        var pages = getCurrentPages();
-        var currentPagePath = pages[pages.length - 1].route || '';
+        var currentPagePath = _.getCurrentPath();
         titleObj = _.isObject(titleObj) ? titleObj : {};
         globalTitle[currentPagePath] = titleObj.title;
         oldSetNavigationBarTitle.call(this, titleObj);
@@ -1446,7 +1485,7 @@ sa.prepareData = function(p, callback) {
   }
 
   if (!p.type || p.type.slice(0, 7) !== 'profile') {
-    data._track_id = Number(String(Math.random()).slice(2, 5) + String(Math.random()).slice(2, 4) + String(Date.now()).slice(-4));
+    data._track_id = Number(String(getRandom()).slice(2, 5) + String(getRandom()).slice(2, 4) + String(Date.now()).slice(-4));
     data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
     if (p.type === 'track') {
       data.properties.$is_first_day = _.getIsFirstDay();
@@ -1486,11 +1525,11 @@ sa.store = {
       '' +
       Date.now() +
       '-' +
-      Math.floor(1e7 * Math.random()) +
+      Math.floor(1e7 * getRandom()) +
       '-' +
-      Math.random().toString(16).replace('.', '') +
+      getRandom().toString(16).replace('.', '') +
       '-' +
-      String(Math.random() * 31242)
+      String(getRandom() * 31242)
       .replace('.', '')
       .slice(0, 8)
     );
@@ -2265,9 +2304,8 @@ _.setQuery = function(params, isEncode) {
 _.getUtmFromPage = function() {
   var newObj = {};
   try {
-    var allpages = getCurrentPages();
-    var myvar = JSON.parse(JSON.stringify(allpages[allpages.length - 1].options));
-
+    var allpages = _.getCurrentPage();
+    var myvar = JSON.parse(JSON.stringify(allpages.options));
     for (var i in myvar) {
       myvar[i] = _.decodeURIComponent(myvar[i]);
     }
@@ -2281,13 +2319,13 @@ _.getUtmFromPage = function() {
 
 _.sendPageLeave = function() {
   var currentPage = {};
+  var router = '';
   try {
-    var pages = getCurrentPages();
-    currentPage = pages[pages.length - 1];
+    currentPage = _.getCurrentPage();
+    router = currentPage ? currentPage.route : '';
   } catch (error) {
     logger.info(error);
   }
-  var router = currentPage.route;
   if (page_show_time >= 0 && router !== '') {
     var prop = {};
     var title = _.getPageTitle(router);
@@ -2801,13 +2839,7 @@ sa.pageShow = function(prop) {
   var obj = {};
   var router = _.getCurrentPath();
   var title = _.getPageTitle(router);
-  var currentPage = {};
-  try {
-    var pages = getCurrentPages();
-    currentPage = pages[pages.length - 1];
-  } catch (error) {
-    logger.info(error);
-  }
+  var currentPage = _.getCurrentPage();
   if (sa.para.preset_properties.url_path === true) {
     sa.registerApp({
       $url_path: router
