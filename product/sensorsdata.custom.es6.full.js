@@ -197,7 +197,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.24',
+  LIB_VERSION = '1.14.25',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2215,11 +2215,16 @@ sa.setWebViewUrl = function(url, after_hash) {
     logger.info('error:请传入正确的 URL 格式');
     return false;
   }
-
-  url = decodeURIComponent(url);
+  if (!/^http(s)?:\/\//.test(url)) {
+    logger.info('warning: 请传入正确的 URL 格式');
+    return false;
+  }
   var reg = /([^?#]+)(\?[^#]*)?(#.*)?/,
     arr = reg.exec(url);
 
+  if (!arr) {
+    return false;
+  }
   var host = arr[1] || '',
     search = arr[2] || '',
     hash = arr[3] || '',
