@@ -93,10 +93,8 @@ var mpHook = {
   onShow: 1,
   onReady: 1,
   onPullDownRefresh: 1,
-  onReachBottom: 1,
   onShareAppMessage: 1,
   onShareTimeline: 1,
-  onPullDownRefresh: 1,
   onReachBottom: 1,
   onPageScroll: 1,
   onResize: 1,
@@ -203,7 +201,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.25',
+  LIB_VERSION = '1.14.26',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -518,12 +516,7 @@ _.strip_sa_properties = function(p) {
           logger.info('您的数据-', v, '的数组里的值必须是字符串,已经将其删除');
         }
       });
-      if (temp.length !== 0) {
-        p[k] = temp;
-      } else {
-        delete p[k];
-        logger.info('已经删除空的数组');
-      }
+      p[k] = temp;
     }
     if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v))) {
       logger.info('您的数据-', v, '-格式不满足要求，我们已经将其删除');
@@ -1135,7 +1128,7 @@ _.setPageSfSource = function(prop) {
     var myvar = JSON.parse(JSON.stringify(options));
     for (var i in myvar) {
       myvar[i] = _.decodeURIComponent(myvar[i]);
-    };
+    }
 
     if (!_.isEmptyObject(myvar) && myvar._sfs) {
       prop.$sf_source = myvar._sfs;
@@ -1162,25 +1155,33 @@ try {
 }
 
 _.setRefPage = function() {
-
+  var _refInfo = {
+    route: "直接打开",
+    title: "",
+  };
   try {
-    var pages = getCurrentPages();
-    if (pages && pages.length === 1) {
-      var current_path = pages[pages.length - 1].route;
+    var pages = _.getCurrentPage();
+    if (pages && pages.route) {
+      var current_path = pages.route;
       var current_title = _.getPageTitle(current_path);
-      var currentPageInfo = {
-        title: current_title,
-        route: current_path
-      };
+      _refInfo.route = current_path;
+      _refInfo.title = current_title;
 
-      if (page_route_map.length >= 2) {
-        if (page_route_map[page_route_map.length - 1].route !== currentPageInfo.route) {
-          page_route_map.push(currentPageInfo);
-          page_route_map.shift();
-        }
-      } else {
-        page_route_map.push(currentPageInfo);
+      var len = page_route_map.length,
+        path = "";
+
+      if (len >= 1) {
+        path = page_route_map[len - 1].route;
       }
+
+      if (path !== current_path) {
+        if (len >= 2) {
+          page_route_map.shift();
+          page_route_map.push(_refInfo);
+        } else {
+          page_route_map.push(_refInfo);
+        }
+      };
     }
   } catch (error) {
     logger.info(error);
@@ -1193,27 +1194,9 @@ _.getRefPage = function() {
     title: ''
   };
 
-  try {
-    var pages = getCurrentPages();
-    if (pages && pages.length >= 2) {
-      _refInfo.route = pages[pages.length - 2].route;
-      _refInfo.title = _.getPageTitle(_refInfo.route);
-    } else if (pages && pages.length >= 1) {
-      if (page_route_map.length >= 2) {
-        var refPages = page_route_map;
-        _refInfo.route = refPages[refPages.length - 2].route;
-        _refInfo.title = _.getPageTitle(_refInfo.route);
-      }
-
-      if (_refInfo.route === pages[pages.length - 1].route) {
-        _refInfo = {
-          title: '',
-          route: '直接打开'
-        };
-      }
-    }
-  } catch (error) {
-    logger.info(error);
+  if (page_route_map.length > 1) {
+    _refInfo.title = page_route_map[0].title;
+    _refInfo.route = page_route_map[0].route;
   }
   return _refInfo;
 };
@@ -1259,7 +1242,7 @@ _.getPageTitle = function(route) {
       });
       if (title.length === 0) {
         var finalTitle = _.extend(globalConfigTitle, pageConfigTitle);
-        title = finalTitle.titleVal;
+        title = finalTitle.titleVal || '';
       }
     }
   } catch (err) {
@@ -1494,6 +1477,7 @@ sa.prepareData = function(p, callback) {
     }
 
     var refPage = _.getRefPage();
+
     if (!data.properties.hasOwnProperty('$referrer')) {
       data.properties.$referrer = refPage.route;
     }
@@ -2221,16 +2205,19 @@ sa.setWebViewUrl = function(url, after_hash) {
     logger.info('error:请传入正确的 URL 格式');
     return false;
   }
+
   if (!/^http(s)?:\/\//.test(url)) {
     logger.info('warning: 请传入正确的 URL 格式');
     return false;
   }
+
   var reg = /([^?#]+)(\?[^#]*)?(#.*)?/,
     arr = reg.exec(url);
 
   if (!arr) {
     return false;
   }
+
   var host = arr[1] || '',
     search = arr[2] || '',
     hash = arr[3] || '',
@@ -2847,6 +2834,7 @@ sa.pageShow = function(prop) {
   var router = _.getCurrentPath();
   var title = _.getPageTitle(router);
   var currentPage = _.getCurrentPage();
+  _.setRefPage();
   if (sa.para.preset_properties.url_path === true) {
     sa.registerApp({
       $url_path: router
