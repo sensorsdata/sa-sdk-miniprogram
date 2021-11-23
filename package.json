@@ -20,5 +20,12 @@
   "bugs": {
     "url": "https://github.com/sensorsdata/sa-sdk-miniprogram/issues"
   },
-  "homepage": "https://github.com/sensorsdata/sa-sdk-miniprogram#readme"
+  "homepage": "https://github.com/sensorsdata/sa-sdk-miniprogram#readme",
+  "devDependencies": {
+    "eslint": "^8.0.1",
+    "husky": "^7.0.4"
+  },
+  "dependencies": {
+    "prettier": "^2.4.1"
+  }
 }

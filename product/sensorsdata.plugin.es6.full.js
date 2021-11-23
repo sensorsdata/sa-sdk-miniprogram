@@ -1,3 +1,5 @@
+var sa = {};
+
 function isObject(obj) {
   if (obj === undefined || obj === null) {
     return false;
@@ -37,9 +39,281 @@ function getRandom() {
   return getRandomBasic(10000000000000000000) / 10000000000000000000;
 }
 
-var _ = {};
+var kit = {};
 
-var sa = {};
+kit.buildData = function(p) {
+  var _ = sa._;
+  var data = {
+    distinct_id: sa.store.getDistinctId(),
+    lib: {
+      $lib: sa.lib_name,
+      $lib_method: 'code',
+      $lib_version: sa.lib_version
+    },
+    properties: {}
+  };
+
+  _.extend(data, sa.store.getUnionId(), p);
+
+  if (_.isObject(p.properties) && !_.isEmptyObject(p.properties)) {
+    _.extend(data.properties, p.properties);
+  }
+
+  if (!p.type || p.type.slice(0, 7) !== 'profile') {
+    data._track_id = Number(String(getRandom()).slice(2, 5) + String(getRandom()).slice(2, 4) + String(Date.now()).slice(-4));
+    data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
+    if (p.type === 'track') {
+      data.properties.$is_first_day = _.getIsFirstDay();
+    }
+
+    var refPage = _.getRefPage();
+    if (!data.properties.hasOwnProperty.call('$referrer')) {
+      data.properties.$referrer = refPage.route;
+    }
+
+    if (!data.properties.hasOwnProperty.call('$referrer_title')) {
+      data.properties.$referrer_title = refPage.title;
+    }
+  }
+  if (data.properties.$time && _.isDate(data.properties.$time)) {
+    data.time = data.properties.$time * 1;
+    delete data.properties.$time;
+  } else {
+    data.time = new Date() * 1;
+  }
+
+  _.parseSuperProperties(data.properties);
+  _.searchObjDate(data);
+  _.searchObjString(data);
+
+  return data;
+};
+
+kit.processData = function(data) {
+  return data;
+};
+
+kit.onceTrackData = function(data) {
+  return 'data=' + encodeTrackData(data);
+};
+
+kit.batchTrackData = function(data) {
+  return 'data_list=' + encodeTrackData(data);
+};
+
+
+function encodeTrackData(data) {
+  data = JSON.stringify(data);
+  var dataStr = sa._.base64Encode(data);
+  return encodeURIComponent(dataStr);
+}
+
+
+var mergeStorageData = {};
+
+mergeStorageData.getData = function(callback) {
+  wx.getStorage({
+    key: sa.para.storage_prepare_data_key,
+    complete: function(res) {
+      var queue = res.data && sa._.isArray(res.data) ? res.data : [];
+      mergeStorageData.deleteAesData(queue);
+      callback && callback();
+    }
+  });
+};
+
+mergeStorageData.deleteAesData = function(queue) {
+  var arr = [];
+  var queue_len = queue.length;
+  if (queue_len > 0) {
+    for (var i = 0; i < queue_len; i++) {
+      if (sa._.isObject(queue[i])) {
+        arr.push(queue[i]);
+      }
+    }
+    sa.store.mem.mdata = arr.concat(sa.store.mem.mdata);
+  }
+};
+
+var sendStrategy = {
+  dataHasSend: true,
+  dataHasChange: false,
+  syncStorage: false,
+  failTime: 0,
+  init: function() {
+    mergeStorageData.getData(sendStrategy.syncStorageState);
+    sendStrategy.batchInterval();
+  },
+  syncStorageState: function() {
+    sendStrategy.syncStorage = true;
+  },
+  onAppHide: function() {
+    if (sa.para.batch_send) {
+      this.batchSend();
+    }
+  },
+  send: function(data) {
+    this.dataHasChange = true;
+    if (sa.store.mem.getLength() >= 500) {
+      sa._.logger.info('数据量存储过大，有异常');
+      sa.store.mem.mdata.shift();
+    }
+
+    var now = Date.now();
+    data._flush_time = now;
+    data = kit.processData(data);
+    if (data) {
+      sa.store.mem.add(data);
+    }
+    if (sa.store.mem.getLength() >= sa.para.batch_send.max_length) {
+      this.batchSend();
+    }
+  },
+  wxrequest: function(option) {
+    if (sa._.isArray(option.data) && option.data.length > 0) {
+      var data = kit.batchTrackData(option.data);
+
+      sa._.wxrequest({
+        url: sa.para.server_url,
+        method: 'POST',
+        dataType: 'text',
+        data: data,
+        success: function() {
+          option.success(option.len);
+        },
+        fail: function() {
+          option.fail();
+        }
+      });
+    } else {
+      option.success(option.len);
+    }
+  },
+  batchSend: function() {
+    if (this.dataHasSend) {
+      var data,
+        len,
+        mdata = sa.store.mem.mdata;
+      if (mdata.length >= 100) {
+        data = mdata.slice(0, 100);
+      } else {
+        data = mdata;
+      }
+      len = data.length;
+      if (len > 0) {
+        this.dataHasSend = false;
+        this.wxrequest({
+          data: data,
+          len: len,
+          success: this.batchRemove.bind(this),
+          fail: this.sendFail.bind(this)
+        });
+      }
+    }
+  },
+  sendFail: function() {
+    this.dataHasSend = true;
+    this.failTime++;
+  },
+  batchRemove: function(len) {
+    sa.store.mem.clear(len);
+    this.dataHasSend = true;
+    this.dataHasChange = true;
+    this.batchWrite();
+    this.failTime = 0;
+  },
+  is_first_batch_write: true,
+  batchWrite: function() {
+    var me = this;
+    if (this.dataHasChange) {
+      if (this.is_first_batch_write) {
+        this.is_first_batch_write = false;
+        setTimeout(function() {
+          me.batchSend();
+        }, 1000);
+      }
+
+      this.dataHasChange = false;
+      if (this.syncStorage) {
+        sa._.setStorageSync(sa.para.storage_prepare_data_key, sa.store.mem.mdata);
+      }
+    }
+  },
+  batchInterval: function() {
+    var _this = this;
+
+    function loopWrite() {
+      setTimeout(function() {
+        _this.batchWrite();
+        loopWrite();
+      }, 500);
+    }
+
+    function loopSend() {
+      setTimeout(function() {
+        _this.batchSend();
+        loopSend();
+      }, sa.para.batch_send.send_timeout * Math.pow(2, _this.failTime));
+    }
+    loopWrite();
+    loopSend();
+  }
+};
+
+function getSendUrl(url, data) {
+  var encodeData = kit.onceTrackData(data);
+
+  if (url.indexOf('?') !== -1) {
+    return url + '&' + encodeData;
+  }
+  return url + '?' + encodeData;
+}
+
+function onceSend(data) {
+  data._flush_time = Date.now();
+  var url = getSendUrl(sa.para.server_url, data);
+  sa._.wxrequest({
+    url: url,
+    method: 'GET'
+  });
+}
+
+var saEvent = {};
+
+saEvent.send = function(p, callback) {
+  if (!sa.para.server_url) {
+    sa._.logger.info('error: server_url 不能为空');
+    return false;
+  }
+
+  if (sa.current_scene && sa.current_scene === 1154 && !sa.para.preset_events.moments_page) {
+    return false;
+  }
+
+  var data = sa.kit.buildData(p);
+  if (data) {
+    saEvent.debug(data);
+    sa.events.emit('send', data);
+    if (sa.para.batch_send) {
+      sendStrategy.send(data);
+    } else {
+      onceSend(data);
+    }
+  } else {
+    sa._.logger.info('error: 数据异常 ' + data);
+  }
+};
+
+saEvent.debug = function(data) {
+  sa._.logger.info(data);
+};
+
+
+var _ = {};
+sa.kit = kit;
+sa.mergeStorageData = mergeStorageData;
+sa.saEvent = saEvent;
+sa.sendStrategy = sendStrategy;
 
 sa.para = {
   name: 'sensors',
@@ -157,7 +431,7 @@ sa.setPara = function(para) {
   };
 
   if (para && para.datasend_timeout);
-  else if (!!sa.para.batch_send) {
+  else if (sa.para.batch_send) {
     sa.para.datasend_timeout = 10000;
   }
 
@@ -218,6 +492,7 @@ var current_scene = '';
 var is_first_launch = false;
 var wxSDKVersion = '';
 sa.lib_version = LIB_VERSION;
+sa.lib_name = LIB_NAME;
 
 var globalTitle = {};
 var page_route_map = [];
@@ -714,8 +989,8 @@ _.rot13obfs = function(str, code_len) {
 
 _.rot13defs = function(str) {
   var code_len = 13,
-    n = 126,
-    str = String(str);
+    n = 126;
+  str = String(str);
   return _.rot13obfs(str, n - code_len);
 };
 
@@ -1154,8 +1429,8 @@ try {
 
 _.setRefPage = function() {
   var _refInfo = {
-    route: "直接打开",
-    title: "",
+    route: '直接打开',
+    title: ''
   };
   try {
     var pages = _.getCurrentPage();
@@ -1166,7 +1441,7 @@ _.setRefPage = function() {
       _refInfo.title = current_title;
 
       var len = page_route_map.length,
-        path = "";
+        path = '';
 
       if (len >= 1) {
         path = page_route_map[len - 1].route;
@@ -1179,7 +1454,7 @@ _.setRefPage = function() {
         } else {
           page_route_map.push(_refInfo);
         }
-      };
+      }
     }
   } catch (error) {
     logger.info(error);
@@ -1196,6 +1471,7 @@ _.getRefPage = function() {
     _refInfo.title = page_route_map[0].title;
     _refInfo.route = page_route_map[0].route;
   }
+
   return _refInfo;
 };
 
@@ -1446,62 +1722,6 @@ sa.usePlugin = function(plugin, para) {
   }
 };
 
-sa.prepareData = function(p, callback) {
-  if (current_scene && current_scene === 1154 && !sa.para.preset_events.moments_page) {
-    return false;
-  }
-
-  var data = {
-    distinct_id: this.store.getDistinctId(),
-    lib: {
-      $lib: LIB_NAME,
-      $lib_method: 'code',
-      $lib_version: String(LIB_VERSION)
-    },
-    properties: {}
-  };
-
-  _.extend(data, this.store.getUnionId(), p);
-
-  if (_.isObject(p.properties) && !_.isEmptyObject(p.properties)) {
-    _.extend(data.properties, p.properties);
-  }
-
-  if (!p.type || p.type.slice(0, 7) !== 'profile') {
-    data._track_id = Number(String(getRandom()).slice(2, 5) + String(getRandom()).slice(2, 4) + String(Date.now()).slice(-4));
-    data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
-    if (p.type === 'track') {
-      data.properties.$is_first_day = _.getIsFirstDay();
-    }
-
-    var refPage = _.getRefPage();
-
-    if (!data.properties.hasOwnProperty('$referrer')) {
-      data.properties.$referrer = refPage.route;
-    }
-
-    if (!data.properties.hasOwnProperty('$referrer_title')) {
-      data.properties.$referrer_title = refPage.title;
-    }
-  }
-  if (data.properties.$time && _.isDate(data.properties.$time)) {
-    data.time = data.properties.$time * 1;
-    delete data.properties.$time;
-  } else {
-    data.time = new Date() * 1;
-  }
-
-  _.parseSuperProperties(data.properties);
-
-  _.searchObjDate(data);
-  _.searchObjString(data);
-
-  logger.info(data);
-  sa.events.emit('send', data);
-
-  sa.sendStrategy.send(data);
-};
-
 sa.store = {
   storageInfo: null,
   getUUID: function() {
@@ -1664,7 +1884,7 @@ sa.store = {
 };
 
 sa.setProfile = function(p, c) {
-  sa.prepareData({
+  sa.saEvent.send({
       type: 'profile_set',
       properties: p
     },
@@ -1673,7 +1893,7 @@ sa.setProfile = function(p, c) {
 };
 
 sa.setOnceProfile = function(p, c) {
-  sa.prepareData({
+  sa.saEvent.send({
       type: 'profile_set_once',
       properties: p
     },
@@ -1688,13 +1908,12 @@ sa.appendProfile = function(p, c) {
   _.each(p, function(value, item) {
     if (_.isString(value)) {
       p[item] = [value];
-    } else if (_.isArray(value));
-    else {
+    } else {
       delete p[item];
       logger.info('appendProfile属性的值必须是字符串或者数组');
     }
   });
-  sa.prepareData({
+  sa.saEvent.send({
       type: 'profile_append',
       properties: p
     },
@@ -1711,7 +1930,7 @@ sa.incrementProfile = function(p, c) {
     p = {};
     p[str] = 1;
   }
-  sa.prepareData({
+  sa.saEvent.send({
       type: 'profile_increment',
       properties: p
     },
@@ -1720,7 +1939,7 @@ sa.incrementProfile = function(p, c) {
 };
 
 sa.track = function(e, p, c) {
-  this.prepareData({
+  this.saEvent.send({
       type: 'track',
       event: e,
       properties: p
@@ -1752,7 +1971,7 @@ sa.identify = function(id, isSave) {
 sa.trackSignup = function(id, e, p, c) {
   var original_id = sa.store.getFirstId() || sa.store.getDistinctId();
   sa.store.set('distinct_id', id);
-  sa.prepareData({
+  sa.saEvent.send({
       original_id: original_id,
       distinct_id: id,
       type: 'track_signup',
@@ -1950,15 +2169,7 @@ sa.init = function(obj) {
     this.store.encryptStorage();
   }
   if (sa.para.batch_send) {
-    wx.getStorage({
-      key: sa.para.storage_prepare_data_key,
-      complete: function(res) {
-        var queue = res.data && _.isArray(res.data) ? res.data : [];
-        sa.store.mem.mdata = queue.concat(sa.store.mem.mdata);
-        sa.sendStrategy.syncStorage = true;
-      }
-    });
-    sa.sendStrategy.batchInterval();
+    sendStrategy.init();
   }
   sa.initialState.storeIsComplete = true;
   sa.initialState.checkIsComplete();
@@ -1980,196 +2191,6 @@ sa.getPresetProperties = function() {
     return obj;
   } else {
     return {};
-  }
-};
-
-_.autoExeQueue = function() {
-  var queue = {
-    items: [],
-    enqueue: function(val) {
-      this.items.push(val);
-      this.start();
-    },
-    dequeue: function() {
-      return this.items.shift();
-    },
-    getCurrentItem: function() {
-      return this.items[0];
-    },
-    isRun: false,
-    start: function() {
-      if (this.items.length > 0 && !this.isRun) {
-        this.isRun = true;
-        this.getCurrentItem().start();
-      }
-    },
-    close: function() {
-      this.dequeue();
-      this.isRun = false;
-      this.start();
-    }
-  };
-  return queue;
-};
-
-sa.requestQueue = function(para) {
-  this.url = para.url;
-};
-sa.requestQueue.prototype.isEnd = function() {
-  if (!this.received) {
-    this.received = true;
-    this.close();
-  }
-};
-sa.requestQueue.prototype.start = function() {
-  var me = this;
-  _.wxrequest({
-    url: this.url,
-    method: 'GET',
-    complete: function() {
-      me.isEnd();
-    }
-  });
-};
-
-sa.dataQueue = _.autoExeQueue();
-
-sa.sendStrategy = {
-  dataHasSend: true,
-  dataHasChange: false,
-  syncStorage: false,
-  failTime: 0,
-  onAppHide: function() {
-    if (sa.para.batch_send) {
-      this.batchSend();
-    }
-  },
-  send: function(data) {
-    if (!sa.para.server_url) {
-      return false;
-    }
-    if (sa.para.batch_send) {
-      this.dataHasChange = true;
-      if (sa.store.mem.getLength() >= 500) {
-        logger.info('数据量存储过大，有异常');
-        sa.store.mem.mdata.shift();
-      }
-      sa.store.mem.add(data);
-      if (sa.store.mem.getLength() >= sa.para.batch_send.max_length) {
-        this.batchSend();
-      }
-    } else {
-      this.queueSend(data);
-    }
-  },
-  queueSend: function(url) {
-    url._flush_time = Date.now();
-    url = JSON.stringify(url);
-    if (sa.para.server_url.indexOf('?') !== -1) {
-      url = sa.para.server_url + '&data=' + encodeURIComponent(_.base64Encode(url));
-    } else {
-      url = sa.para.server_url + '?data=' + encodeURIComponent(_.base64Encode(url));
-    }
-
-    var instance = new sa.requestQueue({
-      url: url
-    });
-    instance.close = function() {
-      sa.dataQueue.close();
-    };
-    sa.dataQueue.enqueue(instance);
-  },
-  wxrequest: function(option) {
-    if (_.isArray(option.data) && option.data.length > 0) {
-      var now = Date.now();
-      option.data.forEach(function(v) {
-        v._flush_time = now;
-      });
-      option.data = JSON.stringify(option.data);
-      _.wxrequest({
-        url: sa.para.server_url,
-        method: 'POST',
-        dataType: 'text',
-        data: 'data_list=' + encodeURIComponent(_.base64Encode(option.data)),
-        success: function() {
-          option.success(option.len);
-        },
-        fail: function() {
-          option.fail();
-        }
-      });
-    } else {
-      option.success(option.len);
-    }
-  },
-  batchSend: function() {
-    if (this.dataHasSend) {
-      var data,
-        len,
-        mdata = sa.store.mem.mdata;
-      if (mdata.length >= 100) {
-        data = mdata.slice(0, 100);
-      } else {
-        data = mdata;
-      }
-      len = data.length;
-      if (len > 0) {
-        this.dataHasSend = false;
-        this.wxrequest({
-          data: data,
-          len: len,
-          success: this.batchRemove.bind(this),
-          fail: this.sendFail.bind(this)
-        });
-      }
-    }
-  },
-  sendFail: function() {
-    this.dataHasSend = true;
-    this.failTime++;
-  },
-  batchRemove: function(len) {
-    sa.store.mem.clear(len);
-    this.dataHasSend = true;
-    this.dataHasChange = true;
-    this.batchWrite();
-    this.failTime = 0;
-  },
-  is_first_batch_write: true,
-  batchWrite: function() {
-    var me = this;
-    if (this.dataHasChange) {
-      if (this.is_first_batch_write) {
-        this.is_first_batch_write = false;
-        setTimeout(function() {
-          me.batchSend();
-        }, 1000);
-      }
-
-      this.dataHasChange = false;
-      if (this.syncStorage) {
-        sa._.setStorageSync(sa.para.storage_prepare_data_key, sa.store.mem.mdata);
-      }
-    }
-  },
-  batchInterval: function() {
-    var _this = this;
-
-    function loopWrite() {
-      setTimeout(function() {
-        _this.batchWrite();
-        loopWrite();
-      }, 500);
-    }
-
-    function loopSend() {
-      setTimeout(function() {
-        _this.batchSend();
-        loopSend();
-      }, sa.para.batch_send.send_timeout * Math.pow(2, _this.failTime));
-    }
-    loopWrite();
-    loopSend();
   }
 };
 
@@ -2471,6 +2492,7 @@ sa.autoTrackCustom = {
     var prop = {};
     if (para && para.scene) {
       current_scene = para.scene;
+      sa.current_scene = current_scene;
       prop.$scene = _.getMPScene(para.scene);
     } else {
       prop.$scene = '未取到值';
@@ -2522,6 +2544,7 @@ sa.autoTrackCustom = {
 
     if (para && para.scene) {
       current_scene = para.scene;
+      sa.current_scene = current_scene;
       prop.$scene = _.getMPScene(para.scene);
     } else {
       prop.$scene = '未取到值';
@@ -2577,7 +2600,7 @@ sa.autoTrackCustom = {
     } else if (sa.para.autoTrack && sa.para.autoTrack.appHide) {
       sa.autoTrackCustom.trackCustom('appHide', prop, '$MPHide');
     }
-    sa.sendStrategy.onAppHide();
+    sendStrategy.onAppHide();
   },
   pageLoad: function(para) {
     if (current_scene && current_scene === 1010 && para) {
@@ -2727,6 +2750,7 @@ sa.appLaunch = function(option, prop) {
   var obj = {};
   if (option && option.scene) {
     current_scene = option.scene;
+    sa.current_scene = current_scene;
     obj.$scene = _.getMPScene(option.scene);
   } else {
     obj.$scene = '未取到值';
@@ -2775,6 +2799,7 @@ sa.appShow = function(option, prop) {
   mpshow_time = new Date().getTime();
   if (option && option.scene) {
     current_scene = option.scene;
+    sa.current_scene = current_scene;
     obj.$scene = _.getMPScene(option.scene);
   } else {
     obj.$scene = '未取到值';
@@ -2824,7 +2849,7 @@ sa.appHide = function(prop) {
     obj = _.extend(obj, prop);
   }
   sa.track('$MPHide', obj);
-  sa.sendStrategy.onAppHide();
+  sendStrategy.onAppHide();
 };
 
 sa.pageShow = function(prop) {
@@ -2875,7 +2900,7 @@ sa.pageShow = function(prop) {
   sa.Page = function(option) {
     var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
 
-    if (!!methods) {
+    if (methods) {
       for (var i = 0, len = methods.length; i < len; i++) {
         click_proxy(option, methods[i]);
       }
@@ -2904,7 +2929,7 @@ sa.pageShow = function(prop) {
     try {
       var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
 
-      if (!!methods) {
+      if (methods) {
         for (var i = 0, len = methods.length; i < len; i++) {
           click_proxy(option.methods, methods[i]);
         }
