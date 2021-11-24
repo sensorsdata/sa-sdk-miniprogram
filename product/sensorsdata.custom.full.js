@@ -70,11 +70,11 @@ kit.buildData = function(p) {
     }
 
     var refPage = _.getRefPage();
-    if (!data.properties.hasOwnProperty.call('$referrer')) {
+    if (!data.properties.hasOwnProperty('$referrer')) {
       data.properties.$referrer = refPage.route;
     }
 
-    if (!data.properties.hasOwnProperty.call('$referrer_title')) {
+    if (!data.properties.hasOwnProperty('$referrer_title')) {
       data.properties.$referrer_title = refPage.title;
     }
   }
@@ -472,7 +472,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.27',
+  LIB_VERSION = '1.14.28',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1434,25 +1434,19 @@ _.setRefPage = function() {
   try {
     var pages = _.getCurrentPage();
     if (pages && pages.route) {
+      var url_query = pages.sensors_mp_url_query ? '?' + pages.sensors_mp_url_query : '';
       var current_path = pages.route;
       var current_title = _.getPageTitle(current_path);
-      _refInfo.route = current_path;
+      _refInfo.route = current_path + url_query;
       _refInfo.title = current_title;
 
-      var len = page_route_map.length,
-        path = '';
+      var len = page_route_map.length;
 
-      if (len >= 1) {
-        path = page_route_map[len - 1].route;
-      }
-
-      if (path !== current_path) {
-        if (len >= 2) {
-          page_route_map.shift();
-          page_route_map.push(_refInfo);
-        } else {
-          page_route_map.push(_refInfo);
-        }
+      if (len >= 2) {
+        page_route_map.shift();
+        page_route_map.push(_refInfo);
+      } else {
+        page_route_map.push(_refInfo);
       }
     }
   } catch (error) {
@@ -1474,11 +1468,21 @@ _.getRefPage = function() {
   return _refInfo;
 };
 
-_.setPageRefData = function(prop) {
+_.setPageRefData = function(prop, path, query) {
   var refPage = _.getRefPage();
+
   if (_.isObject(prop)) {
-    prop.$referrer = refPage.route;
-    prop.$referrer_title = refPage.title;
+    if (!path) {
+      prop.$referrer = refPage.route;
+      prop.$referrer_title = refPage.title;
+    } else if (page_route_map.length > 0 && path) {
+      query = query ? '?' + query : '';
+      prop.$referrer = _.getPath(path) + query;
+      prop.$referrer_title = _.getPageTitle(path);
+    } else {
+      prop.$referrer = '直接打开';
+      prop.$referrer_title = '';
+    }
   }
 };
 
@@ -2459,11 +2463,13 @@ sa.autoTrackCustom = {
 
     _.setLatestChannel(utms.pre2);
     _.setSfSource(para, prop);
-    _.setPageRefData(prop);
+
     sa.registerApp({
       $latest_scene: prop.$scene
     });
     prop.$url_query = _.setQuery(para.query);
+    _.setPageRefData(prop, para.path, prop.$url_query);
+
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
       sa.track('$MPShow', prop);
@@ -2715,7 +2721,7 @@ sa.appShow = function(option, prop) {
     $latest_scene: obj.$scene
   });
   obj.$url_query = _.setQuery(option.query);
-  _.setPageRefData(obj);
+  _.setPageRefData(obj, option.path, obj.$url_query);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
   }
