@@ -1,6 +1,6 @@
 {
   "name": "sa-sdk-miniprogram",
-  "version": "1.14.28",
+  "version": "1.14.29",
   "description": "sensorsdata miniprogram sdk",
   "main": "sensorsdata.min.js",
   "scripts": {
@@ -20,12 +20,5 @@
   "bugs": {
     "url": "https://github.com/sensorsdata/sa-sdk-miniprogram/issues"
   },
-  "homepage": "https://github.com/sensorsdata/sa-sdk-miniprogram#readme",
-  "devDependencies": {
-    "eslint": "^8.0.1",
-    "husky": "^7.0.4"
-  },
-  "dependencies": {
-    "prettier": "^2.4.1"
-  }
+  "homepage": "https://github.com/sensorsdata/sa-sdk-miniprogram#readme"
 }

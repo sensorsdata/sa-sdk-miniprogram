@@ -70,13 +70,7 @@ kit.buildData = function(p) {
     }
 
     var refPage = _.getRefPage();
-    if (!data.properties.hasOwnProperty('$referrer')) {
-      data.properties.$referrer = refPage.route;
-    }
-
-    if (!data.properties.hasOwnProperty('$referrer_title')) {
-      data.properties.$referrer_title = refPage.title;
-    }
+    setPublicPProperties(data);
   }
   if (data.properties.$time && _.isDate(data.properties.$time)) {
     data.time = data.properties.$time * 1;
@@ -109,6 +103,24 @@ function encodeTrackData(data) {
   data = JSON.stringify(data);
   var dataStr = sa._.base64Encode(data);
   return encodeURIComponent(dataStr);
+}
+
+function setPublicPProperties(data) {
+  if (data && data.properties) {
+    var refPage = sa._.getRefPage();
+    var pageInfo = sa._.getCurrentPageInfo();
+    var propertiesMap = {
+      $referrer: refPage.route,
+      $referrer_title: refPage.title,
+      $title: pageInfo.title,
+      $url: pageInfo.url
+    };
+    for (var key in propertiesMap) {
+      if (!data.properties.hasOwnProperty(key)) {
+        data.properties[key] = propertiesMap[key];
+      }
+    }
+  }
 }
 
 
@@ -476,7 +488,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.14.28',
+  LIB_VERSION = '1.14.29',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1472,6 +1484,20 @@ _.getRefPage = function() {
   return _refInfo;
 };
 
+_.getCurrentPageInfo = function() {
+  var pages = _.getCurrentPage();
+  var pageInfo = {
+    title: '',
+    url: ''
+  };
+  if (pages && pages.route) {
+    var query = pages.sensors_mp_url_query ? '?' + pages.sensors_mp_url_query : '';
+    pageInfo.title = _.getPageTitle(pages.route);
+    pageInfo.url = pages.route + query;
+  }
+  return pageInfo;
+};
+
 _.setPageRefData = function(prop, path, query) {
   var refPage = _.getRefPage();
 
@@ -1492,7 +1518,7 @@ _.setPageRefData = function(prop, path, query) {
 
 _.getPageTitle = function(route) {
   if (route === '未取到' || !route) {
-    return false;
+    return '';
   }
   var title = '';
   try {
@@ -1546,13 +1572,23 @@ _.wxrequest = function(obj) {
   }
 };
 
-_.getAppId = function() {
-  var info;
+_.getAppInfoSync = function() {
   if (wx.getAccountInfoSync) {
-    info = wx.getAccountInfoSync();
+    var info = wx.getAccountInfoSync(),
+      accountInfo = info && info.miniProgram ? info.miniProgram : {};
+    return {
+      appId: accountInfo.appId,
+      appEnv: accountInfo.envVersion,
+      appVersion: accountInfo.version
+    };
   }
-  if (_.isObject(info) && _.isObject(info.miniProgram)) {
-    return info.miniProgram.appId;
+  return {};
+};
+
+_.getAppId = function() {
+  var info = _.getAppInfoSync();
+  if (info && info.appId) {
+    return info.appId;
   }
 };
 
@@ -1644,15 +1680,20 @@ _.info = {
           e.$os = formatSystem(t['platform']);
           e.$os_version = t['system'].indexOf(' ') > -1 ? t['system'].split(' ')[1] : t['system'];
           wxSDKVersion = t['SDKVersion'];
+          e.$mp_client_app_version = t['version'];
+          e.$mp_client_basic_library_version = wxSDKVersion;
         },
         complete: function() {
           var timeZoneOffset = new Date().getTimezoneOffset();
-          var appId = _.getAppId();
+          var accountInfo = _.getAppInfoSync();
           if (_.isNumber(timeZoneOffset)) {
             e.$timezone_offset = timeZoneOffset;
           }
-          if (appId) {
-            e.$app_id = appId;
+          if (accountInfo.appId) {
+            e.$app_id = accountInfo.appId;
+          }
+          if (accountInfo.appVersion) {
+            e.$app_version = accountInfo.appVersion;
           }
           sa.initialState.systemIsComplete = true;
           sa.initialState.checkIsComplete();
@@ -2512,6 +2553,14 @@ sa.autoTrackCustom = {
     }
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
+      prop.$title = _.getPageTitle(para.path);
+
+      if (para.query && _.isObject(para.query)) {
+        var _query = _.setQuery(para.query);
+        _query = _query ? '?' + _query : '';
+        prop.$url = prop.$url_path + _query;
+      }
+
       if (sa.para.preset_properties.url_path === true) {
         sa.registerApp({
           $url_path: prop.$url_path
@@ -2566,6 +2615,7 @@ sa.autoTrackCustom = {
 
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
+      prop.$title = _.getPageTitle(para.path);
       if (sa.para.preset_properties.url_path === true) {
         sa.registerApp({
           $url_path: prop.$url_path
@@ -2587,7 +2637,9 @@ sa.autoTrackCustom = {
     });
     prop.$url_query = _.setQuery(para.query);
     _.setPageRefData(prop, para.path, prop.$url_query);
-
+    if (para && para.path) {
+      prop.$url = para.path + (prop.$url_query ? '?' + prop.$url_query : '');
+    }
     if (not_use_auto_track) {
       prop = _.extend(prop, not_use_auto_track);
       sa.track('$MPShow', prop);
@@ -2772,6 +2824,7 @@ sa.appLaunch = function(option, prop) {
   }
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
+    obj.$title = _.getPageTitle(option.path);
     if (sa.para.preset_properties.url_path === true) {
       sa.registerApp({
         $url_path: obj.$url_path
@@ -2797,6 +2850,7 @@ sa.appLaunch = function(option, prop) {
   });
 
   obj.$url_query = _.setQuery(option.query);
+  obj.$url = option.path + (obj.$url_query ? '?' + obj.$url_query : '');
   _.setPageRefData(prop);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);
@@ -2822,6 +2876,7 @@ sa.appShow = function(option, prop) {
 
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
+    obj.$title = _.getPageTitle(option.path);
     if (sa.para.preset_properties.url_path === true) {
       sa.registerApp({
         $url_path: obj.$url_path
@@ -2839,6 +2894,9 @@ sa.appShow = function(option, prop) {
     $latest_scene: obj.$scene
   });
   obj.$url_query = _.setQuery(option.query);
+  if (option && option.path) {
+    obj.$url = option.path + (obj.$url_query ? '?' + obj.$url_query : '');
+  }
   _.setPageRefData(obj, option.path, obj.$url_query);
   if (_.isObject(prop)) {
     obj = _.extend(obj, prop);

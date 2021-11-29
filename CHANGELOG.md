@@ -1,3 +1,8 @@
+## 1.14.29（2021-11-29）
+1.  新增
+    - 新增所有事件采集 `$url`、`$title`、`$mp_client_basic_library_version`、`$mp_client_app_version` 和 `$app_version` 属性
+    
+
 ## 1.14.28（2021-11-24）
 1.  优化
     - 优化 `$referrer` 取值为 `url` 完整路径带 `query` 参数
