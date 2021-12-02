@@ -1,3 +1,7 @@
+## 1.15.1（2021-12-2）
+1.  新增
+    - 新增支持数据传输加密
+
 ## 1.14.29（2021-11-29）
 1.  新增
     - 新增所有事件采集 `$url`、`$title`、`$mp_client_basic_library_version`、`$mp_client_app_version` 和 `$app_version` 属性
