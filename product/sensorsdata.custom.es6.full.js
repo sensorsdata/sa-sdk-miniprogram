@@ -45,6 +45,7 @@ kit.buildData = function(p) {
   var _ = sa._;
   var data = {
     distinct_id: sa.store.getDistinctId(),
+    identities: sa.store._state.identities,
     lib: {
       $lib: sa.lib_name,
       $lib_method: 'code',
@@ -52,6 +53,11 @@ kit.buildData = function(p) {
     },
     properties: {}
   };
+
+  if (p.type === 'track_id_unbind' && p.event === '$UnbindID') {
+    data.identities = _.deepCopy(p.unbind_value);
+    delete p.unbind_value;
+  }
 
   _.extend(data, sa.store.getUnionId(), p);
 
@@ -327,11 +333,17 @@ sa.mergeStorageData = mergeStorageData;
 sa.saEvent = saEvent;
 sa.sendStrategy = sendStrategy;
 
+sa.IDENTITY_KEY = {
+  EMAIL: '$identity_email',
+  MOBILE: '$identity_mobile'
+};
+
 sa.para = {
   name: 'sensors',
   server_url: '',
   send_timeout: 1000,
   show_log: false,
+  login_id_key: '$identity_login_id',
   allow_amend_share_path: true,
   max_string_length: 500,
   datasend_timeout: 3000,
@@ -481,7 +493,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.15.1',
+  LIB_VERSION = '1.16.1',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -656,6 +668,27 @@ _.isEmptyObject = function(obj) {
   return false;
 };
 
+_.deepCopy = function(obj) {
+  var temp = {};
+
+  function deepClone(target, source) {
+    for (var k in source) {
+      var item = source[k];
+      if (_.isArray(item)) {
+        target[k] = [];
+        deepClone(target[k], item);
+      } else if (_.isObject(item)) {
+        target[k] = {};
+        deepClone(target[k], item);
+      } else {
+        target[k] = item;
+      }
+    }
+  }
+  deepClone(temp, obj);
+  return temp;
+};
+
 _.isUndefined = function(obj) {
   return obj === void 0;
 };
@@ -684,6 +717,19 @@ _.isJSONString = function(str) {
   }
   return true;
 };
+
+_.isInteger =
+  Number.isInteger ||
+  function(value) {
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+  };
+
+_.isSafeInteger =
+  Number.isSafeInteger ||
+  function(value) {
+    return _.isInteger(value) && Math.abs(value) <= Math.pow(2, 53) - 1;
+  };
+
 _.decodeURIComponent = function(val) {
   var result = '';
   try {
@@ -781,6 +827,22 @@ _.unique = function(ar) {
     }
   }
   return n;
+};
+
+_.check = {
+  checkKeyword: function(para) {
+    var reg = /^((?!^distinct_id$|^original_id$|^device_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$|^user_group|^user_tag)[a-zA-Z_$][a-zA-Z\d_$]{0,99})$/i;
+    return reg.test(para);
+  },
+
+  ckeckIdLength: function(str) {
+    var temp = String(str);
+    if (temp.length > 255) {
+      logger.info('id 长度超过 255 个字符！');
+      return false;
+    }
+    return true;
+  }
 };
 
 _.strip_sa_properties = function(p) {
@@ -1406,7 +1468,7 @@ _.setPageSfSource = function(prop) {
   try {
     var allpages = _.getCurrentPage();
     var options = allpages ? allpages.options : '';
-    var myvar = JSON.parse(JSON.stringify(options));
+    var myvar = _.deepCopy(options);
     for (var i in myvar) {
       myvar[i] = _.decodeURIComponent(myvar[i]);
     }
@@ -1583,6 +1645,7 @@ _.getAppId = function() {
   if (info && info.appId) {
     return info.appId;
   }
+  return '';
 };
 
 _.validId = function(id) {
@@ -1596,6 +1659,9 @@ _.validId = function(id) {
       logger.info('输入 ID 类型错误');
       return false;
     }
+  }
+  if (!_.check.ckeckIdLength(id)) {
+    return false;
   }
   return id;
 };
@@ -1631,6 +1697,15 @@ _.setUpperCase = function(value) {
     return value.toLocaleUpperCase();
   }
   return value;
+};
+
+_.getOpenidNameByAppid = function() {
+  var appid = _.getAppId();
+  var key = '$mp_openid';
+  if (appid) {
+    key = '$mp_' + appid + '_openid';
+  }
+  return key;
 };
 
 _.info = {
@@ -1819,6 +1894,82 @@ sa.store = {
     } else {
       this.set('distinct_id', this.getUUID());
     }
+    var first_id = this._state._first_id || this._state.first_id;
+    var distinct_id = this._state._distinct_id || this._state.distinct_id;
+    var openid = this._state.openid;
+    var history_login_id = this._state.history_login_id ? this._state.history_login_id : {};
+    var old_login_id_name = history_login_id.name;
+    if (this._state.identities && _.isString(this._state.identities)) {
+      var identities = JSON.parse(_.rot13defs(this._state.identities));
+      this._state.identities = identities;
+    }
+
+    if (this._state.identities && _.isObject(this._state.identities) && !_.isEmptyObject(this._state.identities)) {
+      if (this._state.identities.hasOwnProperty('$identity_anonymous_id')) {
+        if (!first_id) {
+          this._state.identities.$identity_anonymous_id = distinct_id;
+        } else {
+          this._state.identities.$identity_anonymous_id = first_id;
+        }
+      }
+    } else {
+      this._state.identities = {};
+      this._state.identities.$mp_id = this.getUUID();
+      if (!first_id) {
+        this._state.identities.$identity_anonymous_id = distinct_id;
+      } else {
+        this._state.identities.$identity_anonymous_id = first_id;
+      }
+    }
+
+    if (openid) {
+      var key = _.getOpenidNameByAppid();
+      this._state.identities[key] = openid;
+    }
+
+    if (first_id) {
+      if (old_login_id_name && this._state.identities.hasOwnProperty(old_login_id_name)) {
+        if (this._state.identities[old_login_id_name] !== distinct_id) {
+          this._state.identities[old_login_id_name] = distinct_id;
+          for (var identitiesprop in this._state.identities) {
+            if (this._state.identities.hasOwnProperty(identitiesprop)) {
+              if (identitiesprop !== '$mp_id' && identitiesprop !== old_login_id_name) {
+                delete this._state.identities[identitiesprop];
+              }
+            }
+          }
+          this._state.history_login_id.value = distinct_id;
+        }
+      } else {
+        this._state.identities[sa.para.login_id_key] = distinct_id;
+        for (var identitiesprop in this._state.identities) {
+          if (this._state.identities.hasOwnProperty(identitiesprop)) {
+            if (identitiesprop !== '$mp_id' && identitiesprop !== sa.para.login_id_key) {
+              delete this._state.identities[identitiesprop];
+            }
+          }
+        }
+        this._state.history_login_id = {
+          name: sa.para.login_id_key,
+          value: distinct_id
+        };
+      }
+    } else {
+      if (this._state.identities.hasOwnProperty('$identity_login_id') || this._state.identities.hasOwnProperty(old_login_id_name)) {
+        for (var identitiesprop in this._state.identities) {
+          if (this._state.identities.hasOwnProperty(identitiesprop)) {
+            if (identitiesprop !== '$mp_id' && identitiesprop !== '$identity_anonymous_id') {
+              delete this._state.identities[identitiesprop];
+            }
+          }
+        }
+      }
+      this._state.history_login_id = {
+        name: '',
+        value: ''
+      };
+    }
+    this.save();
   },
   getFirstId: function() {
     return this._state._first_id || this._state.first_id;
@@ -1869,6 +2020,23 @@ sa.store = {
     }
     this.save();
   },
+  identitiesSet: function(name, id) {
+    var identities = {};
+    switch (name) {
+      case 'login':
+        identities.$mp_id = sa.store._state.identities.$mp_id;
+        identities[sa.para.login_id_key] = id;
+        break;
+      case 'logout':
+        identities.$mp_id = sa.store._state.identities.$mp_id;
+        break;
+      case 'identify':
+        identities = _.deepCopy(sa.store._state.identities);
+        identities.$identity_anonymous_id = id;
+        break;
+    }
+    sa.store.set('identities', identities);
+  },
   change: function(name, value) {
     this._state['_' + name] = value;
   },
@@ -1885,7 +2053,9 @@ sa.store = {
     sa._.setStorageSync(sa.para.storage_store_key, copyState);
   },
   save: function() {
-    var copyState = JSON.parse(JSON.stringify(this._state));
+    var copyState = _.deepCopy(this._state);
+    var identities = _.rot13obfs(JSON.stringify(copyState.identities));
+    copyState.identities = identities;
     delete copyState._first_id;
     delete copyState._distinct_id;
     if (sa.para.encrypt_storage) {
@@ -1918,7 +2088,14 @@ sa.store = {
       this.set({
         distinct_id: this.getUUID(),
         first_visit_time: visit_time,
-        first_visit_day_time: time.getTime()
+        first_visit_day_time: time.getTime(),
+        identities: {
+          $mp_id: this.getUUID()
+        },
+        history_login_id: {
+          name: '',
+          value: ''
+        }
       });
     }
   }
@@ -2006,6 +2183,7 @@ sa.identify = function(id, isSave) {
         sa.store.change('distinct_id', id);
       }
     }
+    sa.store.identitiesSet('identify', id);
   }
 };
 
@@ -2096,13 +2274,29 @@ sa.login = function(id) {
   if (id) {
     var firstId = sa.store.getFirstId();
     var distinctId = sa.store.getDistinctId();
-    if (id !== distinctId) {
+    if (sa.store._state.identities.hasOwnProperty(sa.para.login_id_key) && id === firstId) {
+      return false;
+    }
+
+
+    var isNewLoginId = !(sa.para.login_id_key === sa.store._state.history_login_id.name && sa.store._state.history_login_id.value === id);
+    if (isNewLoginId) {
+      sa.store._state.identities[sa.para.login_id_key] = id;
+    }
+    if (isNewLoginId) {
       if (firstId) {
         sa.trackSignup(id, '$SignUp');
       } else {
         sa.store.set('first_id', distinctId);
         sa.trackSignup(id, '$SignUp');
       }
+    }
+    if (isNewLoginId) {
+      sa.store.identitiesSet('login', id);
+      sa.store.set('history_login_id', {
+        name: sa.para.login_id_key,
+        value: id
+      });
     }
   }
 };
@@ -2127,6 +2321,11 @@ sa.logout = function(isChangeId) {
   } else {
     logger.info('没有first_id，logout失败');
   }
+  sa.store.identitiesSet('logout');
+  sa.store.set('history_login_id', {
+    name: '',
+    value: ''
+  });
 };
 
 sa.getLocation = function() {
@@ -2236,11 +2435,56 @@ sa.getPresetProperties = function() {
 };
 
 sa.setOpenid = function(openid, isCover) {
+  var openid = _.validId(openid);
+  if (!openid) {
+    return false;
+  }
+  var firstId = sa.store.getFirstId();
   sa.store.set('openid', openid);
   if (isCover) {
     sa.store.set('distinct_id', openid);
   } else {
     sa.identify(openid, true);
+    if (firstId) {
+      sa.store.set('first_id', openid);
+    } else {
+      sa.store.set('distinct_id', openid);
+    }
+  }
+  sa.bind('$mp_openid', openid);
+};
+
+sa.unsetOpenid = function(val) {
+  var id = _.validId(val);
+  if (!id) {
+    return false;
+  }
+  var openid = sa.store._state.openid;
+  if (openid === id) {
+    sa.store.set('openid', '');
+  }
+
+  sa.unbind('$mp_openid', id);
+};
+
+sa.setUnionid = function(val) {
+  var id = _.validId(val);
+  if (id) {
+    sa.bind('$mp_unionid', id);
+  }
+};
+
+sa.unsetUnionid = function(val) {
+  var id = _.validId(val);
+  if (id) {
+    if (sa.store._state.identities.hasOwnProperty('$mp_unionid') && id === sa.store._state.identities['$mp_unionid']) {
+      var openid = _.getOpenidNameByAppid();
+      if (sa.store._state.identities.hasOwnProperty(openid)) {
+        delete sa.store._state.identities[openid];
+        sa.store.save();
+      }
+    }
+    sa.unbind('$mp_unionid', id);
   }
 };
 
@@ -2257,6 +2501,95 @@ sa.initWithOpenid = function(options, callback) {
       callback(openid);
     }
     sa.init(options);
+  });
+};
+
+sa.bind = function(key, value) {
+  if (_.isNumber(value)) {
+    if (_.isInteger(value) && _.isSafeInteger(value) === false) {
+      logger.info('Value must be String');
+      return false;
+    }
+    value = String(value);
+  }
+  if (!_.isString(key)) {
+    logger.info('Key must be String');
+    return false;
+  }
+  if (!_.check.checkKeyword(key) || key === '$identity_anonymous_id' || key === '$mp_id' || key === '$identity_login_id' || key === sa.para.login_id_key) {
+    var info = 'Key [' + key + '] is invalid';
+    logger.info(info);
+    return false;
+  }
+  if (!value || value === '') {
+    logger.info('Value is empty or null');
+    return false;
+  }
+  if (!_.isString(value)) {
+    logger.info('Value must be String');
+    return false;
+  }
+  if (!_.check.ckeckIdLength(value)) {
+    var info = 'Value [' + value + '] is beyond the maximum length 255';
+    logger.info(info);
+    return false;
+  }
+  var identities = sa.store._state.identities;
+  if (key === '$mp_openid') {
+    key = _.getOpenidNameByAppid();
+  }
+  identities[key] = value;
+  sa.store.save();
+
+  sa.saEvent.send({
+    type: 'track_id_bind',
+    event: '$BindID'
+  });
+};
+
+sa.unbind = function(key, value) {
+  if (_.isNumber(value)) {
+    if (_.isInteger(value) && _.isSafeInteger(value) === false) {
+      logger.info('Value must be String');
+      return false;
+    }
+    value = String(value);
+  }
+  if (!_.isString(key)) {
+    logger.info('Key must be String');
+    return false;
+  }
+  if (!_.check.checkKeyword(key) || key === '$identity_anonymous_id' || key === '$mp_id' || key === '$identity_login_id' || key === sa.para.login_id_key) {
+    var info = 'Key [' + key + '] is invalid';
+    logger.info(info);
+    return false;
+  }
+  if (!value || value === '') {
+    logger.info('Value is empty or null');
+    return false;
+  }
+  if (!_.isString(value)) {
+    logger.info('Value must be String');
+    return false;
+  }
+  if (!_.check.ckeckIdLength(value)) {
+    var info = 'Value [' + value + '] is beyond the maximum length 255';
+    logger.info(info);
+    return false;
+  }
+  if (key === '$mp_openid') {
+    key = _.getOpenidNameByAppid();
+  }
+  if (sa.store._state.identities.hasOwnProperty(key) && value === sa.store._state.identities[key]) {
+    delete sa.store._state.identities[key];
+    sa.store.save();
+  }
+  var para = {};
+  para[key] = value;
+  sa.saEvent.send({
+    type: 'track_id_unbind',
+    event: '$UnbindID',
+    unbind_value: para
   });
 };
 
@@ -2325,7 +2658,7 @@ sa.setWebViewUrl = function(url, after_hash) {
   return nurl;
 };
 
-_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister'], function(method) {
+_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
     if (sa.initialState.isComplete) {
@@ -2359,7 +2692,7 @@ _.getUtmFromPage = function() {
   var newObj = {};
   try {
     var allpages = _.getCurrentPage();
-    var myvar = JSON.parse(JSON.stringify(allpages.options));
+    var myvar = _.deepCopy(allpages.options);
     for (var i in myvar) {
       myvar[i] = _.decodeURIComponent(myvar[i]);
     }
@@ -2822,6 +3155,16 @@ sa.pageShow = function(prop) {
   }
   sa.track('$MPViewScreen', obj);
 };
+
+if (global && global.sensors_data_pre_config) {
+  var key = global.sensors_data_pre_config.login_id_key;
+  if (key && _.isString(key) && _.check.checkKeyword(key) && key !== '$identity_anonymous_id' && key !== '$mp_id' && key !== '$mp_unionid') {
+    sa.para.login_id_key = key;
+  } else {
+    logger.info('设置自定义登录 ID 失败');
+  }
+}
+
 sa.initial();
 
 export default sa;
