@@ -75,7 +75,6 @@ kit.buildData = function(p) {
       data.properties.$is_first_day = _.getIsFirstDay();
     }
 
-    var refPage = _.getRefPage();
     setPublicPProperties(data);
   }
   if (data.properties.$time && _.isDate(data.properties.$time)) {
@@ -101,6 +100,10 @@ kit.onceTrackData = function(data) {
 };
 
 kit.batchTrackData = function(data) {
+  var now = Date.now();
+  data.forEach(function(v) {
+    v._flush_time = now;
+  });
   return 'data_list=' + encodeTrackData(data);
 };
 
@@ -121,6 +124,9 @@ function setPublicPProperties(data) {
       $title: pageInfo.title,
       $url: pageInfo.url
     };
+    if (sa.para.preset_properties.url_path === true) {
+      propertiesMap.$url_path = pageInfo.path;
+    }
     for (var key in propertiesMap) {
       if (!data.properties.hasOwnProperty(key)) {
         data.properties[key] = propertiesMap[key];
@@ -180,8 +186,6 @@ var sendStrategy = {
       sa.store.mem.mdata.shift();
     }
 
-    var now = Date.now();
-    data._flush_time = now;
     data = kit.processData(data);
     if (data) {
       sa.store.mem.add(data);
@@ -500,7 +504,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.16.1',
+  LIB_VERSION = '1.16.2',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1550,12 +1554,14 @@ _.getCurrentPageInfo = function() {
   var pages = _.getCurrentPage();
   var pageInfo = {
     title: '',
-    url: ''
+    url: '',
+    path: '未取到'
   };
   if (pages && pages.route) {
     var query = pages.sensors_mp_url_query ? '?' + pages.sensors_mp_url_query : '';
     pageInfo.title = _.getPageTitle(pages.route);
     pageInfo.url = pages.route + query;
+    pageInfo.path = pages.route;
   }
   return pageInfo;
 };
@@ -1708,11 +1714,11 @@ _.setUpperCase = function(value) {
 
 _.getOpenidNameByAppid = function() {
   var appid = _.getAppId();
-  var key = '$mp_openid';
+  var name = '$identity_mp_openid';
   if (appid) {
-    key = '$mp_' + appid + '_openid';
+    name = '$identity_mp_' + appid + '_openid';
   }
-  return key;
+  return name;
 };
 
 _.info = {
@@ -1911,7 +1917,31 @@ sa.store = {
       this._state.identities = identities;
     }
 
+    var openid_name = _.getOpenidNameByAppid();
+
     if (this._state.identities && _.isObject(this._state.identities) && !_.isEmptyObject(this._state.identities)) {
+      function getOldOpenidNameByAppid() {
+        var appid = _.getAppId();
+        var name = '$mp_openid';
+        if (appid) {
+          name = '$mp_' + appid + '_openid';
+        }
+        return name;
+      }
+      var old_openid_name = getOldOpenidNameByAppid();
+      if (this._state.identities.hasOwnProperty('$mp_id')) {
+        this._state.identities['$identity_mp_id'] = this._state.identities['$mp_id'];
+        delete this._state.identities['$mp_id'];
+      }
+      if (this._state.identities.hasOwnProperty('$mp_unionid')) {
+        this._state.identities['$identity_mp_unionid'] = this._state.identities['$mp_unionid'];
+        delete this._state.identities['$mp_unionid'];
+      }
+      if (this._state.identities.hasOwnProperty(old_openid_name)) {
+        this._state.identities[openid_name] = this._state.identities[old_openid_name];
+        delete this._state.identities[old_openid_name];
+      }
+
       if (this._state.identities.hasOwnProperty('$identity_anonymous_id')) {
         if (!first_id) {
           this._state.identities.$identity_anonymous_id = distinct_id;
@@ -1921,7 +1951,7 @@ sa.store = {
       }
     } else {
       this._state.identities = {};
-      this._state.identities.$mp_id = this.getUUID();
+      this._state.identities.$identity_mp_id = this.getUUID();
       if (!first_id) {
         this._state.identities.$identity_anonymous_id = distinct_id;
       } else {
@@ -1930,8 +1960,7 @@ sa.store = {
     }
 
     if (openid) {
-      var key = _.getOpenidNameByAppid();
-      this._state.identities[key] = openid;
+      this._state.identities[openid_name] = openid;
     }
 
     if (first_id) {
@@ -1940,7 +1969,7 @@ sa.store = {
           this._state.identities[old_login_id_name] = distinct_id;
           for (var identitiesprop in this._state.identities) {
             if (this._state.identities.hasOwnProperty(identitiesprop)) {
-              if (identitiesprop !== '$mp_id' && identitiesprop !== old_login_id_name) {
+              if (identitiesprop !== '$identity_mp_id' && identitiesprop !== old_login_id_name) {
                 delete this._state.identities[identitiesprop];
               }
             }
@@ -1951,7 +1980,7 @@ sa.store = {
         this._state.identities[sa.para.login_id_key] = distinct_id;
         for (var identitiesprop in this._state.identities) {
           if (this._state.identities.hasOwnProperty(identitiesprop)) {
-            if (identitiesprop !== '$mp_id' && identitiesprop !== sa.para.login_id_key) {
+            if (identitiesprop !== '$identity_mp_id' && identitiesprop !== sa.para.login_id_key) {
               delete this._state.identities[identitiesprop];
             }
           }
@@ -1965,7 +1994,7 @@ sa.store = {
       if (this._state.identities.hasOwnProperty('$identity_login_id') || this._state.identities.hasOwnProperty(old_login_id_name)) {
         for (var identitiesprop in this._state.identities) {
           if (this._state.identities.hasOwnProperty(identitiesprop)) {
-            if (identitiesprop !== '$mp_id' && identitiesprop !== '$identity_anonymous_id') {
+            if (identitiesprop !== '$identity_mp_id' && identitiesprop !== '$identity_anonymous_id') {
               delete this._state.identities[identitiesprop];
             }
           }
@@ -2031,11 +2060,11 @@ sa.store = {
     var identities = {};
     switch (name) {
       case 'login':
-        identities.$mp_id = sa.store._state.identities.$mp_id;
+        identities.$identity_mp_id = sa.store._state.identities.$identity_mp_id;
         identities[sa.para.login_id_key] = id;
         break;
       case 'logout':
-        identities.$mp_id = sa.store._state.identities.$mp_id;
+        identities.$identity_mp_id = sa.store._state.identities.$identity_mp_id;
         break;
       case 'identify':
         identities = _.deepCopy(sa.store._state.identities);
@@ -2097,7 +2126,7 @@ sa.store = {
         first_visit_time: visit_time,
         first_visit_day_time: time.getTime(),
         identities: {
-          $mp_id: this.getUUID()
+          $identity_mp_id: this.getUUID()
         },
         history_login_id: {
           name: '',
@@ -2430,10 +2459,12 @@ sa.getPresetProperties = function() {
         builtinProps[item] = value;
       }
     });
-    var obj = _.extend(builtinProps, {
+    var propertyObj = {
       $url_path: _.getCurrentPath(),
-      $is_first_day: _.getIsFirstDay()
-    }, _.info.properties, sa.store.getProps());
+      $is_first_day: _.getIsFirstDay(),
+      $is_first_time: is_first_launch
+    };
+    var obj = _.extend(builtinProps, propertyObj, _.info.properties, sa.store.getProps());
     delete obj.$lib;
     return obj;
   } else {
@@ -2446,19 +2477,12 @@ sa.setOpenid = function(openid, isCover) {
   if (!openid) {
     return false;
   }
-  var firstId = sa.store.getFirstId();
-  sa.store.set('openid', openid);
   if (isCover) {
-    sa.store.set('distinct_id', openid);
-  } else {
-    sa.identify(openid, true);
-    if (firstId) {
-      sa.store.set('first_id', openid);
-    } else {
-      sa.store.set('distinct_id', openid);
-    }
+    console.log('%c 当前版本 setOpenid 接口 已不支持传入第二个参数', 'color:#F39C12;font-size: 14px;');
   }
-  sa.bind('$mp_openid', openid);
+  sa.store.set('openid', openid);
+  sa.identify(openid, true);
+  sa.bind('$identity_mp_openid', openid);
 };
 
 sa.unsetOpenid = function(val) {
@@ -2471,27 +2495,28 @@ sa.unsetOpenid = function(val) {
     sa.store.set('openid', '');
   }
 
-  sa.unbind('$mp_openid', id);
+  sa.unbind('$identity_mp_openid', id);
 };
 
 sa.setUnionid = function(val) {
   var id = _.validId(val);
   if (id) {
-    sa.bind('$mp_unionid', id);
+    sa.bind('$identity_mp_unionid', id);
   }
 };
 
 sa.unsetUnionid = function(val) {
   var id = _.validId(val);
   if (id) {
-    if (sa.store._state.identities.hasOwnProperty('$mp_unionid') && id === sa.store._state.identities['$mp_unionid']) {
+    if (sa.store._state.identities.hasOwnProperty('$identity_mp_unionid') && id === sa.store._state.identities['$identity_mp_unionid']) {
       var openid = _.getOpenidNameByAppid();
       if (sa.store._state.identities.hasOwnProperty(openid)) {
         delete sa.store._state.identities[openid];
+        delete sa.store._state.openid;
         sa.store.save();
       }
     }
-    sa.unbind('$mp_unionid', id);
+    sa.unbind('$identity_mp_unionid', id);
   }
 };
 
@@ -2511,7 +2536,7 @@ sa.initWithOpenid = function(options, callback) {
   });
 };
 
-sa.bind = function(key, value) {
+sa.bind = function(name, value) {
   if (_.isNumber(value)) {
     if (_.isInteger(value) && _.isSafeInteger(value) === false) {
       logger.info('Value must be String');
@@ -2519,12 +2544,12 @@ sa.bind = function(key, value) {
     }
     value = String(value);
   }
-  if (!_.isString(key)) {
+  if (!_.isString(name)) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(key) || key === '$identity_anonymous_id' || key === '$mp_id' || key === '$identity_login_id' || key === sa.para.login_id_key) {
-    var info = 'Key [' + key + '] is invalid';
+  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+    var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
   }
@@ -2542,10 +2567,10 @@ sa.bind = function(key, value) {
     return false;
   }
   var identities = sa.store._state.identities;
-  if (key === '$mp_openid') {
-    key = _.getOpenidNameByAppid();
+  if (name === '$identity_mp_openid') {
+    name = _.getOpenidNameByAppid();
   }
-  identities[key] = value;
+  identities[name] = value;
   sa.store.save();
 
   sa.saEvent.send({
@@ -2554,7 +2579,7 @@ sa.bind = function(key, value) {
   });
 };
 
-sa.unbind = function(key, value) {
+sa.unbind = function(name, value) {
   if (_.isNumber(value)) {
     if (_.isInteger(value) && _.isSafeInteger(value) === false) {
       logger.info('Value must be String');
@@ -2562,12 +2587,12 @@ sa.unbind = function(key, value) {
     }
     value = String(value);
   }
-  if (!_.isString(key)) {
+  if (!_.isString(name)) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(key) || key === '$identity_anonymous_id' || key === '$mp_id' || key === '$identity_login_id' || key === sa.para.login_id_key) {
-    var info = 'Key [' + key + '] is invalid';
+  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+    var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
   }
@@ -2584,15 +2609,15 @@ sa.unbind = function(key, value) {
     logger.info(info);
     return false;
   }
-  if (key === '$mp_openid') {
-    key = _.getOpenidNameByAppid();
+  if (name === '$identity_mp_openid') {
+    name = _.getOpenidNameByAppid();
   }
-  if (sa.store._state.identities.hasOwnProperty(key) && value === sa.store._state.identities[key]) {
-    delete sa.store._state.identities[key];
+  if (sa.store._state.identities.hasOwnProperty(name) && value === sa.store._state.identities[name]) {
+    delete sa.store._state.identities[name];
     sa.store.save();
   }
   var para = {};
-  para[key] = value;
+  para[name] = value;
   sa.saEvent.send({
     type: 'track_id_unbind',
     event: '$UnbindID',
@@ -2665,7 +2690,7 @@ sa.setWebViewUrl = function(url, after_hash) {
   return nurl;
 };
 
-_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind'], function(method) {
+_.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
     if (sa.initialState.isComplete) {
@@ -2893,12 +2918,6 @@ sa.autoTrackCustom = {
         _query = _query ? '?' + _query : '';
         prop.$url = prop.$url_path + _query;
       }
-
-      if (sa.para.preset_properties.url_path === true) {
-        sa.registerApp({
-          $url_path: prop.$url_path
-        });
-      }
     }
     _.setShareInfo(para, prop);
     var utms = _.setUtm(para, prop);
@@ -2949,11 +2968,6 @@ sa.autoTrackCustom = {
     if (para && para.path) {
       prop.$url_path = _.getPath(para.path);
       prop.$title = _.getPageTitle(para.path);
-      if (sa.para.preset_properties.url_path === true) {
-        sa.registerApp({
-          $url_path: prop.$url_path
-        });
-      }
     }
     if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
       sa.getLocation();
@@ -3026,11 +3040,6 @@ sa.autoTrackCustom = {
       sa.para.onshow(sa, router, this);
     } else if (!(_.isObject(sa.para.autotrack_exclude_page) && _.isArray(sa.para.autotrack_exclude_page.pageShow) && sa.para.autotrack_exclude_page.pageShow.indexOf(router) !== -1)) {
       sa.autoTrackCustom.trackCustom('pageShow', prop, '$MPViewScreen');
-    }
-    if (sa.para.preset_properties.url_path === true) {
-      sa.registerApp({
-        $url_path: router
-      });
     }
   },
   pageShare: function(option) {
@@ -3158,11 +3167,6 @@ sa.appLaunch = function(option, prop) {
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
     obj.$title = _.getPageTitle(option.path);
-    if (sa.para.preset_properties.url_path === true) {
-      sa.registerApp({
-        $url_path: obj.$url_path
-      });
-    }
   }
   _.setShareInfo(option, obj);
   var utms = _.setUtm(option, obj);
@@ -3210,11 +3214,6 @@ sa.appShow = function(option, prop) {
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
     obj.$title = _.getPageTitle(option.path);
-    if (sa.para.preset_properties.url_path === true) {
-      sa.registerApp({
-        $url_path: obj.$url_path
-      });
-    }
   }
   if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
     sa.getLocation();
@@ -3258,11 +3257,6 @@ sa.pageShow = function(prop) {
   var title = _.getPageTitle(router);
   var currentPage = _.getCurrentPage();
   _.setRefPage();
-  if (sa.para.preset_properties.url_path === true) {
-    sa.registerApp({
-      $url_path: router
-    });
-  }
   if (title) {
     obj.$title = title;
   }
@@ -3298,6 +3292,9 @@ sa.pageShow = function(prop) {
   });
 
   sa.Page = function(option) {
+    if (!option) {
+      option = {};
+    }
     var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
 
     if (methods) {
@@ -3327,6 +3324,12 @@ sa.pageShow = function(prop) {
   };
   sa.Component = function(option) {
     try {
+      if (!option) {
+        option = {};
+      }
+      if (!option.methods) {
+        option.methods = {};
+      }
       var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
 
       if (methods) {
@@ -3340,7 +3343,7 @@ sa.pageShow = function(prop) {
       }
 
       if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-        pageLeaveProxy(option);
+        pageLeaveProxy(option.methods);
       }
 
       mp_proxy(option.methods, 'onLoad', 'pageLoad');
@@ -3360,9 +3363,9 @@ sa.pageShow = function(prop) {
 }
 
 if (global && global.sensors_data_pre_config) {
-  var key = global.sensors_data_pre_config.login_id_key;
-  if (key && _.isString(key) && _.check.checkKeyword(key) && key !== '$identity_anonymous_id' && key !== '$mp_id' && key !== '$mp_unionid') {
-    sa.para.login_id_key = key;
+  var name = global.sensors_data_pre_config.login_id_key;
+  if (name && _.isString(name) && _.check.checkKeyword(name) && name !== '$identity_anonymous_id' && name !== '$mp_id' && name !== '$identity_mp_id' && name !== '$identity_mp_unionid' && name !== '$mp_unionid' && name !== '$identity_mp_openid' && name !== '$mp_openid') {
+    sa.para.login_id_key = name;
   } else {
     logger.info('设置自定义登录 ID 失败');
   }
