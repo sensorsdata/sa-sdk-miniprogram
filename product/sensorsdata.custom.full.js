@@ -500,7 +500,7 @@ var ArrayProto = Array.prototype,
   slice = ArrayProto.slice,
   toString$1 = ObjProto.toString,
   hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.16.2',
+  LIB_VERSION = '1.16.3',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2478,7 +2478,10 @@ sa.setOpenid = function(openid, isCover) {
   }
   sa.store.set('openid', openid);
   sa.identify(openid, true);
-  sa.bind('$identity_mp_openid', openid);
+
+  var name = _.getOpenidNameByAppid();
+  sa.store._state.identities[name] = openid;
+  sa.store.save();
 };
 
 sa.unsetOpenid = function(val) {
@@ -2491,13 +2494,18 @@ sa.unsetOpenid = function(val) {
     sa.store.set('openid', '');
   }
 
-  sa.unbind('$identity_mp_openid', id);
+  var name = _.getOpenidNameByAppid();
+  if (sa.store._state.identities.hasOwnProperty(name) && id === sa.store._state.identities[name]) {
+    delete sa.store._state.identities[name];
+    sa.store.save();
+  }
 };
 
 sa.setUnionid = function(val) {
   var id = _.validId(val);
   if (id) {
-    sa.bind('$identity_mp_unionid', id);
+    sa.store._state.identities['$identity_mp_unionid'] = id;
+    sa.store.save();
   }
 };
 
@@ -2511,8 +2519,9 @@ sa.unsetUnionid = function(val) {
         delete sa.store._state.openid;
         sa.store.save();
       }
+      delete sa.store._state.identities['$identity_mp_unionid'];
+      sa.store.save();
     }
-    sa.unbind('$identity_mp_unionid', id);
   }
 };
 
@@ -2544,7 +2553,7 @@ sa.bind = function(name, value) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$mp_openid' || name === '$identity_mp_openid' || name === '$identity_mp_unionid' || name === '$mp_unionid' || name === '$identity_login_id' || name === sa.para.login_id_key) {
     var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
@@ -2563,9 +2572,6 @@ sa.bind = function(name, value) {
     return false;
   }
   var identities = sa.store._state.identities;
-  if (name === '$identity_mp_openid') {
-    name = _.getOpenidNameByAppid();
-  }
   identities[name] = value;
   sa.store.save();
 
@@ -2587,7 +2593,7 @@ sa.unbind = function(name, value) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$mp_openid' || name === '$identity_mp_openid' || name === '$identity_mp_unionid' || name === '$mp_unionid' || name === '$identity_login_id' || name === sa.para.login_id_key) {
     var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
@@ -2604,9 +2610,6 @@ sa.unbind = function(name, value) {
     var info = 'Value [' + value + '] is beyond the maximum length 255';
     logger.info(info);
     return false;
-  }
-  if (name === '$identity_mp_openid') {
-    name = _.getOpenidNameByAppid();
   }
   if (sa.store._state.identities.hasOwnProperty(name) && value === sa.store._state.identities[name]) {
     delete sa.store._state.identities[name];
