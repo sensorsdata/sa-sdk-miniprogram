@@ -3,6 +3,41 @@
 
 var sa = {};
 
+
+var nativeIsArray = Array.isArray,
+  ObjProto = Object.prototype,
+  ArrayProto = Array.prototype;
+
+var nativeForEach = ArrayProto.forEach,
+  nativeIndexOf = ArrayProto.indexOf,
+  toString = ObjProto.toString,
+  hasOwnProperty = ObjProto.hasOwnProperty,
+  slice = ArrayProto.slice;
+
+var each = function(obj, iterator, context) {
+  if (obj == null) {
+    return false;
+  }
+  var breaker = {};
+  if (nativeForEach && obj.forEach === nativeForEach) {
+    obj.forEach(iterator, context);
+  } else if (obj.length === +obj.length) {
+    for (var i = 0, l = obj.length; i < l; i++) {
+      if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) {
+        return false;
+      }
+    }
+  } else {
+    for (var item in obj) {
+      if (hasOwnProperty.call(obj, item)) {
+        if (iterator.call(context, obj[item], item, obj) === breaker) {
+          return false;
+        }
+      }
+    }
+  }
+};
+
 function isObject(obj) {
   if (obj === undefined || obj === null) {
     return false;
@@ -41,6 +76,210 @@ function getRandom() {
   }
   return getRandomBasic(10000000000000000000) / 10000000000000000000;
 }
+
+function extend(obj) {
+  each(slice.call(arguments, 1), function(source) {
+    for (var prop in source) {
+      if (source[prop] !== void 0) {
+        obj[prop] = source[prop];
+      }
+    }
+  });
+  return obj;
+}
+
+function extend2Lev(obj) {
+  each(slice.call(arguments, 1), function(source) {
+    for (var prop in source) {
+      if (source[prop] !== void 0 && source[prop] !== null) {
+        if (isObject(source[prop]) && isObject(obj[prop])) {
+          extend(obj[prop], source[prop]);
+        } else {
+          obj[prop] = source[prop];
+        }
+      }
+    }
+  });
+  return obj;
+}
+
+function coverExtend(obj) {
+  each(slice.call(arguments, 1), function(source) {
+    for (var prop in source) {
+      if (source[prop] !== void 0 && obj[prop] === void 0) {
+        obj[prop] = source[prop];
+      }
+    }
+  });
+  return obj;
+}
+
+var isArray =
+  nativeIsArray ||
+  function(obj) {
+    return toString.call(obj) === '[object Array]';
+  };
+
+function isFunction(f) {
+  try {
+    return /^\s*\bfunction\b/.test(f);
+  } catch (x) {
+    return false;
+  }
+}
+
+function isArguments(obj) {
+  return !!(obj && hasOwnProperty.call(obj, 'callee'));
+}
+
+function toArray(iterable) {
+  if (!iterable) {
+    return [];
+  }
+  if (iterable.toArray) {
+    return iterable.toArray();
+  }
+  if (isArray(iterable)) {
+    return slice.call(iterable);
+  }
+  if (isArguments(iterable)) {
+    return slice.call(iterable);
+  }
+  return values(iterable);
+}
+
+function values(obj) {
+  var results = [];
+  if (obj == null) {
+    return results;
+  }
+  each(obj, function(value) {
+    results[results.length] = value;
+  });
+  return results;
+}
+
+function include(obj, target) {
+  var found = false;
+  if (obj == null) {
+    return found;
+  }
+  if (nativeIndexOf && obj.indexOf === nativeIndexOf) {
+    return obj.indexOf(target) != -1;
+  }
+  each(obj, function(value) {
+    if (found || (found = value === target)) {
+      return {};
+    }
+  });
+  return found;
+}
+
+function trim(str) {
+  return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+}
+
+function isEmptyObject(obj) {
+  if (isObject(obj)) {
+    for (var item in obj) {
+      if (hasOwnProperty.call(obj, item)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+function deepCopy(obj) {
+  var temp = {};
+
+  function deepClone(target, source) {
+    for (var k in source) {
+      var item = source[k];
+      if (isArray(item)) {
+        target[k] = [];
+        deepClone(target[k], item);
+      } else if (isObject(item)) {
+        target[k] = {};
+        deepClone(target[k], item);
+      } else {
+        target[k] = item;
+      }
+    }
+  }
+  deepClone(temp, obj);
+  return temp;
+}
+
+function isUndefined(obj) {
+  return obj === void 0;
+}
+
+function isString(obj) {
+  return toString.call(obj) == '[object String]';
+}
+
+function isDate(obj) {
+  return toString.call(obj) == '[object Date]';
+}
+
+function isBoolean(obj) {
+  return toString.call(obj) == '[object Boolean]';
+}
+
+function isNumber(obj) {
+  return toString.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj));
+}
+
+function isJSONString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+var isInteger =
+  Number.isInteger ||
+  function(value) {
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+  };
+
+var isSafeInteger =
+  Number.isSafeInteger ||
+  function(value) {
+    return isInteger(value) && Math.abs(value) <= Math.pow(2, 53) - 1;
+  };
+
+var _ = {
+  each,
+  isObject,
+  getRandomBasic,
+  getRandom,
+  extend,
+  extend2Lev,
+  coverExtend,
+  isArray,
+  isFunction,
+  isArguments,
+  toArray,
+  values,
+  include,
+  trim,
+  isEmptyObject,
+  deepCopy,
+  isUndefined,
+  isString,
+  isDate,
+  isBoolean,
+  isNumber,
+  isJSONString,
+  isInteger,
+  isSafeInteger,
+  slice
+};
 
 var kit = {};
 
@@ -333,17 +572,333 @@ saEvent.debug = function(data) {
   sa._.logger.info(data);
 };
 
+var meta = {
+  init_status: false,
+  life_state: {
+    app_launched: false
+  },
+  plugin: {
+    init_list: [],
+    uninitialized_list: []
+  },
+  privacy: {
+    enable_data_collect: false
+  },
+  mp_hook: {
+    data: 1,
+    onLoad: 1,
+    onShow: 1,
+    onReady: 1,
+    onPullDownRefresh: 1,
+    onShareAppMessage: 1,
+    onShareTimeline: 1,
+    onReachBottom: 1,
+    onPageScroll: 1,
+    onResize: 1,
+    onTabItemTap: 1,
+    onHide: 1,
+    onUnload: 1
+  }
+};
 
-var _ = {};
+sa.popupEmitter = {
+  attached: function() {
+    return false;
+  }
+};
+
+var usePlugin = function(plugin, para) {
+  if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
+    if (typeof plugin.init === 'function') {
+      plugin.init(sa, para);
+    }
+    return false;
+  }
+
+  if (!meta.init_status) {
+    var item = {
+      target: plugin,
+      para: para
+    };
+    meta.plugin.uninitialized_list.push(item);
+  } else {
+    if (typeof plugin.init === 'function') {
+      plugin.init(sa, para);
+    }
+  }
+};
+
+var checkPluginInitStatus = function() {
+  if (meta.plugin.uninitialized_list.length > 0) {
+    for (var temp in meta.plugin.uninitialized_list) {
+      var plugin_item = meta.plugin.uninitialized_list[temp];
+      if (plugin_item && plugin_item.target && typeof plugin_item.target.init === 'function') {
+        plugin_item.target.init(sa, plugin_item.para);
+      }
+    }
+    meta.plugin.uninitialized_list = [];
+  }
+};
+
+function checkPrivacyStatus() {
+  var is_compliance_enabled;
+  if (global && global.sensors_data_pre_config) {
+    is_compliance_enabled = global.sensors_data_pre_config.is_compliance_enabled ? global.sensors_data_pre_config.is_compliance_enabled : false;
+  }
+  if (!is_compliance_enabled) {
+    return true;
+  }
+
+  if (meta.init_status) {
+    return true;
+  }
+
+  if (meta.privacy.enable_data_collect) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function enableDataCollect() {
+  meta.privacy.enable_data_collect = true;
+}
+
+function initAppProxy() {
+  var oldApp = App;
+  App = function(option) {
+    option[sa.para.name] = sa;
+    oldApp.apply(this, arguments);
+  };
+
+  monitorApp();
+}
+
+function monitorApp() {
+  wx.onAppShow(function(para) {
+    if (!meta.life_state.app_launched) {
+      var option = wx.getLaunchOptionsSync() || {};
+      sa.autoTrackCustom.appLaunch(option);
+    }
+    sa.autoTrackCustom.appShow(para);
+  });
+
+  wx.onAppHide(function() {
+    sa.autoTrackCustom.appHide();
+  });
+}
+
+function checkAppLaunch() {
+  if (!meta.life_state.app_launched) {
+    var option = wx.getLaunchOptionsSync() || {};
+    sa.autoTrackCustom.appLaunch(option);
+  }
+}
+
+function mpProxy(option, method, identifier) {
+  var newFunc = sa.autoTrackCustom[identifier];
+  if (option[method]) {
+    var oldFunc = option[method];
+    option[method] = function() {
+      if (!sa.para.autoTrackIsFirst || (isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])) {
+        oldFunc.apply(this, arguments);
+        newFunc.apply(this, arguments);
+      } else if (sa.para.autoTrackIsFirst === true || (isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])) {
+        newFunc.apply(this, arguments);
+        oldFunc.apply(this, arguments);
+      }
+    };
+  } else {
+    option[method] = function() {
+      newFunc.apply(this, arguments);
+    };
+  }
+}
+
+function clickTrack(events) {
+  var prop = {},
+    event_prop = {},
+    type = '';
+  var current_target = events.currentTarget || {};
+  var target = events.target || {};
+  if (isObject(sa.para.framework) && isObject(sa.para.framework.taro) && !sa.para.framework.taro.createApp) {
+    if (target.id && current_target.id && target.id !== current_target.id) {
+      return false;
+    }
+  }
+
+  var dataset = current_target.dataset || {};
+  type = events['type'];
+  prop['$element_id'] = current_target.id;
+  prop['$element_type'] = dataset['type'];
+  prop['$element_content'] = dataset['content'];
+  prop['$element_name'] = dataset['name'];
+  if (isObject(events.event_prop)) {
+    event_prop = events.event_prop;
+  }
+  if (type && isClick(type)) {
+    if (sa.para.preset_events && sa.para.preset_events.collect_element && sa.para.preset_events.collect_element(arguments[0]) === false) {
+      return false;
+    }
+    prop['$url_path'] = sa._.getCurrentPath();
+    sa._.setPageRefData(prop);
+    prop = sa._.extend(prop, event_prop);
+    sa.track('$MPClick', prop);
+  }
+}
+
+function clickProxy(option, method) {
+  var oldFunc = option[method];
+  option[method] = function() {
+    var res = oldFunc.apply(this, arguments);
+    var args = arguments[0];
+
+    if (isObject(args)) {
+      if (sa.para.preset_events.defer_track) {
+        setTimeout(function() {
+          clickTrack(args);
+        }, 0);
+      } else {
+        clickTrack(args);
+      }
+    }
+    return res;
+  };
+}
+
+function isClick(type) {
+  var mp_taps = {
+    tap: 1,
+    longpress: 1,
+    longtap: 1
+  };
+  return !!mp_taps[type];
+}
+
+function tabProxy(option) {
+  var oldTab = option['onTabItemTap'];
+  option['onTabItemTap'] = function(item) {
+    if (oldTab) {
+      oldTab.apply(this, arguments);
+    }
+    var prop = {};
+
+    if (item) {
+      prop['$element_content'] = item.text;
+    }
+    prop['$element_type'] = 'tabBar';
+    prop['$url_path'] = sa._.getCurrentPath();
+    sa._.setPageRefData(prop);
+    sa.track('$MPClick', prop);
+  };
+}
+
+function getMethods(option) {
+  var mp_hook = meta.mp_hook;
+  var methods = [];
+  for (var m in option) {
+    if (typeof option[m] === 'function' && !mp_hook[m]) {
+      methods.push(m);
+    }
+  }
+  return methods;
+}
+
+function pageLeaveProxy(option) {
+  var oldHide = option['onHide'];
+  option['onHide'] = function() {
+    if (oldHide) {
+      oldHide.apply(this, arguments);
+    }
+    sa._.sendPageLeave();
+  };
+  var oldUnload = option['onUnload'];
+  option['onUnload'] = function() {
+    if (oldUnload) {
+      oldUnload.apply(this, arguments);
+    }
+    sa._.sendPageLeave();
+  };
+}
+
+function initPageProxy() {
+  var oldPage = Page;
+  Page = function(option) {
+    try {
+      if (!option) {
+        option = {};
+      }
+      monitorClick(option);
+      monitorHooks(option);
+      oldPage.apply(this, arguments);
+    } catch (error) {
+      oldPage.apply(this, arguments);
+    }
+  };
+
+  var oldComponent = Component;
+  Component = function(option) {
+    try {
+      if (!option) {
+        option = {};
+      }
+      if (!option.methods) {
+        option.methods = {};
+      }
+      monitorClick(option.methods);
+      monitorHooks(option.methods);
+      oldComponent.apply(this, arguments);
+    } catch (e) {
+      oldComponent.apply(this, arguments);
+    }
+  };
+}
+
+function monitorClick(option) {
+  var methods = [];
+  if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
+    methods = getMethods(option);
+    tabProxy(option);
+
+    var len = methods.length;
+    for (var i = 0; i < len; i++) {
+      clickProxy(option, methods[i]);
+    }
+  }
+}
+
+function monitorHooks(option) {
+  if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
+    pageLeaveProxy(option);
+  }
+
+  mpProxy(option, 'onLoad', 'pageLoad');
+  mpProxy(option, 'onShow', 'pageShow');
+  mpProxy(option, 'onAddToFavorites', 'pageAddFavorites');
+  if (typeof option.onShareAppMessage === 'function') {
+    sa.autoTrackCustom.pageShare(option);
+  }
+  if (typeof option.onShareTimeline === 'function') {
+    sa.autoTrackCustom.pageShareTimeline(option);
+  }
+}
+
+
 sa.kit = kit;
 sa.mergeStorageData = mergeStorageData;
 sa.saEvent = saEvent;
 sa.sendStrategy = sendStrategy;
+sa._ = _;
 
 sa.IDENTITY_KEY = {
   EMAIL: '$identity_email',
   MOBILE: '$identity_mobile'
 };
+
+sa.usePlugin = usePlugin;
+sa.checkPluginInitStatus = checkPluginInitStatus;
+
+sa.enableDataCollect = enableDataCollect;
 
 sa.para = {
   name: 'sensors',
@@ -386,26 +941,6 @@ sa.para = {
   storage_prepare_data_key: 'sensors_mp_prepare_data'
 };
 
-var deploy_para = {
-  launched: false
-};
-
-var mpHook = {
-  data: 1,
-  onLoad: 1,
-  onShow: 1,
-  onReady: 1,
-  onPullDownRefresh: 1,
-  onShareAppMessage: 1,
-  onShareTimeline: 1,
-  onReachBottom: 1,
-  onPageScroll: 1,
-  onResize: 1,
-  onTabItemTap: 1,
-  onHide: 1,
-  onUnload: 1
-};
-
 var logger = typeof logger === 'object' ? logger : {};
 
 logger.info = function() {
@@ -429,6 +964,8 @@ logger.info = function() {
     }
   }
 };
+
+_.logger = logger;
 
 sa.setPara = function(para) {
   sa.para = _.extend2Lev(sa.para, para);
@@ -496,15 +1033,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-sa.status = {};
-
-
-var ArrayProto = Array.prototype,
-  ObjProto = Object.prototype,
-  slice = ArrayProto.slice,
-  toString$1 = ObjProto.toString,
-  hasOwnProperty = ObjProto.hasOwnProperty,
-  LIB_VERSION = '1.16.3',
+var LIB_VERSION = '1.17.1',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -527,219 +1056,6 @@ sa.lib_name = LIB_NAME;
 
 var globalTitle = {};
 var page_route_map = [];
-
-(function() {
-  var nativeForEach = ArrayProto.forEach,
-    nativeIndexOf = ArrayProto.indexOf,
-    nativeIsArray = Array.isArray,
-    breaker = {};
-
-  var each = (_.each = function(obj, iterator, context) {
-    if (obj == null) {
-      return false;
-    }
-    if (nativeForEach && obj.forEach === nativeForEach) {
-      obj.forEach(iterator, context);
-    } else if (obj.length === +obj.length) {
-      for (var i = 0, l = obj.length; i < l; i++) {
-        if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) {
-          return false;
-        }
-      }
-    } else {
-      for (var item in obj) {
-        if (hasOwnProperty.call(obj, item)) {
-          if (iterator.call(context, obj[item], item, obj) === breaker) {
-            return false;
-          }
-        }
-      }
-    }
-  });
-
-  _.logger = logger;
-  _.extend = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-      for (var prop in source) {
-        if (source[prop] !== void 0) {
-          obj[prop] = source[prop];
-        }
-      }
-    });
-    return obj;
-  };
-  _.extend2Lev = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-      for (var prop in source) {
-        if (source[prop] !== void 0 && source[prop] !== null) {
-          if (_.isObject(source[prop]) && _.isObject(obj[prop])) {
-            _.extend(obj[prop], source[prop]);
-          } else {
-            obj[prop] = source[prop];
-          }
-        }
-      }
-    });
-    return obj;
-  };
-  _.coverExtend = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-      for (var prop in source) {
-        if (source[prop] !== void 0 && obj[prop] === void 0) {
-          obj[prop] = source[prop];
-        }
-      }
-    });
-    return obj;
-  };
-
-  _.isArray =
-    nativeIsArray ||
-    function(obj) {
-      return toString$1.call(obj) === '[object Array]';
-    };
-
-  _.isFunction = function(f) {
-    try {
-      return /^\s*\bfunction\b/.test(f);
-    } catch (x) {
-      return false;
-    }
-  };
-
-  _.isArguments = function(obj) {
-    return !!(obj && hasOwnProperty.call(obj, 'callee'));
-  };
-
-  _.toArray = function(iterable) {
-    if (!iterable) {
-      return [];
-    }
-    if (iterable.toArray) {
-      return iterable.toArray();
-    }
-    if (_.isArray(iterable)) {
-      return slice.call(iterable);
-    }
-    if (_.isArguments(iterable)) {
-      return slice.call(iterable);
-    }
-    return _.values(iterable);
-  };
-
-  _.values = function(obj) {
-    var results = [];
-    if (obj == null) {
-      return results;
-    }
-    each(obj, function(value) {
-      results[results.length] = value;
-    });
-    return results;
-  };
-
-  _.include = function(obj, target) {
-    var found = false;
-    if (obj == null) {
-      return found;
-    }
-    if (nativeIndexOf && obj.indexOf === nativeIndexOf) {
-      return obj.indexOf(target) != -1;
-    }
-    each(obj, function(value) {
-      if (found || (found = value === target)) {
-        return breaker;
-      }
-    });
-    return found;
-  };
-})();
-
-_.trim = function(str) {
-  return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-};
-
-_.isObject = function(obj) {
-  if (obj === undefined || obj === null) {
-    return false;
-  } else {
-    return toString$1.call(obj) == '[object Object]';
-  }
-};
-
-_.isEmptyObject = function(obj) {
-  if (_.isObject(obj)) {
-    for (var item in obj) {
-      if (hasOwnProperty.call(obj, item)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-};
-
-_.deepCopy = function(obj) {
-  var temp = {};
-
-  function deepClone(target, source) {
-    for (var k in source) {
-      var item = source[k];
-      if (_.isArray(item)) {
-        target[k] = [];
-        deepClone(target[k], item);
-      } else if (_.isObject(item)) {
-        target[k] = {};
-        deepClone(target[k], item);
-      } else {
-        target[k] = item;
-      }
-    }
-  }
-  deepClone(temp, obj);
-  return temp;
-};
-
-_.isUndefined = function(obj) {
-  return obj === void 0;
-};
-
-_.isString = function(obj) {
-  return toString$1.call(obj) == '[object String]';
-};
-
-_.isDate = function(obj) {
-  return toString$1.call(obj) == '[object Date]';
-};
-
-_.isBoolean = function(obj) {
-  return toString$1.call(obj) == '[object Boolean]';
-};
-
-_.isNumber = function(obj) {
-  return toString$1.call(obj) == '[object Number]' && /[\d\.]+/.test(String(obj));
-};
-
-_.isJSONString = function(str) {
-  try {
-    JSON.parse(str);
-  } catch (e) {
-    return false;
-  }
-  return true;
-};
-
-_.isInteger =
-  Number.isInteger ||
-  function(value) {
-    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
-  };
-
-_.isSafeInteger =
-  Number.isSafeInteger ||
-  function(value) {
-    return _.isInteger(value) && Math.abs(value) <= Math.pow(2, 53) - 1;
-  };
 
 _.decodeURIComponent = function(val) {
   var result = '';
@@ -1128,25 +1444,6 @@ _.getPath = function(path) {
   return path;
 };
 
-_.getMethods = function(option) {
-  var methods = [];
-  for (var m in option) {
-    if (typeof option[m] === 'function' && !mpHook[m]) {
-      methods.push(m);
-    }
-  }
-  return methods;
-};
-
-_.isClick = function(type) {
-  var mpTaps = {
-    tap: 1,
-    longpress: 1,
-    longtap: 1
-  };
-  return !!mpTaps[type];
-};
-
 sa.initialState = {
   queue: [],
   isComplete: false,
@@ -1157,7 +1454,11 @@ sa.initialState = {
       this.isComplete = true;
       if (this.queue.length > 0) {
         _.each(this.queue, function(content) {
-          sa[content[0]].apply(sa, slice.call(content[1]));
+          if (content[0] === 'appLaunch') {
+            sa.autoTrackCustom.appLaunch.apply(sa.autoTrackCustom, _.slice.call(content[1]));
+          } else {
+            sa[content[0]].apply(sa, _.slice.call(content[1]));
+          }
         });
         this.queue = [];
       }
@@ -1786,8 +2087,6 @@ _.info = {
   }
 };
 
-sa._ = _;
-
 _.eventEmitter = function() {
   this.sub = [];
 };
@@ -1845,14 +2144,9 @@ sa.eventSub = _.eventSub;
 
 sa.events = new _.eventEmitter();
 
-sa.usePlugin = function(plugin, para) {
-  if (typeof plugin.init === 'function') {
-    plugin.init(sa, para);
-  }
-};
-
 sa.store = {
   storageInfo: null,
+  store_queue: [],
   getUUID: function() {
     return (
       '' +
@@ -2134,6 +2428,17 @@ sa.store = {
         }
       });
     }
+    sa.store.checkStoreInit();
+  },
+  checkStoreInit: function() {
+    if (meta.init_status) {
+      if (this.store_queue.length > 0) {
+        _.each(this.store_queue, function(item) {
+          sa[item.method].apply(sa, _.slice.call(item.params));
+        });
+      }
+      this.store_queue = [];
+    }
   }
 };
 
@@ -2203,6 +2508,16 @@ sa.track = function(e, p, c) {
 };
 
 sa.identify = function(id, isSave) {
+  if (!checkPrivacyStatus()) {
+    return false;
+  }
+  if (!meta.init_status) {
+    sa.store.store_queue.push({
+      method: 'identify',
+      params: arguments
+    });
+    return false;
+  }
   id = _.validId(id);
   if (id) {
     var firstId = sa.store.getFirstId();
@@ -2430,25 +2745,25 @@ sa.openid = {
   }
 };
 
-sa.initial = function() {
-  this._.info.getSystem();
-  this.store.init();
-};
-
 sa.init = function(obj) {
-  if (this.hasInit === true) {
+  if (meta.init_status === true) {
     return false;
   }
-  this.hasInit = true;
-  sa.setPara(obj);
-  if (sa.para.encrypt_storage) {
-    this.store.encryptStorage();
+  meta.init_status = true;
+
+  if (obj && _.isObject(obj)) {
+    sa.setPara(obj);
   }
+  sa.store.init();
+  sa._.info.getSystem();
+
+  sa.checkPluginInitStatus();
   if (sa.para.batch_send) {
     sendStrategy.init();
   }
   sa.initialState.storeIsComplete = true;
   sa.initialState.checkIsComplete();
+  checkAppLaunch();
 };
 
 sa.getPresetProperties = function() {
@@ -2475,6 +2790,16 @@ sa.getPresetProperties = function() {
 sa.setOpenid = function(openid, isCover) {
   var openid = _.validId(openid);
   if (!openid) {
+    return false;
+  }
+  if (!checkPrivacyStatus()) {
+    return false;
+  }
+  if (!meta.init_status) {
+    sa.store.store_queue.push({
+      method: 'setOpenid',
+      params: arguments
+    });
     return false;
   }
   if (isCover) {
@@ -2696,6 +3021,9 @@ sa.setWebViewUrl = function(url, after_hash) {
 _.each(['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid'], function(method) {
   var temp = sa[method];
   sa[method] = function() {
+    if (!checkPrivacyStatus()) {
+      return false;
+    }
     if (sa.initialState.isComplete) {
       temp.apply(sa, arguments);
     } else {
@@ -2761,120 +3089,6 @@ _.sendPageLeave = function() {
   }
 };
 
-{
-  var mp_proxy = function mpProxy(option, method, identifier) {
-    var newFunc = sa.autoTrackCustom[identifier];
-    if (option[method]) {
-      var oldFunc = option[method];
-      option[method] = function() {
-        if (method === 'onLaunch') {
-          this[sa.para.name] = sa;
-        }
-        if (!sa.para.autoTrackIsFirst || (_.isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])) {
-          oldFunc.apply(this, arguments);
-          newFunc.apply(this, arguments);
-        } else if (sa.para.autoTrackIsFirst === true || (_.isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])) {
-          newFunc.apply(this, arguments);
-          oldFunc.apply(this, arguments);
-        }
-      };
-    } else {
-      option[method] = function() {
-        if (method === 'onLaunch') {
-          this[sa.para.name] = sa;
-        }
-        newFunc.apply(this, arguments);
-      };
-    }
-  };
-
-  function clickTrack(events) {
-    var prop = {},
-      event_prop = {},
-      type = '';
-    var current_target = events.currentTarget || {};
-    var target = events.target || {};
-    if (_.isObject(sa.para.framework) && _.isObject(sa.para.framework.taro) && !sa.para.framework.taro.createApp) {
-      if (target.id && current_target.id && target.id !== current_target.id) {
-        return false;
-      }
-    }
-
-    var dataset = current_target.dataset || {};
-    type = events['type'];
-    prop['$element_id'] = current_target.id;
-    prop['$element_type'] = dataset['type'];
-    prop['$element_content'] = dataset['content'];
-    prop['$element_name'] = dataset['name'];
-    if (_.isObject(events.event_prop)) {
-      event_prop = events.event_prop;
-    }
-    if (type && _.isClick(type)) {
-      if (sa.para.preset_events && sa.para.preset_events.collect_element && sa.para.preset_events.collect_element(arguments[0]) === false) {
-        return false;
-      }
-      prop['$url_path'] = _.getCurrentPath();
-      _.setPageRefData(prop);
-      prop = _.extend(prop, event_prop);
-      sa.track('$MPClick', prop);
-    }
-  }
-
-  var click_proxy = function clickProxy(option, method) {
-    var oldFunc = option[method];
-    option[method] = function() {
-      var res = oldFunc.apply(this, arguments);
-      var args = arguments[0];
-
-      if (_.isObject(args)) {
-        if (sa.para.preset_events.defer_track) {
-          setTimeout(function() {
-            clickTrack(args);
-          }, 0);
-        } else {
-          clickTrack(args);
-        }
-      }
-      return res;
-    };
-  };
-
-  var tabProxy = function tabProxy(option) {
-    var oldTab = option['onTabItemTap'];
-    option['onTabItemTap'] = function(item) {
-      if (oldTab) {
-        oldTab.apply(this, arguments);
-      }
-      var prop = {};
-
-      if (item) {
-        prop['$element_content'] = item.text;
-      }
-      prop['$element_type'] = 'tabBar';
-      prop['$url_path'] = _.getCurrentPath();
-      _.setPageRefData(prop);
-      sa.track('$MPClick', prop);
-    };
-  };
-
-  var pageLeaveProxy = function pageLeaveProxy(option) {
-    var oldHide = option['onHide'];
-    option['onHide'] = function() {
-      if (oldHide) {
-        oldHide.apply(this, arguments);
-      }
-      _.sendPageLeave();
-    };
-    var oldUnload = option['onUnload'];
-    option['onUnload'] = function() {
-      if (oldUnload) {
-        oldUnload.apply(this, arguments);
-      }
-      _.sendPageLeave();
-    };
-  };
-}
-
 sa.autoTrackCustom = {
   trackCustom: function(api, prop, event) {
     var temp = sa.para.autoTrack[api];
@@ -2893,11 +3107,18 @@ sa.autoTrackCustom = {
     }
   },
   appLaunch: function(para, not_use_auto_track) {
-
     if (typeof this === 'object' && !this['trackCustom']) {
       this[sa.para.name] = sa;
     }
-
+    if (!checkPrivacyStatus()) {
+      return false;
+    }
+    if (!sa.initialState.isComplete) {
+      sa.initialState.queue.push(['appLaunch', arguments]);
+      meta.life_state.app_launched = true;
+      return false;
+    }
+    meta.life_state.app_launched = true;
     var prop = {};
     if (para && para.scene) {
       current_scene = para.scene;
@@ -3275,97 +3496,8 @@ sa.pageShow = function(prop) {
 };
 
 {
-  var oldApp = App;
-  App = function(option) {
-    option[sa.para.name] = sa;
-    oldApp.apply(this, arguments);
-  };
-
-  wx.onAppShow(function(para) {
-    if (!deploy_para.launched) {
-      var option = wx.getLaunchOptionsSync() || {};
-      sa.autoTrackCustom.appLaunch(option);
-      deploy_para.launched = true;
-    }
-    sa.autoTrackCustom.appShow(para);
-  });
-
-  wx.onAppHide(function() {
-    sa.autoTrackCustom.appHide();
-  });
-
-  var oldPage = Page;
-  Page = function(option) {
-    if (!option) {
-      option = {};
-    }
-    var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option);
-
-    if (methods) {
-      for (var i = 0, len = methods.length; i < len; i++) {
-        click_proxy(option, methods[i]);
-      }
-    }
-
-    if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
-      tabProxy(option);
-    }
-
-    if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-      pageLeaveProxy(option);
-    }
-
-    mp_proxy(option, 'onLoad', 'pageLoad');
-    mp_proxy(option, 'onShow', 'pageShow');
-    mp_proxy(option, 'onAddToFavorites', 'pageAddFavorites');
-    if (typeof option.onShareAppMessage === 'function') {
-      sa.autoTrackCustom.pageShare(option);
-    }
-    if (typeof option.onShareTimeline === 'function') {
-      sa.autoTrackCustom.pageShareTimeline(option);
-    }
-    oldPage.apply(this, arguments);
-  };
-
-  var oldComponent = Component;
-  Component = function(option) {
-    try {
-      if (!option) {
-        option = {};
-      }
-      if (!option.methods) {
-        option.methods = {};
-      }
-      var methods = sa.para.autoTrack && sa.para.autoTrack.mpClick && _.getMethods(option.methods);
-
-      if (methods) {
-        for (var i = 0, len = methods.length; i < len; i++) {
-          click_proxy(option.methods, methods[i]);
-        }
-      }
-
-      if (sa.para.autoTrack && sa.para.autoTrack.mpClick) {
-        tabProxy(option.methods);
-      }
-
-      if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-        pageLeaveProxy(option.methods);
-      }
-
-      mp_proxy(option.methods, 'onLoad', 'pageLoad');
-      mp_proxy(option.methods, 'onShow', 'pageShow');
-      mp_proxy(option.methods, 'onAddToFavorites', 'pageAddFavorites');
-      if (typeof option.methods.onShareAppMessage === 'function') {
-        sa.autoTrackCustom.pageShare(option.methods);
-      }
-      if (typeof option.methods.onShareTimeline === 'function') {
-        sa.autoTrackCustom.pageShareTimeline(option.methods);
-      }
-      oldComponent.apply(this, arguments);
-    } catch (e) {
-      oldComponent.apply(this, arguments);
-    }
-  };
+  initAppProxy();
+  initPageProxy();
 }
 
 if (global && global.sensors_data_pre_config) {
@@ -3376,7 +3508,5 @@ if (global && global.sensors_data_pre_config) {
     logger.info('设置自定义登录 ID 失败');
   }
 }
-
-sa.initial();
 
 module.exports = sa;

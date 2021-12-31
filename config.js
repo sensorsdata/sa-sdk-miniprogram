@@ -1,6 +1,7 @@
 // config.js
 var sensors_data_pre_config = {
-  login_id_key: '' // 配置 login_id_key 的值
+  login_id_key: '', // 配置 login_id_key 的值
+  is_compliance_enabled: false
 };
 
 global.sensors_data_pre_config = sensors_data_pre_config;
