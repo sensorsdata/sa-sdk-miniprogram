@@ -1030,7 +1030,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.1',
+var LIB_VERSION = '1.17.2',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1186,7 +1186,7 @@ _.strip_sa_properties = function(p) {
       p[k] = temp;
     }
     if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v))) {
-      logger.info('您的数据-', v, '-格式不满足要求，我们已经将其删除');
+      logger.info('您的数据 - ' + k + ':' + v + ' - 格式不满足要求，已经将其删除');
       delete p[k];
     }
   });
@@ -3077,6 +3077,9 @@ _.sendPageLeave = function() {
     var prop = {};
     var title = _.getPageTitle(router);
     var page_stay_time = (Date.now() - page_show_time) / 1000;
+    if (isNaN(page_stay_time) || page_stay_time < 0) {
+      page_stay_time = 0;
+    }
     prop.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
     prop.$url_path = router;
     prop.$title = title;
