@@ -121,11 +121,11 @@ var isArray =
   };
 
 function isFunction(f) {
-  try {
-    return /^\s*\bfunction\b/.test(f);
-  } catch (x) {
+  if (!f) {
     return false;
   }
+  var type = Object.prototype.toString.call(f);
+  return type == '[object Function]' || type == '[object AsyncFunction]';
 }
 
 function isArguments(obj) {
@@ -283,8 +283,7 @@ var _ = {
 
 var kit = {};
 
-kit.buildData = function(p) {
-  var _ = sa._;
+kit.buildData = function(p, custom_monitor_prop) {
   var data = {
     distinct_id: sa.store.getDistinctId(),
     identities: sa.store._state.identities,
@@ -301,6 +300,10 @@ kit.buildData = function(p) {
     delete p.unbind_value;
   }
 
+  if (!_.isObject(custom_monitor_prop)) {
+    custom_monitor_prop = {};
+  }
+
   _.extend(data, sa.store.getUnionId(), p);
 
   if (_.isObject(p.properties) && !_.isEmptyObject(p.properties)) {
@@ -309,7 +312,7 @@ kit.buildData = function(p) {
 
   if (!p.type || p.type.slice(0, 7) !== 'profile') {
     data._track_id = Number(String(getRandom()).slice(2, 5) + String(getRandom()).slice(2, 4) + String(Date.now()).slice(-4));
-    data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, data.properties);
+    data.properties = _.extend({}, _.info.properties, sa.store.getProps(), _.info.currentProps, custom_monitor_prop, data.properties);
     if (p.type === 'track') {
       data.properties.$is_first_day = _.getIsFirstDay();
     }
@@ -373,6 +376,11 @@ function setPublicPProperties(data) {
     }
   }
 }
+
+kit.onEventSend = function() {
+  var custom_monitor_prop = {};
+  return custom_monitor_prop;
+};
 
 
 var mergeStorageData = {};
@@ -554,7 +562,10 @@ saEvent.send = function(p, callback) {
     return false;
   }
 
-  var data = sa.kit.buildData(p);
+  var event_target = sa._.deepCopy(p);
+  var custom_monitor_prop = sa.kit.onEventSend(event_target);
+
+  var data = sa.kit.buildData(p, custom_monitor_prop);
   if (data) {
     saEvent.debug(data);
     sa.events.emit('send', data);
@@ -1030,7 +1041,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.2',
+var LIB_VERSION = '1.17.3',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
