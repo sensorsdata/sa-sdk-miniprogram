@@ -932,7 +932,8 @@ sa.para = {
     pageLeave: false
   },
   autotrack_exclude_page: {
-    pageShow: []
+    pageShow: [],
+    pageLeave: []
   },
   is_persistent_save: {
     share: false,
@@ -1038,13 +1039,26 @@ sa.setPara = function(para) {
   }
 
   sa.para.preset_properties = _.isObject(sa.para.preset_properties) ? sa.para.preset_properties : {};
+
+  if (!_.isObject(sa.para.autotrack_exclude_page)) {
+    sa.para.autotrack_exclude_page = {
+      pageShow: [],
+      pageLeave: []
+    };
+  }
+  if (!_.isArray(sa.para.autotrack_exclude_page.pageShow)) {
+    sa.para.autotrack_exclude_page.pageShow = [];
+  }
+  if (!_.isArray(sa.para.autotrack_exclude_page.pageLeave)) {
+    sa.para.autotrack_exclude_page.pageLeave = [];
+  }
 };
 
 sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.3',
+var LIB_VERSION = '1.17.4',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -3098,7 +3112,9 @@ _.sendPageLeave = function() {
     prop.$url_path = router;
     prop.$title = title;
     prop.event_duration = page_stay_time;
-    sa.track('$MPPageLeave', prop);
+    if (sa.para.autotrack_exclude_page.pageLeave.indexOf(router) === -1) {
+      sa.track('$MPPageLeave', prop);
+    }
     page_show_time = -1;
   }
 };
@@ -3276,7 +3292,7 @@ sa.autoTrackCustom = {
     }
     if (sa.para.onshow) {
       sa.para.onshow(sa, router, this);
-    } else if (!(_.isObject(sa.para.autotrack_exclude_page) && _.isArray(sa.para.autotrack_exclude_page.pageShow) && sa.para.autotrack_exclude_page.pageShow.indexOf(router) !== -1)) {
+    } else if (sa.para.autotrack_exclude_page.pageShow.indexOf(router) === -1) {
       sa.autoTrackCustom.trackCustom('pageShow', prop, '$MPViewScreen');
     }
   },
