@@ -1052,7 +1052,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.4',
+var LIB_VERSION = '1.17.5',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2644,6 +2644,9 @@ sa.login = function(id) {
   if (id) {
     var firstId = sa.store.getFirstId();
     var distinctId = sa.store.getDistinctId();
+    if (!firstId && distinctId === id) {
+      return false;
+    }
     if (sa.store._state.identities.hasOwnProperty(sa.para.login_id_key) && id === firstId) {
       return false;
     }
