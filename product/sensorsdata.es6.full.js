@@ -606,6 +606,9 @@ var meta = {
     onTabItemTap: 1,
     onHide: 1,
     onUnload: 1
+  },
+  user: {
+    LOGIN_ID_KEY: '$identity_login_id'
   }
 };
 
@@ -891,6 +894,38 @@ function monitorHooks(option) {
   }
 }
 
+function isNewLoginId(name, id) {
+  if (name === sa.store._state.history_login_id.name) {
+    if (sa.store._state.history_login_id.value === id) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isSameAndAnonymousID(id) {
+  var firstId = sa.store.getFirstId();
+  var distinctId = sa.store.getDistinctId();
+  if (firstId) {
+    return id === firstId;
+  } else {
+    return id === distinctId;
+  }
+}
+
+function isPresetIdKeys(name, ids) {
+  var keyList = ['$identity_anonymous_id', '$mp_openid', '$identity_mp_openid', '$identity_mp_unionid', '$mp_unionid'];
+  if (isArray(ids)) {
+    keyList = keyList.concat(ids);
+  }
+  for (var item of keyList) {
+    if (item === name) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 sa.kit = kit;
 sa.mergeStorageData = mergeStorageData;
@@ -1055,7 +1090,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.5',
+var LIB_VERSION = '1.17.6',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2293,16 +2328,16 @@ sa.store = {
           this._state.history_login_id.value = distinct_id;
         }
       } else {
-        this._state.identities[sa.para.login_id_key] = distinct_id;
+        this._state.identities[meta.user.LOGIN_ID_KEY] = distinct_id;
         for (var identitiesprop in this._state.identities) {
           if (this._state.identities.hasOwnProperty(identitiesprop)) {
-            if (identitiesprop !== '$identity_mp_id' && identitiesprop !== sa.para.login_id_key) {
+            if (identitiesprop !== '$identity_mp_id' && identitiesprop !== meta.user.LOGIN_ID_KEY) {
               delete this._state.identities[identitiesprop];
             }
           }
         }
         this._state.history_login_id = {
-          name: sa.para.login_id_key,
+          name: meta.user.LOGIN_ID_KEY,
           value: distinct_id
         };
       }
@@ -2327,12 +2362,17 @@ sa.store = {
     return this._state._first_id || this._state.first_id;
   },
   getDistinctId: function() {
-    return this._state._distinct_id || this._state.distinct_id;
+    var loginDistinctId = this.getLoginDistinctId();
+    if (loginDistinctId) {
+      return loginDistinctId;
+    } else {
+      return this._state._distinct_id || this._state.distinct_id;
+    }
   },
   getUnionId: function() {
     var obj = {};
     var first_id = this._state._first_id || this._state.first_id;
-    var distinct_id = this._state._distinct_id || this._state.distinct_id;
+    var distinct_id = this.getDistinctId();
     if (first_id && distinct_id) {
       obj['login_id'] = distinct_id;
       obj['anonymous_id'] = first_id;
@@ -2340,6 +2380,25 @@ sa.store = {
       obj['anonymous_id'] = distinct_id;
     }
     return obj;
+  },
+  getHistoryLoginId: function() {
+    if (isObject(this._state.history_login_id)) {
+      return this._state.history_login_id;
+    } else {
+      return null;
+    }
+  },
+  getLoginDistinctId: function() {
+    var historyLoginId = this.getHistoryLoginId();
+    if (isObject(historyLoginId) && historyLoginId.value) {
+      if (historyLoginId.name !== meta.user.LOGIN_ID_KEY) {
+        return historyLoginId.name + '+' + historyLoginId.value;
+      } else {
+        return historyLoginId.value;
+      }
+    } else {
+      return null;
+    }
   },
   getProps: function() {
     return this._state.props || {};
@@ -2372,19 +2431,19 @@ sa.store = {
     }
     this.save();
   },
-  identitiesSet: function(name, id) {
+  identitiesSet: function(params) {
     var identities = {};
-    switch (name) {
+    switch (params.type) {
       case 'login':
         identities.$identity_mp_id = sa.store._state.identities.$identity_mp_id;
-        identities[sa.para.login_id_key] = id;
+        identities[params.id_name] = params.id;
         break;
       case 'logout':
         identities.$identity_mp_id = sa.store._state.identities.$identity_mp_id;
         break;
       case 'identify':
         identities = _.deepCopy(sa.store._state.identities);
-        identities.$identity_anonymous_id = id;
+        identities.$identity_anonymous_id = params.id;
         break;
     }
     sa.store.set('identities', identities);
@@ -2556,18 +2615,39 @@ sa.identify = function(id, isSave) {
         sa.store.change('distinct_id', id);
       }
     }
-    sa.store.identitiesSet('identify', id);
+    sa.store.identitiesSet({
+      type: 'identify',
+      id: id
+    });
   }
 };
 
-sa.trackSignup = function(id, e, p, c) {
-  var original_id = sa.store.getFirstId() || sa.store.getDistinctId();
-  sa.store.set('distinct_id', id);
+sa.trackSignup = function(idObj, e, p, c) {
+  var currentId, eventName, idName, distinctId, originalId;
+  if (isObject(idObj)) {
+    currentId = idObj.id;
+    eventName = idObj.event_name;
+    idName = idObj.id_name;
+  } else {
+    currentId = idObj;
+    eventName = e;
+  }
+  sa.store.set('distinct_id', currentId);
+
+  if (idName && idName !== meta.user.LOGIN_ID_KEY) {
+    distinctId = idName + '+' + currentId;
+  } else {
+    distinctId = currentId;
+  }
+
+  var originalId = sa.store.getFirstId() || sa.store.getDistinctId();
+
   sa.saEvent.send({
-      original_id: original_id,
-      distinct_id: id,
+      original_id: originalId,
+      distinct_id: distinctId,
+      login_id: distinctId,
       type: 'track_signup',
-      event: e,
+      event: eventName,
       properties: p
     },
     c
@@ -2644,36 +2724,106 @@ _.setLatestShare = function(share) {
 
 sa.login = function(id) {
   id = _.validId(id);
-  if (id) {
-    var firstId = sa.store.getFirstId();
-    var distinctId = sa.store.getDistinctId();
-    if (!firstId && distinctId === id) {
-      return false;
-    }
-    if (sa.store._state.identities.hasOwnProperty(sa.para.login_id_key) && id === firstId) {
-      return false;
-    }
+  if (!id) {
+    return false;
+  }
 
+  if (isSameAndAnonymousID(id)) {
+    return false;
+  }
 
-    var isNewLoginId = !(sa.para.login_id_key === sa.store._state.history_login_id.name && sa.store._state.history_login_id.value === id);
-    if (isNewLoginId) {
-      sa.store._state.identities[sa.para.login_id_key] = id;
-    }
-    if (isNewLoginId) {
-      if (firstId) {
-        sa.trackSignup(id, '$SignUp');
-      } else {
-        sa.store.set('first_id', distinctId);
-        sa.trackSignup(id, '$SignUp');
-      }
-    }
-    if (isNewLoginId) {
-      sa.store.identitiesSet('login', id);
-      sa.store.set('history_login_id', {
-        name: sa.para.login_id_key,
-        value: id
+  var firstId = sa.store.getFirstId();
+  var distinctId = sa.store.getDistinctId();
+  var idName = meta.user.LOGIN_ID_KEY;
+
+  var newLoginId = isNewLoginId(idName, id);
+  if (newLoginId) {
+    sa.store._state.identities[idName] = id;
+
+    sa.store.set('history_login_id', {
+      name: idName,
+      value: id
+    });
+
+    if (firstId) {
+      sa.trackSignup({
+        id: id,
+        event_name: '$SignUp'
+      });
+    } else {
+      sa.store.set('first_id', distinctId);
+      sa.trackSignup({
+        id: id,
+        event_name: '$SignUp'
       });
     }
+
+    sa.store.identitiesSet({
+      type: 'login',
+      id: id,
+      id_name: idName
+    });
+  }
+};
+
+sa.loginWithKey = function(name, id) {
+  if (!_.isString(name)) {
+    logger.info('Key must be String');
+    return false;
+  }
+  var info;
+  if (!_.check.checkKeyword(name) && name.length > 100) {
+    info = 'Key [' + name + '] is invalid';
+    logger.info(info);
+  } else if (!_.check.checkKeyword(name)) {
+    info = 'Key [' + name + '] is invalid';
+    logger.info(info);
+    return false;
+  }
+  if (isPresetIdKeys(name, ['$mp_id', '$identity_mp_id'])) {
+    var info = 'Key [' + name + '] is invalid';
+    logger.info(info);
+    return false;
+  }
+  id = _.validId(id);
+  if (!id) {
+    return false;
+  }
+
+  if (isSameAndAnonymousID(id)) {
+    return false;
+  }
+
+  var firstId = sa.store.getFirstId();
+  var distinctId = sa.store.getDistinctId();
+  var newLoginId = isNewLoginId(name, id);
+  if (newLoginId) {
+    sa.store._state.identities[name] = id;
+
+    sa.store.set('history_login_id', {
+      name: name,
+      value: id
+    });
+
+    if (firstId) {
+      sa.trackSignup({
+        id: id,
+        event_name: '$SignUp',
+        id_name: name
+      });
+    } else {
+      sa.store.set('first_id', distinctId);
+      sa.trackSignup({
+        id: id,
+        event_name: '$SignUp',
+        id_name: name
+      });
+    }
+    sa.store.identitiesSet({
+      type: 'login',
+      id: id,
+      id_name: name
+    });
   }
 };
 
@@ -2685,8 +2835,26 @@ sa.getAnonymousID = function() {
   }
 };
 
+sa.getIdentities = function() {
+  if (_.isEmptyObject(sa.store._state)) {
+    logger.info('请先初始化SDK');
+    return null;
+  } else {
+    return sa.store._state.identities || null;
+  }
+};
+
 sa.logout = function(isChangeId) {
   var firstId = sa.store.getFirstId();
+
+  sa.store.identitiesSet({
+    type: 'logout'
+  });
+  sa.store.set('history_login_id', {
+    name: '',
+    value: ''
+  });
+
   if (firstId) {
     sa.store.set('first_id', '');
     if (isChangeId === true) {
@@ -2697,11 +2865,6 @@ sa.logout = function(isChangeId) {
   } else {
     logger.info('没有first_id，logout失败');
   }
-  sa.store.identitiesSet('logout');
-  sa.store.set('history_login_id', {
-    name: '',
-    value: ''
-  });
 };
 
 sa.getLocation = function() {
@@ -2907,7 +3070,10 @@ sa.bind = function(name, value) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$mp_openid' || name === '$identity_mp_openid' || name === '$identity_mp_unionid' || name === '$mp_unionid' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+  var historyLoginId = sa.store.getHistoryLoginId();
+  var currentLoginIdName = historyLoginId ? historyLoginId.name : '';
+
+  if (!_.check.checkKeyword(name) || isPresetIdKeys(name, [meta.user.LOGIN_ID_KEY, currentLoginIdName, '$mp_id', '$identity_mp_id'])) {
     var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
@@ -2947,7 +3113,8 @@ sa.unbind = function(name, value) {
     logger.info('Key must be String');
     return false;
   }
-  if (!_.check.checkKeyword(name) || name === '$identity_anonymous_id' || name === '$mp_id' || name === '$identity_mp_id' || name === '$mp_openid' || name === '$identity_mp_openid' || name === '$identity_mp_unionid' || name === '$mp_unionid' || name === '$identity_login_id' || name === sa.para.login_id_key) {
+
+  if (!_.check.checkKeyword(name) || isPresetIdKeys(name, [meta.user.LOGIN_ID_KEY])) {
     var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
@@ -2965,9 +3132,24 @@ sa.unbind = function(name, value) {
     logger.info(info);
     return false;
   }
+
   if (sa.store._state.identities.hasOwnProperty(name) && value === sa.store._state.identities[name]) {
-    delete sa.store._state.identities[name];
+    if (name !== '$mp_id' && name !== '$identity_mp_id') {
+      delete sa.store._state.identities[name];
+    }
     sa.store.save();
+  }
+  var distinctId = sa.store.getDistinctId();
+  var firstId = sa.store.getFirstId();
+  var unbindDistinctId = name + '+' + value;
+
+  if (distinctId === unbindDistinctId) {
+    sa.store.set('first_id', '');
+    sa.store.set('distinct_id', firstId);
+    sa.store.set('history_login_id', {
+      name: '',
+      value: ''
+    });
   }
   var para = {};
   para[name] = value;
@@ -3528,15 +3710,6 @@ sa.pageShow = function(prop) {
 {
   initAppProxy();
   initPageProxy();
-}
-
-if (global && global.sensors_data_pre_config) {
-  var name = global.sensors_data_pre_config.login_id_key;
-  if (name && _.isString(name) && _.check.checkKeyword(name) && name !== '$identity_anonymous_id' && name !== '$mp_id' && name !== '$identity_mp_id' && name !== '$identity_mp_unionid' && name !== '$mp_unionid' && name !== '$identity_mp_openid' && name !== '$mp_openid') {
-    sa.para.login_id_key = name;
-  } else {
-    logger.info('设置自定义登录 ID 失败');
-  }
 }
 
 export default sa;
