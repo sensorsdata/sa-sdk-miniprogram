@@ -1087,7 +1087,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.6',
+var LIB_VERSION = '1.17.7',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2864,30 +2864,6 @@ sa.logout = function(isChangeId) {
   }
 };
 
-sa.getLocation = function() {
-  wx.getSetting({
-    success: function(res) {
-      if (res.authSetting['scope.userLocation']) {
-        wx.getLocation({
-          type: sa.para.preset_properties.location.type,
-          success: function(res) {
-            sa.registerApp({
-              $latitude: res.latitude * Math.pow(10, 6),
-              $longitude: res.longitude * Math.pow(10, 6),
-              $geo_coordinate_system: _.setUpperCase(sa.para.preset_properties.location.type)
-            });
-          },
-          fail: function(err) {
-            logger.info('获取位置失败', err);
-          }
-        });
-      } else {
-        return false;
-      }
-    }
-  });
-};
-
 sa.openid = {
   getRequest: function(callback) {
     wx.login({
@@ -3402,9 +3378,6 @@ sa.autoTrackCustom = {
       prop.$url_path = _.getPath(para.path);
       prop.$title = _.getPageTitle(para.path);
     }
-    if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
-      sa.getLocation();
-    }
     _.setShareInfo(para, prop);
 
     var utms = _.setUtm(para, prop);
@@ -3647,9 +3620,6 @@ sa.appShow = function(option, prop) {
   if (option && option.path) {
     obj.$url_path = _.getPath(option.path);
     obj.$title = _.getPageTitle(option.path);
-  }
-  if (_.isObject(sa.para.preset_properties.location) && (sa.para.preset_properties.location.type === 'wgs84' || sa.para.preset_properties.location.type === 'gcj02')) {
-    sa.getLocation();
   }
   _.setShareInfo(option, obj);
   var utms = _.setUtm(option, obj);
