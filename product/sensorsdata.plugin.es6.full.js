@@ -314,7 +314,7 @@ kit.buildData = function(p, custom_monitor_prop) {
       data.properties.$is_first_day = _.getIsFirstDay();
     }
 
-    setPublicPProperties(data);
+    setPublicProperties(data);
   }
   if (data.properties.$time && _.isDate(data.properties.$time)) {
     data.time = data.properties.$time * 1;
@@ -322,6 +322,8 @@ kit.buildData = function(p, custom_monitor_prop) {
   } else {
     data.time = new Date() * 1;
   }
+
+  sa.ee.sdk.emit('createData', data);
 
   _.parseSuperProperties(data.properties);
   _.searchObjDate(data);
@@ -353,7 +355,7 @@ function encodeTrackData(data) {
   return encodeURIComponent(dataStr);
 }
 
-function setPublicPProperties(data) {
+function setPublicProperties(data) {
   if (data && data.properties) {
     var refPage = sa._.getRefPage();
     var pageInfo = sa._.getCurrentPageInfo();
@@ -546,6 +548,7 @@ function onceSend(data) {
     method: 'GET'
   });
 }
+
 
 var saEvent = {};
 
@@ -891,6 +894,134 @@ function monitorHooks(option) {
   }
 }
 
+function isValidListener(listener) {
+  if (typeof listener === 'function') {
+    return true;
+  } else if (listener && typeof listener === 'object') {
+    return isValidListener(listener.listener);
+  } else {
+    return false;
+  }
+}
+
+function EventEmitter() {
+  this._events = {};
+}
+
+EventEmitter.prototype.on = function(eventName, listener) {
+  if (!eventName || !listener) {
+    return false;
+  }
+
+  if (!isValidListener(listener)) {
+    throw new Error('listener must be a function');
+  }
+
+  this._events[eventName] = this._events[eventName] || [];
+  var listenerIsWrapped = typeof listener === 'object';
+
+  this._events[eventName].push(
+    listenerIsWrapped ?
+    listener :
+    {
+      listener: listener,
+      once: false
+    }
+  );
+
+  return this;
+};
+
+EventEmitter.prototype.prepend = function(eventName, listener) {
+  if (!eventName || !listener) {
+    return false;
+  }
+
+  if (!isValidListener(listener)) {
+    throw new Error('listener must be a function');
+  }
+
+  this._events[eventName] = this._events[eventName] || [];
+  var listenerIsWrapped = typeof listener === 'object';
+
+  this._events[eventName].unshift(
+    listenerIsWrapped ?
+    listener :
+    {
+      listener: listener,
+      once: false
+    }
+  );
+
+  return this;
+};
+
+EventEmitter.prototype.prependOnce = function(eventName, listener) {
+  return this.prepend(eventName, {
+    listener: listener,
+    once: true
+  });
+};
+
+EventEmitter.prototype.once = function(eventName, listener) {
+  return this.on(eventName, {
+    listener: listener,
+    once: true
+  });
+};
+
+EventEmitter.prototype.off = function(eventName, listener) {
+  var listeners = this._events[eventName];
+  if (!listeners) {
+    return false;
+  }
+  if (typeof listener === 'number') {
+    listeners.splice(listener, 1);
+  } else if (typeof listener === 'function') {
+    for (var i = 0, len = listeners.length; i < len; i++) {
+      if (listeners[i] && listeners[i].listener === listener) {
+        listeners.splice(i, 1);
+      }
+    }
+  }
+  return this;
+};
+
+EventEmitter.prototype.emit = function(eventName, args) {
+  var listeners = this._events[eventName];
+  if (!listeners) {
+    return false;
+  }
+
+  for (var i = 0; i < listeners.length; i++) {
+    var listener = listeners[i];
+    if (listener) {
+      listener.listener.call(this, args || {});
+      if (listener.once) {
+        this.off(eventName, i);
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(eventName) {
+  if (eventName && this._events[eventName]) {
+    this._events[eventName] = [];
+  } else {
+    this._events = {};
+  }
+};
+
+EventEmitter.prototype.listeners = function(eventName) {
+  if (eventName && typeof eventName === 'string') {
+    return this._events[eventName];
+  } else {
+    return this._events;
+  }
+};
+
 function isNewLoginId(name, id) {
   if (name === sa.store._state.history_login_id.name) {
     if (sa.store._state.history_login_id.value === id) {
@@ -929,6 +1060,8 @@ sa.mergeStorageData = mergeStorageData;
 sa.saEvent = saEvent;
 sa.sendStrategy = sendStrategy;
 sa._ = _;
+sa.ee = {};
+sa.ee.sdk = new EventEmitter();
 
 sa.IDENTITY_KEY = {
   EMAIL: '$identity_email',
@@ -1087,7 +1220,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.10',
+var LIB_VERSION = '1.17.11',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -1864,8 +1997,10 @@ try {
 }
 
 _.setRefPage = function() {
+  var urlText = '直接打开';
   var _refInfo = {
-    route: '直接打开',
+    route: urlText,
+    path: urlText,
     title: ''
   };
   try {
@@ -1875,6 +2010,7 @@ _.setRefPage = function() {
       var current_path = pages.route;
       var current_title = _.getPageTitle(current_path);
       _refInfo.route = current_path + url_query;
+      _refInfo.path = current_path;
       _refInfo.title = current_title;
 
       var len = page_route_map.length;
@@ -1892,14 +2028,17 @@ _.setRefPage = function() {
 };
 
 _.getRefPage = function() {
+  var urlText = '直接打开';
   var _refInfo = {
-    route: '直接打开',
+    route: urlText,
+    path: urlText,
     title: ''
   };
 
   if (page_route_map.length > 1) {
     _refInfo.title = page_route_map[0].title;
     _refInfo.route = page_route_map[0].route;
+    _refInfo.path = page_route_map[0].path;
   }
 
   return _refInfo;
