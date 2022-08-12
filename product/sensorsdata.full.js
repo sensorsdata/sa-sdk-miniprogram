@@ -1226,7 +1226,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.11',
+var LIB_VERSION = '1.17.12',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -3595,10 +3595,13 @@ sa.autoTrackCustom = {
   },
   pageShare: function(option) {
     var oldMessage = option.onShareAppMessage;
+    var isPromise = function(val) {
+      return !!val && _.isFunction(val.then) && _.isFunction(val.catch);
+    };
 
     option.onShareAppMessage = function() {
       share_method = '转发消息卡片';
-      var oldValue = oldMessage.apply(this, arguments);
+      var oldShareValue = oldMessage.apply(this, arguments);
 
       if (sa.para.autoTrack && sa.para.autoTrack.pageShare) {
         var prop = {
@@ -3610,28 +3613,46 @@ sa.autoTrackCustom = {
         sa.autoTrackCustom.trackCustom('pageShare', prop, '$MPShare');
       }
 
-      if (sa.para.allow_amend_share_path) {
-        if (typeof oldValue !== 'object') {
-          oldValue = {};
-          oldValue.path = _.getCurrentUrl(this);
+      function setPath(value) {
+        if (!_.isObject(value)) {
+          value = {};
         }
-        if (typeof oldValue === 'object' && (typeof oldValue.path === 'undefined' || oldValue.path === '')) {
-          oldValue.path = _.getCurrentUrl(this);
+
+        if (_.isUndefined(value.path) || value.path === '') {
+          value.path = _.getCurrentUrl(this);
         }
-        if (typeof oldValue === 'object' && typeof oldValue.path === 'string') {
-          if (oldValue.path.indexOf('?') === -1) {
-            oldValue.path = oldValue.path + '?';
+
+        if (_.isString(value.path)) {
+          if (value.path.indexOf('?') === -1) {
+            value.path = value.path + '?';
           } else {
-            if (oldValue.path.slice(-1) !== '&') {
-              oldValue.path = oldValue.path + '&';
+            if (value.path.slice(-1) !== '&') {
+              value.path = value.path + '&';
             }
           }
         }
-
-        oldValue.path = oldValue.path + _.getShareInfo();
+        value.path = value.path + _.getShareInfo();
+        return value;
       }
 
-      return oldValue;
+      if (sa.para.allow_amend_share_path) {
+        oldShareValue = setPath(oldShareValue);
+        if (_.isObject(oldShareValue)) {
+          for (var key in oldShareValue) {
+            if (isPromise(oldShareValue[key])) {
+              try {
+                oldShareValue[key] = oldShareValue[key].then(function(data) {
+                  return setPath(data);
+                });
+              } catch (error) {
+                logger.info('onShareAppMessage: ' + error);
+              }
+            }
+          }
+        }
+      }
+
+      return oldShareValue;
     };
   },
   pageShareTimeline: function(option) {
