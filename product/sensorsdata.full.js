@@ -1048,7 +1048,7 @@ function isSameAndAnonymousID(id) {
 }
 
 function isPresetIdKeys(name, ids) {
-  var keyList = ['$identity_anonymous_id', '$mp_openid', '$identity_mp_openid', '$identity_mp_unionid', '$mp_unionid'];
+  var keyList = ['$identity_anonymous_id'];
   if (isArray(ids)) {
     keyList = keyList.concat(ids);
   }
@@ -1226,7 +1226,7 @@ sa.getServerUrl = function() {
   return sa.para.server_url;
 };
 
-var LIB_VERSION = '1.17.12',
+var LIB_VERSION = '1.17.13',
   LIB_NAME = 'MiniProgram';
 
 var source_channel_standard = 'utm_source utm_medium utm_campaign utm_content utm_term';
@@ -2922,7 +2922,8 @@ sa.loginWithKey = function(name, id) {
     logger.info(info);
     return false;
   }
-  if (isPresetIdKeys(name, ['$mp_id', '$identity_mp_id'])) {
+  var listKeys = ['$mp_openid', '$identity_mp_openid', '$identity_mp_unionid', '$mp_unionid', '$mp_id', '$identity_mp_id'];
+  if (isPresetIdKeys(name, listKeys)) {
     var info = 'Key [' + name + '] is invalid';
     logger.info(info);
     return false;
@@ -3139,8 +3140,7 @@ sa.unsetOpenid = function(val) {
 sa.setUnionid = function(val) {
   var id = _.validId(val);
   if (id) {
-    sa.store._state.identities['$identity_mp_unionid'] = id;
-    sa.store.save();
+    sa.bind('$identity_mp_unionid', id);
   }
 };
 
@@ -3154,9 +3154,8 @@ sa.unsetUnionid = function(val) {
         delete sa.store._state.openid;
         sa.store.save();
       }
-      delete sa.store._state.identities['$identity_mp_unionid'];
-      sa.store.save();
     }
+    sa.unbind('$identity_mp_unionid', id);
   }
 };
 
@@ -3257,6 +3256,7 @@ sa.unbind = function(name, value) {
     }
     sa.store.save();
   }
+
   var distinctId = sa.store.getDistinctId();
   var firstId = sa.store.getFirstId();
   var unbindDistinctId = name + '+' + value;
