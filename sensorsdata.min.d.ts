@@ -1,3 +1,8 @@
+/*
+ * @Author: wangzhigang@sensorsdata.cn
+ * @Date: 2022-05-07 14:40:11
+ * @File: 
+ */
 declare namespace sensors {
   function init(): void;
   function track(e: string, p?: object): void;

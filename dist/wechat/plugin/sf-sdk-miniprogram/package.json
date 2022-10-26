@@ -1,0 +1,25 @@
+{
+  "name": "sf-sdk-miniprogram",
+  "version": "0.4.8",
+  "description": "神策小程序弹窗",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sensorsdata/sf-sdk-miniprogram.git"
+  },
+  "keywords": [
+    "sensorsdata",
+    "sdk",
+    "popup",
+    "sf-sdk-miniprogram"
+  ],
+  "author": "shengyonggen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sensorsdata/sf-sdk-miniprogram/issues"
+  },
+  "homepage": "https://github.com/sensorsdata/sf-sdk-miniprogram/#readme"
+}

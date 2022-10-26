@@ -1,8 +1,8 @@
 {
   "name": "sa-sdk-miniprogram",
-  "version": "1.17.13",
+  "version": "1.18.1",
   "description": "sensorsdata miniprogram sdk",
-  "main": "sensorsdata.min.js",
+  "main": "/dist/wechat/sensorsdata.cjs.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,7 +15,7 @@
     "mininprogram",
     "sdk"
   ],
-  "author": "shengyonggen",
+  "author": "shengyonggen@sensorsdata.cn",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/sensorsdata/sa-sdk-miniprogram/issues"

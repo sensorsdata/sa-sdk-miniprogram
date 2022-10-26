@@ -1,0 +1,103 @@
+<view
+  catchtap="clickMask"
+  class="wx-popup"
+  hidden="{{flag}}"
+  style="background: {{template.properties.maskColor}}"
+>
+  
+  <view wx:if="{{isShow}}" class='popup-container' catchtap="tapContent">
+    <view 
+      wx:if="{{template.image_button.aligin === 'right'}}" class="close_btn-right">
+      <image
+        class="close_btn"
+        catchtap="topCloseButton" 
+        src="{{template.image_button.src}}">
+      </image>
+    </view>
+    <image wx:if="{{!template.diverseModule && template.img}}"
+      class ='content-image'
+      style="{{template.img.style}}"
+      catchtap="clickImage"
+      src="{{template.img.src?template.img.src:''}}"
+      >
+    </image>
+    <view 
+      wx:if="{{template.diverseModule}}"
+      class="popup-content"
+      style="{{template.view.content.style}}"
+      >
+     
+      <image 
+        wx:if="{{template.img && template.img.src}}" 
+        class ='content-image' 
+        style="{{template.img.style}}" 
+        src="{{template.img.src}}">
+      </image>
+
+      <view wx:if="{{template.view.padding}}" style="{{template.view.padding.style}}"></view>
+      <text wx:if="{{template.title}}" 
+        class="content-title" 
+        style="{{template.title.style}}">{{template.title.innerText}}
+      </text>
+
+      <text wx:if="{{template.content}}" 
+        class="content-content" 
+        style="{{template.content.style}}">{{template.content.innerText}}
+      </text>
+      <!-- 按钮模块 -->
+      <view 
+        wx:if="{{template.button && template.button.length > 0}}"
+        class="{{ template.view.button.type === 'column' ? 'popup-btn_column' : 'popup-btn_row'}} "
+        style="{{template.view.button.style}}">
+
+        <view wx:if="{{template.button[0].type === 'button'}}" 
+          class="{{ template.view.button.type === 'column' ? 'popup-btn-button_column' : 'popup-btn-button_row'}}" 
+          style="{{template.button[0].style}}"
+          catchtap="buttonFirst">{{template.button[0].innerText}}
+        </view>
+        <image wx:if="{{template.button[0].type === 'image_button'}}" 
+          class="{{ template.view.button.type === 'column' ? 'popup-btn-img_column' : 'popup-btn-img_row'}}" 
+          style="{{template.button[0].style}}"
+          src="{{template.button[0].src}}"
+          catchtap="buttonFirst">
+        </image>
+
+        <view wx:if="{{template.button[0].type === 'link'}}" 
+          class="{{ template.view.button.type === 'column' ? 'popup-btn-linker_column' : 'popup-btn-linker_row'}}"   
+          style="{{template.button[0].style}}" catchtap="buttonFirst">{{template.button[0].innerText}}
+        </view>
+
+        <view wx:if="{{template.button[1].type === 'button'}}"
+          class="{{template.view.button.type === 'column' ? 'popup-btn-button_column popup-btn-second_column' : 'popup-btn-button_row popup-btn-second_row'}}" 
+          style="{{template.button[1].style}}"
+          catchtap='buttonSecond'>{{template.button[1].innerText}}
+        </view>
+
+        <image wx:if="{{template.button[1].type === 'image_button'}}" 
+          class="{{ template.view.button.type === 'column' ? 'popup-btn-img_column popup-btn-second_column' : 'popup-btn-img_row popup-btn-second_row'}}" 
+          style="{{template.button[1].style}}"
+          src="{{template.button[1].src}}"
+          catchtap='buttonSecond'>  
+        </image>
+
+        <view wx:if="{{template.button[1].type === 'link'}}"  
+          class="{{ template.view.button.type === 'column' ? 'popup-btn-linker_column' : 'popup-btn-linker_row'}}" 
+          style="{{template.button[1].style}}"
+          catchtap='buttonSecond'>{{template.button[1].innerText}}
+        </view>
+      </view>
+    </view>
+
+    <view 
+      wx:if="{{template.image_button.aligin === 'center'}}" class="close_btn-center">
+      <image 
+        catchtap="buttomCloseButton"
+        class="close_btn"
+        src="{{template.image_button.src}}">
+      </image>
+    </view>
+  </view>
+  <view wx:for="{{image_list}}" wx:key="index" hidden="{{true}}">
+    <image src="{{image_list[index]}}"></image>
+  </view>
+</view>
