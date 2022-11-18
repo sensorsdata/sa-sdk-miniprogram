@@ -1,6 +1,6 @@
 {
   "name": "ab-sdk-miniprogram",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "神策小程序 A/B Testing SDk",
   "main": "",
   "scripts": {

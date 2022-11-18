@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.1';
+var LIB_VERSION = '1.18.2';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2934,7 +2934,6 @@ function dataStage(p) {
  * @Date: 2022-05-07 14:40:11
  * @File:
  */
-//import { log } from '../../common/log';
 
 // 为了兼容弹窗 SDK 的弹窗组件 在 attached 的生命周期中调用此方法时，弹窗插件尚未声明而报错
 // 弹窗 SDK 自身也会增加修复代码，进行修复
@@ -2954,9 +2953,20 @@ var usePlugin = function (plugin, para) {
   if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
     if (typeof plugin.init === 'function') {
       plugin.init(sa, para);
-      //      log('abtesting plugin is initialized');
+      log('abtesting plugin is initialized');
     }
     return false;
+  }
+
+  // 过滤掉不包含name的插件
+  if (isObject(plugin) && isString(plugin.name) && plugin.name) {
+    // 如果有插件，就使用原来的插件
+    if (sa.modules[plugin.name]) {
+      plugin = sa.modules[plugin.name];
+    } else {
+      // 如果没有插件，就存起来
+      sa.modules[plugin.name] = plugin;
+    }
   }
 
   if (!meta.init_status) {
@@ -2968,7 +2978,7 @@ var usePlugin = function (plugin, para) {
   } else {
     if (typeof plugin.init === 'function') {
       plugin.init(sa, para);
-      //      log(plugin.name + ' plugin is initialized');
+      log(plugin.name + ' plugin is initialized');
     }
   }
 };
@@ -2982,6 +2992,9 @@ var checkPluginInitStatus = function () {
       var plugin_item = meta.plugin.uninitialized_list[temp];
       if (plugin_item && plugin_item.target && typeof plugin_item.target.init === 'function') {
         plugin_item.target.init(sa, plugin_item.para);
+        if (isObject(plugin_item.target) && isString(plugin_item.target.name) && plugin_item.target.name) {
+          log(plugin_item.target.name + ' plugin is initialized');
+        }
       }
     }
     meta.plugin.uninitialized_list = [];
@@ -3343,6 +3356,9 @@ function apiStaging() {
     var temp = sa[method];
     sa[method] = function () {
       if (!checkPrivacyStatus()) {
+        return false;
+      }
+      if (isFunction(sa.getDisabled) && sa.getDisabled()) {
         return false;
       }
       if (meta.initialState.isComplete) {
@@ -4684,6 +4700,7 @@ function init (obj) {
  */
 
 sa._ = _;
+sa.modules = {};
 sa.meta = meta;
 sa.kit = kit;
 sa.mergeStorageData = mergeStorageData;
@@ -4721,6 +4738,27 @@ initAppShowHide();
 initPageProxy();
 
 sa.init = init;
+
+var disableSDK = {
+  init(sa) {
+    sa.disableSDK = this.disableSDK.bind(this);
+    sa.enableSDK = this.enableSDK.bind(this);
+    sa.getDisabled = this.getDisabled.bind(this);
+  },
+  name: 'DisableSDK',
+  disabled: false,
+  disableSDK() {
+    this.disabled = true;
+  },
+  enableSDK() {
+    this.disabled = false;
+  },
+  getDisabled() {
+    return this.disabled;
+  }
+};
+
+sa.usePlugin(disableSDK);
 
 /*
  * @Author: wangzhigang@sensorsdata.cn

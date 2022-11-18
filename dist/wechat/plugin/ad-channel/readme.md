@@ -1,7 +1,7 @@
-# SAT - 微信小程序渠道
+# SAT - 微信小程序广告渠道
 
 ## 功能
-神策 SAT 标准功能。微信小程序支持腾讯广告渠道。   
+神策 SAT 标准功能。微信小程序支持 SAT 广告渠道。   
 原理：判断有 `sat_cf` 参数时候，第一时间发送 `$ChannelLinkReaching` 事件。如果是首次触发的自定义事件，增加 `$is_channel_callback_event` 属性。  
 
 ## 集成

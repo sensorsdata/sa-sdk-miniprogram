@@ -6,8 +6,8 @@
 
 ## API
 ```javascript
-import RegisterProperties from '/dist/wechat/plugin/register-properties/index.esm';
-sensors.usePlugin(RegisterProperties);
+import registerProperties from '/dist/wechat/plugin/register-properties/index.esm';
+sensors.usePlugin(registerProperties);
 
 // 给 '$MPLaunch' 和 '$MPShow' 注册 tel 和 project 属性
 registerProperties.register({

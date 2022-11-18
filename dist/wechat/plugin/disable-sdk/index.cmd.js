@@ -1,0 +1,1 @@
+"use strict";var disableSDK={init(i){i.disableSDK=this.disableSDK.bind(this),i.enableSDK=this.enableSDK.bind(this),i.getDisabled=this.getDisabled.bind(this)},name:"DisableSDK",disabled:!1,disableSDK(){this.disabled=!0},enableSDK(){this.disabled=!1},getDisabled(){return this.disabled}};module.exports=disableSDK;
