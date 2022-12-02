@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.2';
+var LIB_VERSION = '1.18.3';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -758,27 +758,10 @@ var store = {
         this._state.identities[openid_name] = this._state.identities[old_openid_name];
         delete this._state.identities[old_openid_name];
       }
-
-      // 没有 state.first_id 认为没有登录，或者已经注销
-      // 这部分处理中省去了判断 identities.anonymous_id 和 2.0 匿名ID 是否相等的判断，因为相等就不对 identities.anonymous_id 处理，不相等就将 2.0 的匿名 ID 赋值上去
-      if (hasOwnProperty$1.call(this._state.identities, '$identity_anonymous_id')) {
-        if (!first_id) {
-          this._state.identities.$identity_anonymous_id = distinct_id;
-        } else {
-          this._state.identities.$identity_anonymous_id = first_id;
-        }
-      }
     } else {
       this._state.identities = {};
       this._state.identities.$identity_mp_id = this.getUUID();
-      if (!first_id) {
-        // 3.0 identify -> 2.0 identify -> 3.0 更新 anonymous_id
-        this._state.identities.$identity_anonymous_id = distinct_id;
-      } else {
-        this._state.identities.$identity_anonymous_id = first_id;
-      }
     }
-
     // 单独处理 openid
     if (openid) {
       this._state.identities[openid_name] = openid;
@@ -800,25 +783,11 @@ var store = {
       if (old_login_id_name && hasOwnProperty$1.call(this._state.identities, old_login_id_name)) {
         if (this._state.identities[old_login_id_name] !== distinct_id) {
           this._state.identities[old_login_id_name] = distinct_id;
-          // for (var identitiesprop in this._state.identities) {
-          //   if (hasOwnProperty.call(this._state.identities, identitiesprop)) {
-          //     if (identitiesprop !== '$identity_mp_id' && identitiesprop !== old_login_id_name) {
-          //       delete this._state.identities[identitiesprop];
-          //     }
-          //   }
-          // }
           delIdentitiesProp(old_login_id_name);
           this._state.history_login_id.value = distinct_id;
         }
       } else {
         this._state.identities[IDENTITY_KEY.LOGIN] = distinct_id;
-        // for (var identitiesprop in this._state.identities) {
-        //   if (hasOwnProperty.call(this._state.identities, identitiesprop)) {
-        //     if (identitiesprop !== '$identity_mp_id' && identitiesprop !== IDENTITY_KEY.LOGIN) {
-        //       delete this._state.identities[identitiesprop];
-        //     }
-        //   }
-        // }
         delIdentitiesProp(IDENTITY_KEY.LOGIN);
         this._state.history_login_id = {
           name: IDENTITY_KEY.LOGIN,
@@ -827,16 +796,6 @@ var store = {
       }
     } else {
       // 处理 3.0 降到 2.0 后调用 logout 但是 3.0 的登录 ID 依旧存在的情况
-      if (hasOwnProperty$1.call(this._state.identities, '$identity_login_id') || hasOwnProperty$1.call(this._state.identities, old_login_id_name)) {
-        // for (var identitiesprop in this._state.identities) {
-        //   if (hasOwnProperty.call(this._state.identities, identitiesprop)) {
-        //     if (identitiesprop !== '$identity_mp_id' && identitiesprop !== '$identity_anonymous_id') {
-        //       delete this._state.identities[identitiesprop];
-        //     }
-        //   }
-        // }
-        delIdentitiesProp('$identity_anonymous_id');
-      }
       this._state.history_login_id = {
         name: '',
         value: ''
@@ -941,11 +900,6 @@ var store = {
     case 'logout':
       identities.$identity_mp_id = this._state.identities.$identity_mp_id;
       break;
-    case 'identify':
-      identities = deepCopy(this._state.identities);
-      identities.$identity_anonymous_id = params.id;
-      break;
-      // donoting
     }
     this.set('identities', identities);
   },
@@ -983,6 +937,7 @@ var store = {
   init: function () {
     var info = this.getStorage();
     var flag = 'data:enc;';
+    var uuid = store.getUUID();
     if (info) {
       if (isString(info)) {
         //判断是否有加密的字段 有就解密
@@ -1000,11 +955,11 @@ var store = {
       time.setMinutes(59);
       time.setSeconds(60);
       this.set({
-        distinct_id: store.getUUID(),
+        distinct_id: uuid,
         first_visit_time: visit_time,
         first_visit_day_time: time.getTime(),
         identities: {
-          $identity_mp_id: store.getUUID()
+          $identity_mp_id: uuid
         },
         history_login_id: {
           name: '',
@@ -1026,57 +981,6 @@ var store = {
     }
   }
 };
-
-/*
- * @Author: wangzhigang@sensorsdata.cn
- * @Date: 2022-07-04 11:18:47
- * @File:
- */
-
-function registerApp(obj) {
-  if (isObject(obj) && !isEmptyObject(obj)) {
-    meta.preset_properties = extend(meta.preset_properties, obj);
-  }
-}
-
-function register(obj) {
-  if (isObject(obj) && !isEmptyObject(obj)) {
-    store.setProps(obj);
-  }
-}
-
-function clearAllRegister() {
-  store.setProps({}, true);
-}
-
-function clearAppRegister(arr) {
-  if (isArray(arr)) {
-    each(meta.preset_properties, function (value, item) {
-      if (include(arr, item)) {
-        delete meta.preset_properties[item];
-      }
-    });
-  }
-}
-
-/*
- * @Author: wangzhigang@sensorsdata.cn
- * @Date: 2022-07-05 14:32:00
- * @File:
- */
-
-function clearAllProps(arr) {
-  var obj = store.getProps();
-  var props = {};
-  if (isArray(arr)) {
-    each(obj, function (value, item) {
-      if (!include(arr, item)) {
-        props[item] = value;
-      }
-    });
-    store.setProps(props, true);
-  }
-}
 
 /*
  * @Author: wangzhigang@sensorsdata.cn
@@ -1767,7 +1671,7 @@ function setSfSource(para, prop) {
   if (!isEmptyObject(para.query)) {
     if (para.query && para.query._sfs) {
       prop.$sf_source = para.query._sfs;
-      registerApp({ $latest_sf_source: prop.$sf_source });
+      sa.registerApp({ $latest_sf_source: prop.$sf_source });
     }
   }
 }
@@ -2000,10 +1904,10 @@ function setUpperCase(value) {
 function setLatestChannel(channel) {
   if (!isEmptyObject(channel)) {
     if (includeChannel(channel, LATEST_SOURCE_CHANNEL)) {
-      clearAppRegister(LATEST_SOURCE_CHANNEL);
-      clearAllProps(LATEST_SOURCE_CHANNEL);
+      sa.clearAppRegister(LATEST_SOURCE_CHANNEL);
+      sa.clearAllProps(LATEST_SOURCE_CHANNEL);
     }
-    saPara.is_persistent_save.utm ? register(channel) : registerApp(channel);
+    saPara.is_persistent_save.utm ? sa.register(channel) : sa.registerApp(channel);
   }
 
   function includeChannel(channel, arr) {
@@ -2019,10 +1923,10 @@ function setLatestChannel(channel) {
 
 function setLatestShare(share) {
   if (share.$latest_share_depth || share.$latest_share_distinct_id || share.$latest_share_url_path || share.$latest_share_method) {
-    clearAppRegister(LATEST_SHARE_INFO);
-    clearAllProps(LATEST_SHARE_INFO);
+    sa.clearAppRegister(LATEST_SHARE_INFO);
+    sa.clearAllProps(LATEST_SHARE_INFO);
 
-    saPara.is_persistent_save.share ? register(share) : registerApp(share);
+    saPara.is_persistent_save.share ? sa.register(share) : sa.registerApp(share);
   }
 }
 
@@ -2186,7 +2090,7 @@ function setPublicProperties(data) {
  */
 function networkStatusChange() {
   wx.onNetworkStatusChange(function (res) {
-    registerApp({ $network_type: res.networkType || '' });
+    sa.registerApp({ $network_type: res.networkType || '' });
   });
 }
 
@@ -3353,7 +3257,7 @@ function checkPrivacyStatus() {
  */
 
 function apiStaging() {
-  var saApiList = ['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid'];
+  var saApiList = ['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid', 'bindOpenid', 'unbindOpenid', 'bindUnionid', 'unbindUnionid'];
   each(saApiList, function (method) {
     var temp = sa[method];
     sa[method] = function () {
@@ -3370,6 +3274,57 @@ function apiStaging() {
       }
     };
   });
+}
+
+/*
+ * @Author: wangzhigang@sensorsdata.cn
+ * @Date: 2022-07-04 11:18:47
+ * @File:
+ */
+
+function registerApp(obj) {
+  if (isObject(obj) && !isEmptyObject(obj)) {
+    meta.preset_properties = extend(meta.preset_properties, obj);
+  }
+}
+
+function register(obj) {
+  if (isObject(obj) && !isEmptyObject(obj)) {
+    store.setProps(obj);
+  }
+}
+
+function clearAllRegister() {
+  store.setProps({}, true);
+}
+
+function clearAppRegister(arr) {
+  if (isArray(arr)) {
+    each(meta.preset_properties, function (value, item) {
+      if (include(arr, item)) {
+        delete meta.preset_properties[item];
+      }
+    });
+  }
+}
+
+/*
+ * @Author: wangzhigang@sensorsdata.cn
+ * @Date: 2022-07-05 14:32:00
+ * @File:
+ */
+
+function clearAllProps(arr) {
+  var obj = store.getProps();
+  var props = {};
+  if (isArray(arr)) {
+    each(obj, function (value, item) {
+      if (!include(arr, item)) {
+        props[item] = value;
+      }
+    });
+    store.setProps(props, true);
+  }
 }
 
 var hasOwnProperty$3 = Object.prototype.hasOwnProperty;
@@ -3463,10 +3418,6 @@ function identify(id, isSave) {
         store.change('distinct_id', id);
       }
     }
-    store.identitiesSet({
-      type: 'identify',
-      id: id
-    });
   }
 }
 
@@ -3700,6 +3651,7 @@ function getPresetProperties() {
 }
 
 function setOpenid(openid, isCover) {
+  log('该方法已不建议使用，如果是 id2 用户，请使用 identify 代替，如果是 id3 用户，请使用 bindOpenid 代替');
   openid = validId(openid);
   if (!openid) {
     return false;
@@ -3727,6 +3679,7 @@ function setOpenid(openid, isCover) {
 }
 
 function unsetOpenid(val) {
+  log('该方法已不建议使用，如果是 id3 用户，请使用 unbindOpenid 代替');
   var id = validId(val);
   if (!id) {
     return false;
@@ -3740,8 +3693,40 @@ function unsetOpenid(val) {
   var name = getOpenidNameByAppid();
   if (hasOwnProperty$3.call(store._state.identities, name) && id === store._state.identities[name]) {
     delete store._state.identities[name];
+
+    // 2022-11-29-老乡鸡优化
+    var first_id = store.getFirstId();
+    var distinct_id = store.getDistinctId();
+    var mp_id = store._state && store._state.identities && store._state.identities.$identity_mp_id;
+
+    if (first_id && first_id === openid && mp_id) {
+      store.change('first_id', mp_id);
+    }
+    if (distinct_id && distinct_id === openid && mp_id) {
+      store.change('distinct_id', mp_id);
+    }
+
     store.save();
   }
+}
+
+function bindOpenid(openid) {
+  openid = validId(openid);
+  if (!openid) {
+    return false;
+  }
+  var name = getOpenidNameByAppid();
+  this.bind(name, openid);
+}
+
+function unbindOpenid(val) {
+  var id = validId(val);
+  if (!id) {
+    return false;
+  }
+  var name = getOpenidNameByAppid();
+  // 不管本地有没有都要 unbind
+  this.unbind(name, val);
 }
 
 function setUnionid(val) {
@@ -4567,8 +4552,12 @@ var functions = /*#__PURE__*/Object.freeze({
   getPresetProperties: getPresetProperties,
   setOpenid: setOpenid,
   unsetOpenid: unsetOpenid,
+  bindOpenid: bindOpenid,
+  unbindOpenid: unbindOpenid,
   setUnionid: setUnionid,
   unsetUnionid: unsetUnionid,
+  bindUnionid: setUnionid,
+  unbindUnionid: unsetUnionid,
   initWithOpenid: initWithOpenid,
   bind: bind,
   unbind: unbind,
