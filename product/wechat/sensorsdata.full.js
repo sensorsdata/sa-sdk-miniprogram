@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.3';
+var LIB_VERSION = '1.18.4';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -1052,9 +1052,9 @@ function formatDate(d) {
 
 // 把日期格式全部转化成日期字符串
 function searchObjDate(o) {
-  if (isObject(o)) {
+  if (isObject(o) || isArray(o)) {
     each(o, function (a, b) {
-      if (isObject(a)) {
+      if (isObject(a) || isArray(a)) {
         searchObjDate(o[b]);
       } else {
         if (isDate(a)) {
@@ -1154,14 +1154,28 @@ function strip_sa_properties(p) {
       each(v, function (arrv) {
         if (isString(arrv)) {
           temp.push(arrv);
+        } else if (isUndefined(arrv)) {
+          temp.push('null');
         } else {
-          log('您的数据-', v, '的数组里的值必须是字符串,已经将其删除');
+          try {
+            temp.push(JSON.stringify(arrv));
+          } catch (error) {
+            log('您的数据 - ' + k + ':' + v + ' - 的数组里的值有错误,已经将其删除');
+          }
         }
       });
       p[k] = temp;
     }
-    // 只能是字符串，数字，日期,布尔，数组
-    if (!(isString(v) || isNumber(v) || isDate(v) || isBoolean(v) || isArray(v))) {
+    //如果是多层结构对象，直接序列化为字符串
+    if (isObject(v)) {
+      try {
+        p[k] = JSON.stringify(v);
+      } catch (error) {
+        delete p[k];
+        log('您的数据 - ' + k + ':' + v + ' - 的数据值有错误,已经将其删除');
+      }
+    } else if (!(isString(v) || isNumber(v) || isDate(v) || isBoolean(v) || isArray(v))) {
+      // 只能是字符串，数字，日期,布尔，数组
       log('您的数据 - ' + k + ':' + v + ' - 格式不满足要求，已经将其删除');
       delete p[k];
     }
@@ -2792,9 +2806,8 @@ function buildData(p, custom_monitor_prop) {
 
   // 处理动态公共属性
   parseSuperProperties(data.properties);
-  strip_sa_properties(data.properties);
-
   searchObjDate(data);
+  strip_sa_properties(data.properties);
   searchObjString(data);
 
   return data;
