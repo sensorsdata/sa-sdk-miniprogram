@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * @fileoverview sensors analytic miniprogram sdk
@@ -17,14 +17,14 @@ var sa = {};
 // 默认配置
 var saPara = {
   // 神策分析注册在APP全局函数中的变量名，在非app.js中可以通过getApp().sensors(你这里定义的名字来使用)
-  name: 'sensors',
+  name: "sensors",
   // 神策分析数据接收地址
-  server_url: '',
+  server_url: "",
   //默认使用队列发数据时候，两条数据发送间的最大间隔
   send_timeout: 1000,
   // 是否允许控制台打印查看埋点数据（建议开启查看）
   show_log: false,
-  login_id_key: '$identity_login_id',
+  login_id_key: "$identity_login_id",
   // 是否允许修改onShareMessage里return的path，用来增加（用户id，分享层级，当前的path），在app onshow中自动获取这些参数来查看具体分享来源，层级等
   allow_amend_share_path: true,
   max_string_length: 500,
@@ -38,20 +38,20 @@ var saPara = {
     pageShare: true, //是否采集 $MPShare 事件，true 代表开启。
     mpClick: false, // 是否采集 $MPClick 事件，true 代表开启。
     mpFavorite: true, // 是否采集 $MPAddFavorites 事件，true 代表开启。
-    pageLeave: false // 是否采集页面浏览时长,默认不开启
+    pageLeave: false, // 是否采集页面浏览时长,默认不开启
   },
   autotrack_exclude_page: {
     pageShow: [],
-    pageLeave: []
+    pageLeave: [],
   },
   //是否允许将最近一次站外渠道信息保存到 wxStorage 中
   is_persistent_save: {
     share: false, // share 相关信息
-    utm: false // utm 相关信息
+    utm: false, // utm 相关信息
   },
 
   preset_properties: {
-    url_path: true //默认开启所有事件都采集
+    url_path: true, //默认开启所有事件都采集
   },
   // 是否集成了插件！重要！
   // is_plugin: false
@@ -59,11 +59,11 @@ var saPara = {
   preset_events: {
     moments_page: false, // 处于单页模式是否开启数据发送，默认 false 不开启发送
     defer_track: false, // 上报点击埋点事件方式，默认同步，设置为真时会放入异步队列中
-    share_info_use_string: false //分享信息设置区分 A B 版本 URL 链接拼接方式不一样
+    share_info_use_string: false, //分享信息设置区分 A B 版本 URL 链接拼接方式不一样
   },
   batch_send: true,
-  storage_store_key: 'sensorsdata2015_wechat',
-  storage_prepare_data_key: 'sensors_mp_prepare_data'
+  storage_store_key: "sensorsdata2015_wechat",
+  storage_prepare_data_key: "sensors_mp_prepare_data",
 };
 
 /*
@@ -74,7 +74,7 @@ var saPara = {
 
 function log() {
   if (saPara.show_log) {
-    if (typeof console === 'object' && console.log) {
+    if (typeof console === "object" && console.log) {
       try {
         return console.log.apply(console, arguments);
       } catch (e) {
@@ -140,7 +140,7 @@ function isObject(obj) {
   if (obj === undefined || obj === null) {
     return false;
   } else {
-    return toString.call(obj) == '[object Object]';
+    return toString.call(obj) == "[object Object]";
   }
 }
 
@@ -166,11 +166,11 @@ var getRandomBasic = (function () {
  * @return {number}
  */
 function getRandom() {
-  if (typeof Uint32Array === 'function') {
-    var cry = '';
-    if (typeof crypto !== 'undefined') {
+  if (typeof Uint32Array === "function") {
+    var cry = "";
+    if (typeof crypto !== "undefined") {
       cry = crypto;
-    } else if (typeof msCrypto !== 'undefined') {
+    } else if (typeof msCrypto !== "undefined") {
       cry = msCrypto;
     }
     if (isObject(cry) && cry.getRandomValues) {
@@ -240,7 +240,7 @@ function coverExtend(obj) {
 var isArray =
   nativeIsArray ||
   function (obj) {
-    return toString.call(obj) === '[object Array]';
+    return toString.call(obj) === "[object Array]";
   };
 
 /**
@@ -253,7 +253,7 @@ function isFunction(f) {
     return false;
   }
   var type = Object.prototype.toString.call(f);
-  return type == '[object Function]' || type == '[object AsyncFunction]';
+  return type == "[object Function]" || type == "[object AsyncFunction]";
 }
 
 /**
@@ -262,7 +262,7 @@ function isFunction(f) {
  * @return {boolean}
  */
 function isArguments(obj) {
-  return !!(obj && hasOwnProperty.call(obj, 'callee'));
+  return !!(obj && hasOwnProperty.call(obj, "callee"));
 }
 
 /**
@@ -330,7 +330,7 @@ function include(obj, target) {
  * @returns
  */
 function trim(str) {
-  return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
 }
 
 /**
@@ -390,7 +390,7 @@ function isUndefined(obj) {
  * @returns
  */
 function isString(obj) {
-  return toString.call(obj) == '[object String]';
+  return toString.call(obj) == "[object String]";
 }
 
 /**
@@ -399,7 +399,7 @@ function isString(obj) {
  * @returns
  */
 function isDate(obj) {
-  return toString.call(obj) == '[object Date]';
+  return toString.call(obj) == "[object Date]";
 }
 
 /**
@@ -408,7 +408,7 @@ function isDate(obj) {
  * @returns
  */
 function isBoolean(obj) {
-  return toString.call(obj) == '[object Boolean]';
+  return toString.call(obj) == "[object Boolean]";
 }
 
 /**
@@ -417,7 +417,7 @@ function isBoolean(obj) {
  * @returns
  */
 function isNumber(obj) {
-  return toString.call(obj) == '[object Number]' && /[\d\\.]+/.test(String(obj));
+  return toString.call(obj) == "[object Number]" && /[\d\\.]+/.test(String(obj));
 }
 
 /**
@@ -440,7 +440,7 @@ function isJSONString(str) {
 var isInteger =
   Number.isInteger ||
   function (value) {
-    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+    return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
   };
 
 /**
@@ -454,14 +454,14 @@ var isSafeInteger =
 
 var urlSafeBase64 = {
   ENC: {
-    '+': '-',
-    '/': '_',
-    '=': '.'
+    "+": "-",
+    "/": "_",
+    "=": ".",
   },
   DEC: {
-    '-': '+',
-    _: '/',
-    '.': '='
+    "-": "+",
+    _: "/",
+    ".": "=",
   },
   /**
    * encode base64 string url safe
@@ -489,7 +489,7 @@ var urlSafeBase64 = {
    * @return {String} string with padding chars removed
    */
   trim: function (string) {
-    return string.replace(/[.=]{1,2}$/, '');
+    return string.replace(/[.=]{1,2}$/, "");
   },
   /**
    * checks if `string` is base64 encoded
@@ -506,7 +506,7 @@ var urlSafeBase64 = {
    */
   isUrlSafeBase64: function (string) {
     return /^[A-Za-z0-9_-]*[.]{0,2}$/.test(string);
-  }
+  },
 };
 
 /*
@@ -514,10 +514,22 @@ var urlSafeBase64 = {
  * @Date: 2022-06-09 11:36:17
  * @File:
  */
-var SOURCE_CHANNEL_STANDARD = 'utm_source utm_medium utm_campaign utm_content utm_term';
-var LATEST_SOURCE_CHANNEL = ['$latest_utm_source', '$latest_utm_medium', '$latest_utm_campaign', '$latest_utm_content', '$latest_utm_term', '$latest_sa_utm'];
-var LATEST_SHARE_INFO = ['$latest_share_distinct_id', '$latest_share_url_path', '$latest_share_depth', '$latest_share_method'];
-var SHARE_INFO_KEY = ['sensors_share_d', 'sensors_share_p', 'sensors_share_i', 'sensors_share_m'];
+var SOURCE_CHANNEL_STANDARD = "utm_source utm_medium utm_campaign utm_content utm_term";
+var LATEST_SOURCE_CHANNEL = [
+  "$latest_utm_source",
+  "$latest_utm_medium",
+  "$latest_utm_campaign",
+  "$latest_utm_content",
+  "$latest_utm_term",
+  "$latest_sa_utm",
+];
+var LATEST_SHARE_INFO = [
+  "$latest_share_distinct_id",
+  "$latest_share_url_path",
+  "$latest_share_depth",
+  "$latest_share_method",
+];
+var SHARE_INFO_KEY = ["sensors_share_d", "sensors_share_p", "sensors_share_i", "sensors_share_m"];
 
 var MP_FILTER_HOOK = {
   data: 1,
@@ -532,17 +544,17 @@ var MP_FILTER_HOOK = {
   onResize: 1,
   onTabItemTap: 1,
   onHide: 1,
-  onUnload: 1
+  onUnload: 1,
 };
 
 var IDENTITY_KEY = {
-  EMAIL: '$identity_email',
-  MOBILE: '$identity_mobile',
-  LOGIN: '$identity_login_id'
+  EMAIL: "$identity_email",
+  MOBILE: "$identity_mobile",
+  LOGIN: "$identity_login_id",
 };
 
-var LIB_VERSION = '1.18.4';
-var LIB_NAME = 'MiniProgram';
+var LIB_VERSION = "1.18.4";
+var LIB_NAME = "MiniProgram";
 
 /*
  * @Author: wangzhigang@sensorsdata.cn
@@ -553,34 +565,34 @@ var LIB_NAME = 'MiniProgram';
 var meta = {
   init_status: false,
   life_state: {
-    app_launched: false
+    app_launched: false,
   },
   plugin: {
     init_list: [],
-    uninitialized_list: []
+    uninitialized_list: [],
   },
   privacy: {
-    enable_data_collect: false
+    enable_data_collect: false,
   },
   initialState: {
     queue: [],
-    isComplete: false
+    isComplete: false,
   },
   preset_properties: {
     $lib: LIB_NAME,
-    $lib_version: LIB_VERSION
+    $lib_version: LIB_VERSION,
   },
   promise_list: [],
   query_share_depth: 0,
   page_show_time: Date.now(),
   mp_show_time: null,
-  share_distinct_id: '',
-  share_method: '',
-  current_scene: '',
+  share_distinct_id: "",
+  share_method: "",
+  current_scene: "",
   is_first_launch: false,
-  wx_sdk_version: '',
+  wx_sdk_version: "",
   global_title: {},
-  page_route_map: []
+  page_route_map: [],
 };
 
 /*
@@ -596,7 +608,7 @@ function getAppInfoSync() {
     return {
       appId: accountInfo.appId,
       appEnv: accountInfo.envVersion,
-      appVersion: accountInfo.version
+      appVersion: accountInfo.version,
     };
   }
   return {};
@@ -607,14 +619,14 @@ function getAppId() {
   if (info && info.appId) {
     return info.appId;
   }
-  return '';
+  return "";
 }
 
 function getOpenidNameByAppid() {
   var appid = getAppId();
-  var name = '$identity_mp_openid';
+  var name = "$identity_mp_openid";
   if (appid) {
-    name = '$identity_mp_' + appid + '_openid';
+    name = "$identity_mp_" + appid + "_openid";
   }
   return name;
 }
@@ -640,10 +652,10 @@ function rot13defs(str) {
  */
 function rot13obfs(str, code_len) {
   str = String(str);
-  code_len = typeof code_len === 'number' ? code_len : 13;
+  code_len = typeof code_len === "number" ? code_len : 13;
   var n = 126;
 
-  var chars = str.split('');
+  var chars = str.split("");
 
   for (var i = 0, len = chars.length; i < len; i++) {
     var c = chars[i].charCodeAt(0);
@@ -653,7 +665,7 @@ function rot13obfs(str, code_len) {
     }
   }
 
-  return chars.join('');
+  return chars.join("");
 }
 
 var hasOwnProperty$1 = Object.prototype.hasOwnProperty;
@@ -664,15 +676,15 @@ var store = {
   store_queue: [],
   getUUID: function () {
     return (
-      '' +
+      "" +
       Date.now() +
-      '-' +
+      "-" +
       Math.floor(1e7 * getRandom()) +
-      '-' +
-      getRandom().toString(16).replace('.', '') +
-      '-' +
+      "-" +
+      getRandom().toString(16).replace(".", "") +
+      "-" +
       String(getRandom() * 31242)
-        .replace('.', '')
+        .replace(".", "")
         .slice(0, 8)
     );
   },
@@ -680,7 +692,7 @@ var store = {
     if (this.storageInfo) {
       return this.storageInfo;
     } else {
-      this.storageInfo = sa._.getStorageSync(saPara.storage_store_key) || '';
+      this.storageInfo = sa._.getStorageSync(saPara.storage_store_key) || "";
       return this.storageInfo;
     }
   },
@@ -696,7 +708,7 @@ var store = {
     },
     clear: function (len) {
       this.mdata.splice(0, len);
-    }
+    },
   },
   toState: function (ds) {
     var state = null;
@@ -705,7 +717,7 @@ var store = {
       if (state.distinct_id) {
         _this._state = state;
       } else {
-        _this.set('distinct_id', _this.getUUID());
+        _this.set("distinct_id", _this.getUUID());
       }
     }
     if (isJSONString(ds)) {
@@ -715,7 +727,7 @@ var store = {
       state = ds;
       isStateDistinctId();
     } else {
-      this.set('distinct_id', this.getUUID());
+      this.set("distinct_id", this.getUUID());
     }
     // 在初始化同步 storage ID 属性到内存中时，将对应的 identities 对象进行处理
     var first_id = this._state._first_id || this._state.first_id;
@@ -729,30 +741,34 @@ var store = {
       this._state.identities = identities;
     }
 
-    // 获取当前 opneid 的 key 值
+    // 获取当前 openid 的 key 值
     var openid_name = getOpenidNameByAppid();
     /**
      * 由于 1.16.1 版本上线时，发现 1.16.1 版本 $mp_id、$mp_unionid、$mp_{appid}_openid 与其他业务线（SF）ID 冲突，且此版本上线 5 天后才下线，已经存在客户使用，故对此逻辑做兼容处理
      */
     function getOldOpenidNameByAppid() {
       var appid = getAppId();
-      var name = '$mp_openid';
+      var name = "$mp_openid";
       if (appid) {
-        name = '$mp_' + appid + '_openid';
+        name = "$mp_" + appid + "_openid";
       }
       return name;
     }
 
     // 初始化处理匿名 ID 及 初始化 identities
-    if (this._state.identities && isObject(this._state.identities) && !isEmptyObject(this._state.identities)) {
+    if (
+      this._state.identities &&
+      isObject(this._state.identities) &&
+      !isEmptyObject(this._state.identities)
+    ) {
       var old_openid_name = getOldOpenidNameByAppid();
-      if (hasOwnProperty$1.call(this._state.identities, '$mp_id')) {
-        this._state.identities['$identity_mp_id'] = this._state.identities['$mp_id'];
-        delete this._state.identities['$mp_id'];
+      if (hasOwnProperty$1.call(this._state.identities, "$mp_id")) {
+        this._state.identities["$identity_mp_id"] = this._state.identities["$mp_id"];
+        delete this._state.identities["$mp_id"];
       }
-      if (hasOwnProperty$1.call(this._state.identities, '$mp_unionid')) {
-        this._state.identities['$identity_mp_unionid'] = this._state.identities['$mp_unionid'];
-        delete this._state.identities['$mp_unionid'];
+      if (hasOwnProperty$1.call(this._state.identities, "$mp_unionid")) {
+        this._state.identities["$identity_mp_unionid"] = this._state.identities["$mp_unionid"];
+        delete this._state.identities["$mp_unionid"];
       }
       if (hasOwnProperty$1.call(this._state.identities, old_openid_name)) {
         this._state.identities[openid_name] = this._state.identities[old_openid_name];
@@ -770,7 +786,7 @@ var store = {
     function delIdentitiesProp(value) {
       for (var identitiesProp in store._state.identities) {
         if (hasOwnProperty$1.call(store._state.identities, identitiesProp)) {
-          if (identitiesProp !== '$identity_mp_id' && identitiesProp !== value) {
+          if (identitiesProp !== "$identity_mp_id" && identitiesProp !== value) {
             delete store._state.identities[identitiesProp];
           }
         }
@@ -791,14 +807,14 @@ var store = {
         delIdentitiesProp(IDENTITY_KEY.LOGIN);
         this._state.history_login_id = {
           name: IDENTITY_KEY.LOGIN,
-          value: distinct_id
+          value: distinct_id,
         };
       }
     } else {
       // 处理 3.0 降到 2.0 后调用 logout 但是 3.0 的登录 ID 依旧存在的情况
       this._state.history_login_id = {
-        name: '',
-        value: ''
+        name: "",
+        value: "",
       };
     }
     this.save();
@@ -823,10 +839,10 @@ var store = {
     var first_id = this._state._first_id || this._state.first_id;
     var distinct_id = this.getDistinctId();
     if (first_id && distinct_id) {
-      obj['login_id'] = distinct_id;
-      obj['anonymous_id'] = first_id;
+      obj["login_id"] = distinct_id;
+      obj["anonymous_id"] = first_id;
     } else {
-      obj['anonymous_id'] = distinct_id;
+      obj["anonymous_id"] = distinct_id;
     }
     return obj;
   },
@@ -850,7 +866,7 @@ var store = {
     // 存在登录 ID 对象，且登录 ID 值为真（排除登录后登出，保存 history_login_id 对象，但清空属性值的情况）;否则为未登录状态，直接取当前的 distinct_id
     if (isObject(historyLoginId) && historyLoginId.value) {
       if (historyLoginId.name !== IDENTITY_KEY.LOGIN) {
-        return historyLoginId.name + '+' + historyLoginId.value;
+        return historyLoginId.name + "+" + historyLoginId.value;
       } else {
         return historyLoginId.value;
       }
@@ -865,27 +881,27 @@ var store = {
     var props = this._state.props || {};
     if (!isCover) {
       extend(props, newp);
-      this.set('props', props);
+      this.set("props", props);
     } else {
-      this.set('props', newp);
+      this.set("props", newp);
     }
   },
   set: function (name, value) {
     var obj = {};
-    if (typeof name === 'string') {
+    if (typeof name === "string") {
       obj[name] = value;
-    } else if (typeof name === 'object') {
+    } else if (typeof name === "object") {
       obj = name;
     }
     this._state = this._state || {};
     for (var i in obj) {
       this._state[i] = obj[i];
       // 如果set('first_id') 或者 set('distinct_id')，删除对应的临时属性
-      if (i === 'first_id') {
+      if (i === "first_id") {
         delete this._state._first_id;
-      } else if (i === 'distinct_id') {
+      } else if (i === "distinct_id") {
         delete this._state._distinct_id;
-        sa.events.emit('changeDistinctId');
+        sa.events.emit("changeDistinctId");
       }
     }
     this.save();
@@ -893,22 +909,22 @@ var store = {
   identitiesSet: function (params) {
     var identities = {};
     switch (params.type) {
-    case 'login':
-      identities.$identity_mp_id = this._state.identities.$identity_mp_id;
-      identities[params.id_name] = params.id;
-      break;
-    case 'logout':
-      identities.$identity_mp_id = this._state.identities.$identity_mp_id;
-      break;
+      case "login":
+        identities.$identity_mp_id = this._state.identities.$identity_mp_id;
+        identities[params.id_name] = params.id;
+        break;
+      case "logout":
+        identities.$identity_mp_id = this._state.identities.$identity_mp_id;
+        break;
     }
-    this.set('identities', identities);
+    this.set("identities", identities);
   },
   change: function (name, value) {
-    this._state['_' + name] = value;
+    this._state["_" + name] = value;
   },
   encryptStorage: function () {
     var copyState = this.getStorage();
-    var flag = 'data:enc;';
+    var flag = "data:enc;";
     if (isObject(copyState)) {
       copyState = flag + rot13obfs(JSON.stringify(copyState));
     } else if (isString(copyState)) {
@@ -929,14 +945,14 @@ var store = {
     delete copyState._distinct_id;
     // 是否开启本地存储加密
     if (saPara.encrypt_storage) {
-      var flag = 'data:enc;';
+      var flag = "data:enc;";
       copyState = flag + rot13obfs(JSON.stringify(copyState));
     }
     sa._.setStorageSync(saPara.storage_store_key, copyState);
   },
   init: function () {
     var info = this.getStorage();
-    var flag = 'data:enc;';
+    var flag = "data:enc;";
     var uuid = store.getUUID();
     if (info) {
       if (isString(info)) {
@@ -959,12 +975,12 @@ var store = {
         first_visit_time: visit_time,
         first_visit_day_time: time.getTime(),
         identities: {
-          $identity_mp_id: uuid
+          $identity_mp_id: uuid,
         },
         history_login_id: {
-          name: '',
-          value: ''
-        }
+          name: "",
+          value: "",
+        },
       });
     }
 
@@ -979,7 +995,7 @@ var store = {
       }
       this.store_queue = [];
     }
-  }
+  },
 };
 
 /*
@@ -989,7 +1005,7 @@ var store = {
  */
 // gbk等编码decode会异常
 function _decodeURIComponent(val) {
-  var result = '';
+  var result = "";
   try {
     result = decodeURIComponent(val);
   } catch (e) {
@@ -1022,7 +1038,7 @@ function getPublicPresetProperties() {
     $referrer: refPage.route,
     $referrer_title: refPage.title,
     $title: pageInfo.title,
-    $url: pageInfo.url
+    $url: pageInfo.url,
   };
   if (saPara.preset_properties.url_path === true) {
     propertiesMap.$url_path = pageInfo.path;
@@ -1044,10 +1060,24 @@ function encodeDates(obj) {
 
 function formatDate(d) {
   function pad(n) {
-    return n < 10 ? '0' + n : n;
+    return n < 10 ? "0" + n : n;
   }
 
-  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + pad(d.getMilliseconds());
+  return (
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth() + 1) +
+    "-" +
+    pad(d.getDate()) +
+    " " +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes()) +
+    ":" +
+    pad(d.getSeconds()) +
+    "." +
+    pad(d.getMilliseconds())
+  );
 }
 
 // 把日期格式全部转化成日期字符串
@@ -1067,7 +1097,7 @@ function searchObjDate(o) {
 // 把字符串格式数据限制字符串长度
 function formatString(str) {
   if (str.length > saPara.max_string_length) {
-    log('字符串长度超过限制，已经做截取--' + str);
+    log("字符串长度超过限制，已经做截取--" + str);
     return str.slice(0, saPara.max_string_length);
   } else {
     return str;
@@ -1097,12 +1127,12 @@ function parseSuperProperties(obj) {
         try {
           obj[item] = value();
           if (isFunction(obj[item])) {
-            log('您的属性- ' + item + ' 格式不满足要求，我们已经将其删除');
+            log("您的属性- " + item + " 格式不满足要求，我们已经将其删除");
             delete obj[item];
           }
         } catch (e) {
           delete obj[item];
-          log('您的属性- ' + item + ' 抛出了异常，我们已经将其删除');
+          log("您的属性- " + item + " 抛出了异常，我们已经将其删除");
         }
       }
     });
@@ -1127,7 +1157,8 @@ function unique(ar) {
 var check = {
   // 检查关键字
   checkKeyword: function (para) {
-    var reg = /^((?!^distinct_id$|^original_id$|^device_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$|^user_group|^user_tag)[a-zA-Z_$][a-zA-Z\d_$]{0,99})$/i;
+    var reg =
+      /^((?!^distinct_id$|^original_id$|^device_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$|^user_group|^user_tag)[a-zA-Z_$][a-zA-Z\d_$]{0,99})$/i;
     return reg.test(para);
   },
 
@@ -1135,11 +1166,11 @@ var check = {
   checkIdLength: function (str) {
     var temp = String(str);
     if (temp.length > 255) {
-      log('id 长度超过 255 个字符！');
+      log("id 长度超过 255 个字符！");
       return false;
     }
     return true;
-  }
+  },
 };
 
 // 只能是sensors满足的数据格式
@@ -1155,12 +1186,12 @@ function strip_sa_properties(p) {
         if (isString(arrv)) {
           temp.push(arrv);
         } else if (isUndefined(arrv)) {
-          temp.push('null');
+          temp.push("null");
         } else {
           try {
             temp.push(JSON.stringify(arrv));
           } catch (error) {
-            log('您的数据 - ' + k + ':' + v + ' - 的数组里的值有错误,已经将其删除');
+            log("您的数据 - " + k + ":" + v + " - 的数组里的值有错误,已经将其删除");
           }
         }
       });
@@ -1172,11 +1203,11 @@ function strip_sa_properties(p) {
         p[k] = JSON.stringify(v);
       } catch (error) {
         delete p[k];
-        log('您的数据 - ' + k + ':' + v + ' - 的数据值有错误,已经将其删除');
+        log("您的数据 - " + k + ":" + v + " - 的数据值有错误,已经将其删除");
       }
     } else if (!(isString(v) || isNumber(v) || isDate(v) || isBoolean(v) || isArray(v))) {
       // 只能是字符串，数字，日期,布尔，数组
-      log('您的数据 - ' + k + ':' + v + ' - 格式不满足要求，已经将其删除');
+      log("您的数据 - " + k + ":" + v + " - 格式不满足要求，已经将其删除");
       delete p[k];
     }
   });
@@ -1195,9 +1226,9 @@ function strip_empty_properties(p) {
 }
 
 function utf8Encode(string) {
-  string = (string + '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  string = (string + "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-  var utftext = '',
+  var utftext = "",
     start,
     end;
   var stringl = 0,
@@ -1234,7 +1265,7 @@ function utf8Encode(string) {
 }
 
 function base64Encode(data) {
-  var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   var o1,
     o2,
     o3,
@@ -1245,7 +1276,7 @@ function base64Encode(data) {
     bits,
     i = 0,
     ac = 0,
-    enc = '',
+    enc = "",
     tmp_arr = [];
   if (!data) {
     return data;
@@ -1265,47 +1296,57 @@ function base64Encode(data) {
     tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
   } while (i < data.length);
 
-  enc = tmp_arr.join('');
+  enc = tmp_arr.join("");
 
   switch (data.length % 3) {
-  case 1:
-    enc = enc.slice(0, -2) + '==';
-    break;
-  case 2:
-    enc = enc.slice(0, -1) + '=';
-    break;
+    case 1:
+      enc = enc.slice(0, -2) + "==";
+      break;
+    case 2:
+      enc = enc.slice(0, -1) + "=";
+      break;
   }
 
   return enc;
 }
 
 function btoa(string) {
-  var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   string = String(string);
   var bitmap,
     a,
     b,
     c,
-    result = '',
+    result = "",
     i = 0,
     rest = string.length % 3; // To determine the final padding
 
   for (; i < string.length; ) {
-    if ((a = string.charCodeAt(i++)) > 255 || (b = string.charCodeAt(i++)) > 255 || (c = string.charCodeAt(i++)) > 255) {
-      log('Failed to execute \'btoa\' : The string to be encoded contains characters outside of the Latin1 range.');
+    if (
+      (a = string.charCodeAt(i++)) > 255 ||
+      (b = string.charCodeAt(i++)) > 255 ||
+      (c = string.charCodeAt(i++)) > 255
+    ) {
+      log(
+        "Failed to execute 'btoa' : The string to be encoded contains characters outside of the Latin1 range."
+      );
     }
     bitmap = (a << 16) | (b << 8) | c;
-    result += b64.charAt((bitmap >> 18) & 63) + b64.charAt((bitmap >> 12) & 63) + b64.charAt((bitmap >> 6) & 63) + b64.charAt(bitmap & 63);
+    result +=
+      b64.charAt((bitmap >> 18) & 63) +
+      b64.charAt((bitmap >> 12) & 63) +
+      b64.charAt((bitmap >> 6) & 63) +
+      b64.charAt(bitmap & 63);
   }
 
   // If there's need of padding, replace the last 'A's with equal signs
-  return rest ? result.slice(0, rest - 3) + '==='.substring(rest) : result;
+  return rest ? result.slice(0, rest - 3) + "===".substring(rest) : result;
 }
 
 function urlBase64Encode(data) {
   return btoa(
     encodeURIComponent(data).replace(/%([0-9A-F]{2})/g, function (match, p1) {
-      return String.fromCharCode('0x' + p1);
+      return String.fromCharCode("0x" + p1);
     })
   );
 }
@@ -1323,7 +1364,7 @@ function getCurrentPage() {
 }
 
 function getCurrentPath() {
-  var url = '未取到';
+  var url = "未取到";
   try {
     var currentPage = getCurrentPage();
     url = currentPage ? currentPage.route : url;
@@ -1335,7 +1376,11 @@ function getCurrentPath() {
 
 // 获取是否首日访问属性
 function getIsFirstDay() {
-  if (typeof store._state === 'object' && isNumber(store._state.first_visit_day_time) && store._state.first_visit_day_time > new Date().getTime()) {
+  if (
+    typeof store._state === "object" &&
+    isNumber(store._state.first_visit_day_time) &&
+    store._state.first_visit_day_time > new Date().getTime()
+  ) {
     return true;
   } else {
     return false;
@@ -1344,23 +1389,23 @@ function getIsFirstDay() {
 
 function getCurrentUrl(me) {
   var path = getCurrentPath();
-  var query = '';
+  var query = "";
   if (isObject(me) && me.sensors_mp_encode_url_query) {
     query = me.sensors_mp_encode_url_query;
   }
   if (path) {
-    return query ? path + '?' + query : path;
+    return query ? path + "?" + query : path;
   } else {
-    return '未取到';
+    return "未取到";
   }
 }
 
 // 统一path的格式
 function getPath(path) {
   if (isString(path)) {
-    path = path.replace(/^\//, '');
+    path = path.replace(/^\//, "");
   } else {
-    path = '取值异常';
+    path = "取值异常";
   }
   return path;
 }
@@ -1371,9 +1416,9 @@ function getCustomUtmFromQuery(query, utm_prefix, source_channel_prefix, sautm_p
     return {};
   }
   var result = {};
-  if (query['sa_utm']) {
+  if (query["sa_utm"]) {
     for (var i in query) {
-      if (i === 'sa_utm') {
+      if (i === "sa_utm") {
         result[sautm_prefix + i] = query[i];
         continue;
       }
@@ -1383,7 +1428,7 @@ function getCustomUtmFromQuery(query, utm_prefix, source_channel_prefix, sautm_p
     }
   } else {
     for (var k in query) {
-      if ((' ' + SOURCE_CHANNEL_STANDARD + ' ').indexOf(' ' + k + ' ') !== -1) {
+      if ((" " + SOURCE_CHANNEL_STANDARD + " ").indexOf(" " + k + " ") !== -1) {
         result[utm_prefix + k] = query[k];
         continue;
       }
@@ -1396,12 +1441,12 @@ function getCustomUtmFromQuery(query, utm_prefix, source_channel_prefix, sautm_p
 }
 
 function getObjFromQuery(str) {
-  var query = str.split('?');
+  var query = str.split("?");
   var arr = [];
   var obj = {};
   if (query && query[1]) {
-    each(query[1].split('&'), function (value) {
-      arr = value.split('=');
+    each(query[1].split("&"), function (value) {
+      arr = value.split("=");
       if (arr[0] && arr[1]) {
         obj[arr[0]] = arr[1];
       }
@@ -1419,31 +1464,31 @@ function setStorageSync(storage_key, value) {
   try {
     fn();
   } catch (e) {
-    log('set Storage fail --', e);
+    log("set Storage fail --", e);
     try {
       fn();
     } catch (e2) {
-      log('set Storage fail again --', e2);
+      log("set Storage fail again --", e2);
     }
   }
 }
 
 function getStorageSync(storage_key) {
-  var store = '';
+  var store = "";
   try {
     store = wx.getStorageSync(storage_key);
   } catch (e) {
-    log('getStorage fail');
+    log("getStorage fail");
   }
   return store;
 }
 
 function getMPScene(scene_value) {
-  if (isNumber(scene_value) || (isString(scene_value) && scene_value !== '')) {
-    scene_value = 'wx-' + String(scene_value);
+  if (isNumber(scene_value) || (isString(scene_value) && scene_value !== "")) {
+    scene_value = "wx-" + String(scene_value);
     return scene_value;
   } else {
-    return '未取到值';
+    return "未取到值";
   }
 }
 
@@ -1455,28 +1500,28 @@ function getMPScene(scene_value) {
  */
 function objToParam(param, isEncode) {
   if (!isObject(param)) {
-    log('请传入有效对象');
-    return '';
+    log("请传入有效对象");
+    return "";
   }
   var queryParam = [];
   for (var key in param) {
     if (hasOwnProperty$2.call(param, key)) {
       var value = param[key];
-      if (typeof value == 'undefined') {
-        queryParam.push(key + '=');
+      if (typeof value == "undefined") {
+        queryParam.push(key + "=");
       } else {
         value = isEncode ? encodeURIComponent(value) : value;
-        queryParam.push(key + '=' + value);
+        queryParam.push(key + "=" + value);
       }
     }
   }
-  return queryParam.join('&');
+  return queryParam.join("&");
 }
 
 //删除分享设置属性
 function delObjectKey(obj) {
   if (!isObject(obj)) {
-    log('请传入有效对象');
+    log("请传入有效对象");
     return;
   }
   for (var i = 0; i < SHARE_INFO_KEY.length; i++) {
@@ -1505,7 +1550,7 @@ function shareInfoData(para) {
       depth: share.d,
       path: share.p,
       id: share.i,
-      method: share.m
+      method: share.m,
     };
   } else {
     share = para.query;
@@ -1518,9 +1563,9 @@ function shareInfoData(para) {
 
     shareData = {
       depth: Number(share.sensors_share_d),
-      path: share.sensors_share_p || '',
-      id: share.sensors_share_i || '',
-      method: share.sensors_share_m || ''
+      path: share.sensors_share_p || "",
+      id: share.sensors_share_i || "",
+      method: share.sensors_share_m || "",
     };
   }
 
@@ -1544,40 +1589,46 @@ function setShareInfo(para, prop) {
     }
   }
 
-  if (typeof id === 'string') {
+  if (typeof id === "string") {
     prop.$share_distinct_id = id;
     meta.share_distinct_id = id;
     obj.$latest_share_distinct_id = id;
   } else {
-    prop.$share_distinct_id = '取值异常';
+    prop.$share_distinct_id = "取值异常";
   }
 
-  if (typeof depth === 'number') {
-    if (meta.share_distinct_id && (meta.share_distinct_id === current_id || meta.share_distinct_id === current_first_id)) {
+  if (typeof depth === "number") {
+    if (
+      meta.share_distinct_id &&
+      (meta.share_distinct_id === current_id || meta.share_distinct_id === current_first_id)
+    ) {
       prop.$share_depth = depth;
       meta.query_share_depth = depth;
       obj.$latest_share_depth = depth;
-    } else if (meta.share_distinct_id && (meta.share_distinct_id !== current_id || meta.share_distinct_id !== current_first_id)) {
+    } else if (
+      meta.share_distinct_id &&
+      (meta.share_distinct_id !== current_id || meta.share_distinct_id !== current_first_id)
+    ) {
       prop.$share_depth = depth + 1;
       meta.query_share_depth = depth + 1;
       obj.$latest_share_depth = depth + 1;
     } else {
-      prop.$share_depth = '-1';
+      prop.$share_depth = "-1";
     }
   } else {
-    prop.$share_depth = '-1';
+    prop.$share_depth = "-1";
   }
-  if (typeof path === 'string') {
+  if (typeof path === "string") {
     prop.$share_url_path = path;
     obj.$latest_share_url_path = path;
   } else {
-    prop.$share_url_path = '取值异常';
+    prop.$share_url_path = "取值异常";
   }
-  if (typeof method === 'string') {
+  if (typeof method === "string") {
     prop.$share_method = method;
     obj.$latest_share_method = method;
   } else {
-    prop.$share_method = '取值异常';
+    prop.$share_method = "取值异常";
   }
   setLatestShare(obj);
 }
@@ -1586,23 +1637,23 @@ function getShareInfo() {
   //确认是否采用新的拼接方式
   if (saPara.preset_events.share_info_use_string) {
     var param = {
-      sensors_share_i: store.getDistinctId() || '取值异常',
+      sensors_share_i: store.getDistinctId() || "取值异常",
       sensors_share_p: getCurrentPath(),
       sensors_share_d: meta.query_share_depth,
-      sensors_share_m: meta.share_method
+      sensors_share_m: meta.share_method,
     };
 
     return objToParam(param, true);
   }
 
   var share_info = JSON.stringify({
-    i: store.getDistinctId() || '取值异常',
+    i: store.getDistinctId() || "取值异常",
     p: getCurrentPath(),
     d: meta.query_share_depth,
-    m: meta.share_method
+    m: meta.share_method,
   });
 
-  return 'sampshare=' + encodeURIComponent(share_info);
+  return "sampshare=" + encodeURIComponent(share_info);
 }
 
 // 筛选检测出para里的query，q，scene
@@ -1614,22 +1665,22 @@ function detectOptionQuery(para) {
   // path的query
   result.query = extend({}, para.query);
   //如果query有scene，认为scene是b接口传过来的
-  if (typeof result.query.scene === 'string' && isBScene(result.query)) {
+  if (typeof result.query.scene === "string" && isBScene(result.query)) {
     result.scene = result.query.scene;
     delete result.query.scene;
   }
   //如果query有q
-  if (para.query.q && para.query.scancode_time && String(para.scene).slice(0, 3) === '101') {
+  if (para.query.q && para.query.scancode_time && String(para.scene).slice(0, 3) === "101") {
     result.q = String(result.query.q);
     delete result.query.q;
     delete result.query.scancode_time;
   }
   function isBScene(obj) {
-    var source = ['utm_source', 'utm_content', 'utm_medium', 'utm_campaign', 'utm_term', 'sa_utm'];
+    var source = ["utm_source", "utm_content", "utm_medium", "utm_campaign", "utm_term", "sa_utm"];
     var source_keyword = source.concat(saPara.source_channel);
-    var reg = new RegExp('(' + source_keyword.join('|') + ')%3D', 'i');
+    var reg = new RegExp("(" + source_keyword.join("|") + ")%3D", "i");
     var keys = Object.keys(obj);
-    if (keys.length === 1 && keys[0] === 'scene' && reg.test(obj.scene)) {
+    if (keys.length === 1 && keys[0] === "scene" && reg.test(obj.scene)) {
       return true;
     } else {
       return false;
@@ -1652,10 +1703,10 @@ function getMixedQuery(para) {
   // scene
   if (scene) {
     scene = _decodeURIComponent(scene);
-    if (scene.indexOf('?') !== -1) {
-      scene = '?' + scene.replace(/\?/g, '');
+    if (scene.indexOf("?") !== -1) {
+      scene = "?" + scene.replace(/\?/g, "");
     } else {
-      scene = '?' + scene;
+      scene = "?" + scene;
     }
     extend(query, getObjFromQuery(scene));
   }
@@ -1672,8 +1723,8 @@ function getMixedQuery(para) {
 function setUtm(para, prop) {
   var utms = {};
   var query = getMixedQuery(para);
-  var pre1 = getCustomUtmFromQuery(query, '$', '_', '$');
-  var pre2 = getCustomUtmFromQuery(query, '$latest_', '_latest_', '$latest_');
+  var pre1 = getCustomUtmFromQuery(query, "$", "_", "$");
+  var pre2 = getCustomUtmFromQuery(query, "$latest_", "_latest_", "$latest_");
   utms.pre1 = pre1;
   utms.pre2 = pre2;
   extend(prop, pre1);
@@ -1694,7 +1745,7 @@ function setSfSource(para, prop) {
 function setPageSfSource(prop) {
   try {
     var allpages = getCurrentPage();
-    var options = allpages ? allpages.options : '';
+    var options = allpages ? allpages.options : "";
     var myvar = deepCopy(options);
     for (var i in myvar) {
       myvar[i] = _decodeURIComponent(myvar[i]);
@@ -1709,16 +1760,16 @@ function setPageSfSource(prop) {
 }
 
 function setRefPage() {
-  var urlText = '直接打开';
+  var urlText = "直接打开";
   var _refInfo = {
     route: urlText,
     path: urlText,
-    title: ''
+    title: "",
   };
   try {
     var pages = getCurrentPage();
     if (pages && pages.route) {
-      var url_query = pages.sensors_mp_url_query ? '?' + pages.sensors_mp_url_query : '';
+      var url_query = pages.sensors_mp_url_query ? "?" + pages.sensors_mp_url_query : "";
       var current_path = pages.route;
       var current_title = getPageTitle(current_path);
       _refInfo.route = current_path + url_query;
@@ -1740,11 +1791,11 @@ function setRefPage() {
 }
 
 function getRefPage() {
-  var urlText = '直接打开';
+  var urlText = "直接打开";
   var _refInfo = {
     route: urlText,
     path: urlText,
-    title: ''
+    title: "",
   };
 
   if (meta.page_route_map.length > 1) {
@@ -1760,12 +1811,12 @@ function getRefPage() {
 function getCurrentPageInfo() {
   var pages = getCurrentPage();
   var pageInfo = {
-    title: '',
-    url: '',
-    path: '未取到'
+    title: "",
+    url: "",
+    path: "未取到",
   };
   if (pages && pages.route) {
-    var query = pages.sensors_mp_url_query ? '?' + pages.sensors_mp_url_query : '';
+    var query = pages.sensors_mp_url_query ? "?" + pages.sensors_mp_url_query : "";
     pageInfo.title = getPageTitle(pages.route);
     pageInfo.url = pages.route + query;
     pageInfo.path = pages.route;
@@ -1787,43 +1838,51 @@ function setPageRefData(prop, path, query) {
       prop.$referrer = refPage.route;
       prop.$referrer_title = refPage.title;
     } else if (meta.page_route_map.length > 0 && path) {
-      query = query ? '?' + query : '';
+      query = query ? "?" + query : "";
       prop.$referrer = getPath(path) + query;
       prop.$referrer_title = getPageTitle(path);
     } else {
-      prop.$referrer = '直接打开';
-      prop.$referrer_title = '';
+      prop.$referrer = "直接打开";
+      prop.$referrer_title = "";
     }
   }
 }
 
 // 获取页面标题
 function getPageTitle(route) {
-  if (route === '未取到' || !route) {
-    return '';
+  if (route === "未取到" || !route) {
+    return "";
   }
-  var title = '';
+  var title = "";
   try {
     if (__wxConfig) {
       var wxConfig = __wxConfig;
       var page_list = __wxConfig.page || {};
-      var currentPageConfig = page_list[route] || page_list[route + '.html'];
+      var currentPageConfig = page_list[route] || page_list[route + ".html"];
       var globalConfigTitle = {},
         pageConfigTitle = {};
-      if (wxConfig.global && wxConfig.global.window && wxConfig.global.window.navigationBarTitleText) {
+      if (
+        wxConfig.global &&
+        wxConfig.global.window &&
+        wxConfig.global.window.navigationBarTitleText
+      ) {
         // app.json 中配置的标题
         globalConfigTitle.titleVal = wxConfig.global.window.navigationBarTitleText;
       }
-      if (currentPageConfig && currentPageConfig.window && currentPageConfig.window.navigationBarTitleText) {
+      if (
+        currentPageConfig &&
+        currentPageConfig.window &&
+        currentPageConfig.window.navigationBarTitleText
+      ) {
         // 页面 json 中配置的标题
         pageConfigTitle.titleVal = currentPageConfig.window.navigationBarTitleText;
       }
 
       // 增加页面 json 文件中页面标题读取，来增加获取到 title 的概率（在企业微信中无 __wxConfig.page 对象，所以上面的步骤无法获取到页面 title）
       if (!pageConfigTitle.titleVal && __wxAppCode__) {
-        var page_config = __wxAppCode__[route + '.json'];
-        if (page_config && page_config['navigationBarTitleText']) {
-          pageConfigTitle.titleVal = page_config['navigationBarTitleText'];
+        var page_config = __wxAppCode__[route + ".json"];
+        if (page_config && page_config["navigationBarTitleText"]) {
+          pageConfigTitle.titleVal = page_config["navigationBarTitleText"];
         }
       }
 
@@ -1836,7 +1895,7 @@ function getPageTitle(route) {
       // 页面 json 配置的标题 > app.json 配置的标题
       if (title.length === 0) {
         var finalTitle = extend(globalConfigTitle, pageConfigTitle);
-        title = finalTitle.titleVal || '';
+        title = finalTitle.titleVal || "";
       }
     }
   } catch (err) {
@@ -1846,7 +1905,7 @@ function getPageTitle(route) {
 }
 
 function wxrequest(obj) {
-  if (compareSDKVersion(meta.wx_sdk_version, '2.10.0') >= 0) {
+  if (compareSDKVersion(meta.wx_sdk_version, "2.10.0") >= 0) {
     obj.timeout = saPara.datasend_timeout;
     wx.request(obj);
   } else {
@@ -1860,14 +1919,14 @@ function wxrequest(obj) {
 }
 
 function validId(id) {
-  if ((typeof id !== 'string' && typeof id !== 'number') || id === '') {
-    log('输入 ID 类型错误');
+  if ((typeof id !== "string" && typeof id !== "number") || id === "") {
+    log("输入 ID 类型错误");
     return false;
   }
-  if (typeof id === 'number') {
+  if (typeof id === "number") {
     id = String(id);
     if (!/^\d+$/.test(id)) {
-      log('输入 ID 类型错误');
+      log("输入 ID 类型错误");
       return false;
     }
   }
@@ -1879,15 +1938,15 @@ function validId(id) {
 
 // 对比基础库版本号函数
 function compareSDKVersion(v1, v2) {
-  v1 = v1.split('.');
-  v2 = v2.split('.');
+  v1 = v1.split(".");
+  v2 = v2.split(".");
   var len = Math.max(v1.length, v2.length);
 
   while (v1.length < len) {
-    v1.push('0');
+    v1.push("0");
   }
   while (v2.length < len) {
-    v2.push('0');
+    v2.push("0");
   }
 
   for (var i = 0; i < len; i++) {
@@ -1936,7 +1995,12 @@ function setLatestChannel(channel) {
 }
 
 function setLatestShare(share) {
-  if (share.$latest_share_depth || share.$latest_share_distinct_id || share.$latest_share_url_path || share.$latest_share_method) {
+  if (
+    share.$latest_share_depth ||
+    share.$latest_share_distinct_id ||
+    share.$latest_share_url_path ||
+    share.$latest_share_method
+  ) {
     sa.clearAppRegister(LATEST_SHARE_INFO);
     sa.clearAllProps(LATEST_SHARE_INFO);
 
@@ -1946,20 +2010,20 @@ function setLatestShare(share) {
 
 // query 解析
 function setQuery(params, isEncode) {
-  var url_query = '';
+  var url_query = "";
   if (params && isObject(params) && !isEmptyObject(params)) {
     var arr = [];
     each(params, function (value, item) {
       // 防止传统二维码的para.q这种异常query。另外异常的para.scene 不好判断，直接去掉。建议不要使用这个容易异意的参数
-      if (!(item === 'q' && isString(value) && value.indexOf('http') === 0)) {
+      if (!(item === "q" && isString(value) && value.indexOf("http") === 0)) {
         if (isEncode) {
-          arr.push(item + '=' + value);
+          arr.push(item + "=" + value);
         } else {
-          arr.push(item + '=' + _decodeURIComponent(value));
+          arr.push(item + "=" + _decodeURIComponent(value));
         }
       }
     });
-    return arr.join('&');
+    return arr.join("&");
   } else {
     return url_query;
   }
@@ -1972,7 +2036,7 @@ function setQuery(params, isEncode) {
 function setNavigationBarTitle() {
   try {
     var oldSetNavigationBarTitle = wx.setNavigationBarTitle;
-    Object.defineProperty(wx, 'setNavigationBarTitle', {
+    Object.defineProperty(wx, "setNavigationBarTitle", {
       get: function () {
         return function (titleObj) {
           // 获取当前页面路径
@@ -1982,7 +2046,7 @@ function setNavigationBarTitle() {
           meta.global_title[currentPagePath] = titleObj.title;
           oldSetNavigationBarTitle.call(this, titleObj);
         };
-      }
+      },
     });
   } catch (err) {
     log(err);
@@ -2003,7 +2067,7 @@ function getUtmFromPage() {
       myvar[i] = _decodeURIComponent(myvar[i]);
     }
 
-    newObj = getCustomUtmFromQuery(myvar, '$', '_', '$');
+    newObj = getCustomUtmFromQuery(myvar, "$", "_", "$");
   } catch (e) {
     log(e);
   }
@@ -2050,7 +2114,7 @@ function isSameAndAnonymousID(id) {
  */
 function isPresetIdKeys(name, ids) {
   // 预置 ID key 列表
-  var keyList = ['$identity_anonymous_id'];
+  var keyList = ["$identity_anonymous_id"];
   if (isArray(ids)) {
     keyList = keyList.concat(ids);
   }
@@ -2086,7 +2150,7 @@ function setPublicProperties(data) {
       $referrer: refPage.route,
       $referrer_title: refPage.title,
       $title: pageInfo.title,
-      $url: pageInfo.url
+      $url: pageInfo.url,
     };
     if (saPara.preset_properties.url_path === true) {
       propertiesMap.$url_path = pageInfo.path;
@@ -2104,7 +2168,7 @@ function setPublicProperties(data) {
  */
 function networkStatusChange() {
   wx.onNetworkStatusChange(function (res) {
-    sa.registerApp({ $network_type: res.networkType || '' });
+    sa.registerApp({ $network_type: res.networkType || "" });
   });
 }
 
@@ -2112,13 +2176,13 @@ function getNetworkType() {
   return new Promise((resolve, reject) => {
     wx.getNetworkType({
       success: function (t) {
-        meta.preset_properties.$network_type = setUpperCase(t['networkType']);
+        meta.preset_properties.$network_type = setUpperCase(t["networkType"]);
         resolve();
       },
       fail: function (t) {
-        log('获取网络信息失败', t);
+        log("获取网络信息失败", t);
         reject();
-      }
+      },
     });
   });
 }
@@ -2127,10 +2191,10 @@ function getSystemInfo() {
   var e = meta.preset_properties;
   function formatSystem(system) {
     var _system = system.toLowerCase();
-    if (_system === 'ios') {
-      return 'iOS';
-    } else if (_system === 'android') {
-      return 'Android';
+    if (_system === "ios") {
+      return "iOS";
+    } else if (_system === "android") {
+      return "Android";
     } else {
       return system;
     }
@@ -2138,15 +2202,15 @@ function getSystemInfo() {
   return new Promise((resolve) => {
     wx.getSystemInfo({
       success: function (t) {
-        e.$brand = setUpperCase(t['brand']);
-        e.$manufacturer = t['brand'];
-        e.$model = t['model'];
-        e.$screen_width = Number(t['screenWidth']);
-        e.$screen_height = Number(t['screenHeight']);
-        e.$os = formatSystem(t['platform']);
-        e.$os_version = t['system'].indexOf(' ') > -1 ? t['system'].split(' ')[1] : t['system'];
-        meta.wx_sdk_version = t['SDKVersion'];
-        e.$mp_client_app_version = t['version'];
+        e.$brand = setUpperCase(t["brand"]);
+        e.$manufacturer = t["brand"];
+        e.$model = t["model"];
+        e.$screen_width = Number(t["screenWidth"]);
+        e.$screen_height = Number(t["screenHeight"]);
+        e.$os = formatSystem(t["platform"]);
+        e.$os_version = t["system"].indexOf(" ") > -1 ? t["system"].split(" ")[1] : t["system"];
+        meta.wx_sdk_version = t["SDKVersion"];
+        e.$mp_client_app_version = t["version"];
         e.$mp_client_basic_library_version = meta.wx_sdk_version;
         var timeZoneOffset = new Date().getTimezoneOffset();
         var accountInfo = getAppInfoSync();
@@ -2160,13 +2224,13 @@ function getSystemInfo() {
           e.$app_version = accountInfo.appVersion;
         }
         resolve();
-      }
+      },
     });
   });
 }
 
 var info = {
-  currentProps: meta.preset_properties
+  currentProps: meta.preset_properties,
 };
 
 /*
@@ -2177,7 +2241,7 @@ var info = {
 var logger = {
   info: function () {
     if (saPara.show_log) {
-      if (typeof console === 'object' && console.log) {
+      if (typeof console === "object" && console.log) {
         try {
           // 传入的自定义属性是 null、undefined 等值也需要打印，所以判断 arguments.length
           if (arguments.length === 3) {
@@ -2196,13 +2260,13 @@ var logger = {
         }
       }
     }
-  }
+  },
 };
 
 function isValidListener(listener) {
-  if (typeof listener === 'function') {
+  if (typeof listener === "function") {
     return true;
-  } else if (listener && typeof listener === 'object') {
+  } else if (listener && typeof listener === "object") {
     return isValidListener(listener.listener);
   } else {
     return false;
@@ -2238,19 +2302,19 @@ class EventEmitterBase {
     }
 
     if (!isValidListener(listener)) {
-      throw new Error('listener must be a function');
+      throw new Error("listener must be a function");
     }
 
     this._events[eventName] = this._events[eventName] || [];
-    var listenerIsWrapped = typeof listener === 'object';
+    var listenerIsWrapped = typeof listener === "object";
 
     this._events[eventName].push(
       listenerIsWrapped
         ? listener
         : {
-          listener: listener,
-          once: false
-        }
+            listener: listener,
+            once: false,
+          }
     );
 
     return this;
@@ -2268,19 +2332,19 @@ class EventEmitterBase {
     }
 
     if (!isValidListener(listener)) {
-      throw new Error('listener must be a function');
+      throw new Error("listener must be a function");
     }
 
     this._events[eventName] = this._events[eventName] || [];
-    var listenerIsWrapped = typeof listener === 'object';
+    var listenerIsWrapped = typeof listener === "object";
 
     this._events[eventName].unshift(
       listenerIsWrapped
         ? listener
         : {
-          listener: listener,
-          once: false
-        }
+            listener: listener,
+            once: false,
+          }
     );
 
     return this;
@@ -2295,7 +2359,7 @@ class EventEmitterBase {
   prependOnce(eventName, listener) {
     return this.prepend(eventName, {
       listener: listener,
-      once: true
+      once: true,
     });
   }
 
@@ -2308,7 +2372,7 @@ class EventEmitterBase {
   once(eventName, listener) {
     return this.on(eventName, {
       listener: listener,
-      once: true
+      once: true,
     });
   }
 
@@ -2323,9 +2387,9 @@ class EventEmitterBase {
     if (!listeners) {
       return false;
     }
-    if (typeof listener === 'number') {
+    if (typeof listener === "number") {
       listeners.splice(listener, 1);
-    } else if (typeof listener === 'function') {
+    } else if (typeof listener === "function") {
       for (var i = 0, len = listeners.length; i < len; i++) {
         if (listeners[i] && listeners[i].listener === listener) {
           listeners.splice(i, 1);
@@ -2377,7 +2441,7 @@ class EventEmitterBase {
    * @param  {String[]} eventName 事件名称
    */
   listeners(eventName) {
-    if (eventName && typeof eventName === 'string') {
+    if (eventName && typeof eventName === "string") {
       return this._events[eventName];
     } else {
       return this._events;
@@ -2417,7 +2481,7 @@ class EventEmitterEx extends EventEmitterBase {
  * @File:
  */
 
-var _ = /*#__PURE__*/Object.freeze({
+var _ = /*#__PURE__*/ Object.freeze({
   __proto__: null,
   decodeURIComponent: decodeURIComponent$1,
   encodeDates: encodeDates,
@@ -2511,7 +2575,7 @@ var _ = /*#__PURE__*/Object.freeze({
   urlSafeBase64: urlSafeBase64,
   EventEmitterBase: EventEmitterBase,
   EventEmitterEx: EventEmitterEx,
-  log: log
+  log: log,
 });
 
 /*
@@ -2541,7 +2605,7 @@ function batchTrackData(data) {
   data.forEach(function (v) {
     v._flush_time = now;
   });
-  return 'data_list=' + encodeTrackData(data);
+  return "data_list=" + encodeTrackData(data);
 }
 
 //批量发送之前需要合并本地数据
@@ -2553,7 +2617,7 @@ var mergeStorageData = {
         var queue = res.data && isArray(res.data) ? res.data : [];
         mergeStorageData.deleteAesData(queue);
         callback && callback();
-      }
+      },
     });
   },
   deleteAesData: function (queue) {
@@ -2568,7 +2632,7 @@ var mergeStorageData = {
       }
       store.mem.mdata = arr.concat(store.mem.mdata);
     }
-  }
+  },
 };
 
 /*
@@ -2579,7 +2643,7 @@ var mergeStorageData = {
 
 //单条发送，提供方法对数据加密插件重写
 function onceTrackData(data) {
-  return 'data=' + encodeTrackData(data);
+  return "data=" + encodeTrackData(data);
 }
 
 /*
@@ -2625,7 +2689,7 @@ var sendStrategy = {
   send: function (data) {
     this.dataHasChange = true;
     if (store.mem.getLength() >= 500) {
-      log('storage data is too large');
+      log("storage data is too large");
       store.mem.mdata.shift();
     }
 
@@ -2646,15 +2710,15 @@ var sendStrategy = {
       var data = kit.batchTrackData(option.data);
       sa._.wxrequest({
         url: saPara.server_url,
-        method: 'POST',
-        dataType: 'text',
+        method: "POST",
+        dataType: "text",
         data: data,
         success: function () {
           option.success(option.len);
         },
         fail: function () {
           option.fail();
-        }
+        },
       });
     } else {
       option.success(option.len);
@@ -2677,7 +2741,7 @@ var sendStrategy = {
           data: data,
           len: len,
           success: this.batchRemove.bind(this),
-          fail: this.sendFail.bind(this)
+          fail: this.sendFail.bind(this),
         });
       }
     }
@@ -2720,7 +2784,7 @@ var sendStrategy = {
     }
     loopWrite();
     loopSend();
-  }
+  },
 };
 
 /*
@@ -2732,15 +2796,15 @@ var sendStrategy = {
 function onceSend(data) {
   data._flush_time = Date.now();
   var encodeData = kit.onceTrackData(data);
-  var url = saPara.server_url + '?' + encodeData;
+  var url = saPara.server_url + "?" + encodeData;
 
-  if (saPara.server_url.indexOf('?') !== -1) {
-    url = saPara.server_url + '&' + encodeData;
+  if (saPara.server_url.indexOf("?") !== -1) {
+    url = saPara.server_url + "&" + encodeData;
   }
 
   wxrequest({
     url: url,
-    method: 'GET'
+    method: "GET",
   });
 }
 
@@ -2756,13 +2820,13 @@ function buildData(p, custom_monitor_prop) {
     identities: sa.store._state.identities,
     lib: {
       $lib: LIB_NAME,
-      $lib_method: 'code',
-      $lib_version: LIB_VERSION
+      $lib_method: "code",
+      $lib_version: LIB_VERSION,
     },
-    properties: {}
+    properties: {},
   };
 
-  if (p.type === 'track_id_unbind' && p.event === '$UnbindID') {
+  if (p.type === "track_id_unbind" && p.event === "$UnbindID") {
     data.identities = deepCopy(p.unbind_value);
     delete p.unbind_value;
   }
@@ -2780,12 +2844,23 @@ function buildData(p, custom_monitor_prop) {
   }
 
   // profile时不传公用属性
-  if (!p.type || p.type.slice(0, 7) !== 'profile') {
-    data._track_id = Number(String(getRandom()).slice(2, 5) + String(getRandom()).slice(2, 4) + String(Date.now()).slice(-4));
+  if (!p.type || p.type.slice(0, 7) !== "profile") {
+    data._track_id = Number(
+      String(getRandom()).slice(2, 5) +
+        String(getRandom()).slice(2, 4) +
+        String(Date.now()).slice(-4)
+    );
     // 传入的属性 > 当前页面的属性 > session的属性 > cookie的属性 > 预定义属性
-    data.properties = extend({}, getPublicPresetProperties(), meta.preset_properties, sa.store.getProps(), custom_monitor_prop, data.properties);
+    data.properties = extend(
+      {},
+      getPublicPresetProperties(),
+      meta.preset_properties,
+      sa.store.getProps(),
+      custom_monitor_prop,
+      data.properties
+    );
     // 当上报的是事件的数据设置 $is_first_day 属性，对于上报用户属性相关的事件均不上报 $is_first_day 属性
-    if (p.type === 'track') {
+    if (p.type === "track") {
       data.properties.$is_first_day = getIsFirstDay();
     }
   }
@@ -2798,11 +2873,11 @@ function buildData(p, custom_monitor_prop) {
   }
 
   //兼容自定义属性插件监听事件名称
-  sa.ee.sdk.emit('createData', data);
+  sa.ee.sdk.emit("createData", data);
   //兼容自定义属性插件监听事件名称
-  sa.ee.sdk.emit('beforeBuildCheck', data);
+  sa.ee.sdk.emit("beforeBuildCheck", data);
 
-  sa.ee.data.emit('beforeBuildCheck', data);
+  sa.ee.data.emit("beforeBuildCheck", data);
 
   // 处理动态公共属性
   parseSuperProperties(data.properties);
@@ -2836,7 +2911,7 @@ function dataStage(p) {
   var data = buildData(p, custom_monitor_prop);
   if (data) {
     log(data);
-    sa.events.emit('send', data);
+    sa.events.emit("send", data);
     //如果是批量发送
     if (sa.para.batch_send) {
       sendStrategy.send(data);
@@ -2844,7 +2919,7 @@ function dataStage(p) {
       onceSend(data);
     }
   } else {
-    log('error: 数据异常 ' + data);
+    log("error: 数据异常 " + data);
   }
 }
 
@@ -2859,7 +2934,7 @@ function dataStage(p) {
 sa.popupEmitter = {
   attached: function () {
     return false;
-  }
+  },
 };
 
 /**
@@ -2869,10 +2944,10 @@ sa.popupEmitter = {
  */
 var usePlugin = function (plugin, para) {
   // 判断是否为 A/B Testing 插件，如果是 A/B Testing 插件，则不处理合规状态 & 主 SDK 的初始化状态，立即执行 A/B Testing 插件的初始化
-  if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
-    if (typeof plugin.init === 'function') {
+  if (plugin && plugin.info && plugin.info.lib_plugin_name === "miniprogram_abtesting") {
+    if (typeof plugin.init === "function") {
       plugin.init(sa, para);
-      log('abtesting plugin is initialized');
+      log("abtesting plugin is initialized");
     }
     return false;
   }
@@ -2891,13 +2966,13 @@ var usePlugin = function (plugin, para) {
   if (!meta.init_status) {
     var item = {
       target: plugin,
-      para: para
+      para: para,
     };
     meta.plugin.uninitialized_list.push(item);
   } else {
-    if (typeof plugin.init === 'function') {
+    if (typeof plugin.init === "function") {
       plugin.init(sa, para);
-      log(plugin.name + ' plugin is initialized');
+      log(plugin.name + " plugin is initialized");
     }
   }
 };
@@ -2909,10 +2984,14 @@ var checkPluginInitStatus = function () {
   if (meta.plugin.uninitialized_list.length > 0) {
     for (var temp in meta.plugin.uninitialized_list) {
       var plugin_item = meta.plugin.uninitialized_list[temp];
-      if (plugin_item && plugin_item.target && typeof plugin_item.target.init === 'function') {
+      if (plugin_item && plugin_item.target && typeof plugin_item.target.init === "function") {
         plugin_item.target.init(sa, plugin_item.para);
-        if (isObject(plugin_item.target) && isString(plugin_item.target.name) && plugin_item.target.name) {
-          log(plugin_item.target.name + ' plugin is initialized');
+        if (
+          isObject(plugin_item.target) &&
+          isString(plugin_item.target.name) &&
+          plugin_item.target.name
+        ) {
+          log(plugin_item.target.name + " plugin is initialized");
         }
       }
     }
@@ -2959,10 +3038,16 @@ function mpProxy(option, method, identifier) {
   if (option[method]) {
     var oldFunc = option[method];
     option[method] = function () {
-      if (!sa.para.autoTrackIsFirst || (isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])) {
+      if (
+        !sa.para.autoTrackIsFirst ||
+        (isObject(sa.para.autoTrackIsFirst) && !sa.para.autoTrackIsFirst[identifier])
+      ) {
         oldFunc.apply(this, arguments);
         newFunc.apply(this, arguments);
-      } else if (sa.para.autoTrackIsFirst === true || (isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])) {
+      } else if (
+        sa.para.autoTrackIsFirst === true ||
+        (isObject(sa.para.autoTrackIsFirst) && sa.para.autoTrackIsFirst[identifier])
+      ) {
         newFunc.apply(this, arguments);
         oldFunc.apply(this, arguments);
       }
@@ -2977,32 +3062,40 @@ function mpProxy(option, method, identifier) {
 function clickTrack(events) {
   var prop = {},
     event_prop = {},
-    type = '';
+    type = "";
   var current_target = events.currentTarget || {};
   var target = events.target || {};
-  if (isObject(sa.para.framework) && isObject(sa.para.framework.taro) && !sa.para.framework.taro.createApp) {
+  if (
+    isObject(sa.para.framework) &&
+    isObject(sa.para.framework.taro) &&
+    !sa.para.framework.taro.createApp
+  ) {
     if (target.id && current_target.id && target.id !== current_target.id) {
       return false;
     }
   }
 
   var dataset = current_target.dataset || {};
-  type = events['type'];
-  prop['$element_id'] = current_target.id;
-  prop['$element_type'] = dataset['type'];
-  prop['$element_content'] = dataset['content'];
-  prop['$element_name'] = dataset['name'];
+  type = events["type"];
+  prop["$element_id"] = current_target.id;
+  prop["$element_type"] = dataset["type"];
+  prop["$element_content"] = dataset["content"];
+  prop["$element_name"] = dataset["name"];
   if (isObject(events.event_prop)) {
     event_prop = events.event_prop;
   }
   if (type && isClick(type)) {
-    if (sa.para.preset_events && sa.para.preset_events.collect_element && sa.para.preset_events.collect_element(arguments[0]) === false) {
+    if (
+      sa.para.preset_events &&
+      sa.para.preset_events.collect_element &&
+      sa.para.preset_events.collect_element(arguments[0]) === false
+    ) {
       return false;
     }
-    prop['$url_path'] = sa._.getCurrentPath();
+    prop["$url_path"] = sa._.getCurrentPath();
     sa._.setPageRefData(prop);
     prop = sa._.extend(prop, event_prop);
-    sa.track('$MPClick', prop);
+    sa.track("$MPClick", prop);
   }
 }
 
@@ -3031,27 +3124,27 @@ function isClick(type) {
   var mp_taps = {
     tap: 1,
     longpress: 1,
-    longtap: 1
+    longtap: 1,
   };
   return !!mp_taps[type];
 }
 
 function tabProxy(option) {
-  var oldTab = option['onTabItemTap'];
-  option['onTabItemTap'] = function (item) {
+  var oldTab = option["onTabItemTap"];
+  option["onTabItemTap"] = function (item) {
     if (oldTab) {
       oldTab.apply(this, arguments);
     }
     var prop = {};
 
     if (item) {
-      prop['$element_content'] = item.text;
+      prop["$element_content"] = item.text;
     }
-    prop['$element_type'] = 'tabBar';
-    prop['$url_path'] = sa._.getCurrentPath();
+    prop["$element_type"] = "tabBar";
+    prop["$url_path"] = sa._.getCurrentPath();
     //设置 ref
     sa._.setPageRefData(prop);
-    sa.track('$MPClick', prop);
+    sa.track("$MPClick", prop);
   };
 }
 
@@ -3060,7 +3153,7 @@ function getMethods(option) {
   var mp_hook = MP_FILTER_HOOK;
   var methods = [];
   for (var m in option) {
-    if (typeof option[m] === 'function' && !mp_hook[m]) {
+    if (typeof option[m] === "function" && !mp_hook[m]) {
       methods.push(m);
     }
   }
@@ -3071,15 +3164,15 @@ function getMethods(option) {
  * 页面停留时长采集
  */
 function pageLeaveProxy(option) {
-  var oldHide = option['onHide'];
-  option['onHide'] = function () {
+  var oldHide = option["onHide"];
+  option["onHide"] = function () {
     if (oldHide) {
       oldHide.apply(this, arguments);
     }
     sa.sendPageLeave();
   };
-  var oldUnload = option['onUnload'];
-  option['onUnload'] = function () {
+  var oldUnload = option["onUnload"];
+  option["onUnload"] = function () {
     if (oldUnload) {
       oldUnload.apply(this, arguments);
     }
@@ -3147,13 +3240,13 @@ function monitorHooks(option) {
     pageLeaveProxy(option);
   }
 
-  mpProxy(option, 'onLoad', 'pageLoad');
-  mpProxy(option, 'onShow', 'pageShow');
-  mpProxy(option, 'onAddToFavorites', 'pageAddFavorites');
-  if (typeof option.onShareAppMessage === 'function') {
+  mpProxy(option, "onLoad", "pageLoad");
+  mpProxy(option, "onShow", "pageShow");
+  mpProxy(option, "onAddToFavorites", "pageAddFavorites");
+  if (typeof option.onShareAppMessage === "function") {
     sa.autoTrackCustom.pageShare(option);
   }
-  if (typeof option.onShareTimeline === 'function') {
+  if (typeof option.onShareTimeline === "function") {
     sa.autoTrackCustom.pageShareTimeline(option);
   }
 }
@@ -3176,7 +3269,7 @@ eventEmitter.prototype = {
     this.sub.forEach(function (temp) {
       temp.on(event, data);
     });
-  }
+  },
 };
 
 var eventSub = function (handle) {
@@ -3199,7 +3292,7 @@ eventSub.prototype = {
     } else {
       this._events.push({
         event,
-        data
+        data,
       });
     }
   },
@@ -3215,7 +3308,7 @@ eventSub.prototype = {
         }
       }
     });
-  }
+  },
 };
 
 /*
@@ -3241,7 +3334,9 @@ ee.data = new EventEmitterEx();
 function checkPrivacyStatus() {
   var is_compliance_enabled;
   if (global && global.sensors_data_pre_config) {
-    is_compliance_enabled = global.sensors_data_pre_config.is_compliance_enabled ? global.sensors_data_pre_config.is_compliance_enabled : false;
+    is_compliance_enabled = global.sensors_data_pre_config.is_compliance_enabled
+      ? global.sensors_data_pre_config.is_compliance_enabled
+      : false;
   }
   // 如果未配置 is_compliance_enabled 则检查合规状态时不做拦截处理
   if (!is_compliance_enabled) {
@@ -3270,7 +3365,30 @@ function checkPrivacyStatus() {
  */
 
 function apiStaging() {
-  var saApiList = ['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid', 'bindOpenid', 'unbindOpenid', 'bindUnionid', 'unbindUnionid'];
+  var saApiList = [
+    "setProfile",
+    "setOnceProfile",
+    "track",
+    "quick",
+    "incrementProfile",
+    "appendProfile",
+    "login",
+    "logout",
+    "registerApp",
+    "register",
+    "clearAllRegister",
+    "clearAllProps",
+    "clearAppRegister",
+    "bind",
+    "unbind",
+    "unsetOpenid",
+    "setUnionid",
+    "unsetUnionid",
+    "bindOpenid",
+    "unbindOpenid",
+    "bindUnionid",
+    "unbindUnionid",
+  ];
   each(saApiList, function (method) {
     var temp = sa[method];
     sa[method] = function () {
@@ -3343,19 +3461,17 @@ function clearAllProps(arr) {
 var hasOwnProperty$3 = Object.prototype.hasOwnProperty;
 
 function setProfile(p, c) {
-  dataStage(
-    {
-      type: 'profile_set',
-      properties: p
-    });
+  dataStage({
+    type: "profile_set",
+    properties: p,
+  });
 }
 
 function setOnceProfile(p, c) {
-  dataStage(
-    {
-      type: 'profile_set_once',
-      properties: p
-    });
+  dataStage({
+    type: "profile_set_once",
+    properties: p,
+  });
 }
 
 function appendProfile(p, c) {
@@ -3369,14 +3485,13 @@ function appendProfile(p, c) {
       p[item] = value;
     } else {
       delete p[item];
-      log('appendProfile属性的值必须是字符串或者数组');
+      log("appendProfile属性的值必须是字符串或者数组");
     }
   });
-  dataStage(
-    {
-      type: 'profile_append',
-      properties: p
-    });
+  dataStage({
+    type: "profile_append",
+    properties: p,
+  });
 }
 
 function incrementProfile(p, c) {
@@ -3388,20 +3503,18 @@ function incrementProfile(p, c) {
     p = {};
     p[str] = 1;
   }
-  dataStage(
-    {
-      type: 'profile_increment',
-      properties: p
-    });
+  dataStage({
+    type: "profile_increment",
+    properties: p,
+  });
 }
 
 function track(e, p, c) {
-  dataStage(
-    {
-      type: 'track',
-      event: e,
-      properties: p
-    });
+  dataStage({
+    type: "track",
+    event: e,
+    properties: p,
+  });
 }
 
 function identify(id, isSave) {
@@ -3410,8 +3523,8 @@ function identify(id, isSave) {
   }
   if (!meta.init_status) {
     store.store_queue.push({
-      method: 'identify',
-      params: arguments
+      method: "identify",
+      params: arguments,
     });
     return false;
   }
@@ -3420,15 +3533,15 @@ function identify(id, isSave) {
     var firstId = store.getFirstId();
     if (isSave === true) {
       if (firstId) {
-        store.set('first_id', id);
+        store.set("first_id", id);
       } else {
-        store.set('distinct_id', id);
+        store.set("distinct_id", id);
       }
     } else {
       if (firstId) {
-        store.change('first_id', id);
+        store.change("first_id", id);
       } else {
-        store.change('distinct_id', id);
+        store.change("distinct_id", id);
       }
     }
   }
@@ -3455,26 +3568,25 @@ function trackSignup(idObj, e, p, c) {
     eventName = e;
   }
   // 按照原有逻辑修改 distinct_id 的值
-  store.set('distinct_id', currentId);
+  store.set("distinct_id", currentId);
 
   // 上报 $SignUp 事件前，先获取 original_id、distinct_id 的值
   if (idName && idName !== IDENTITY_KEY.LOGIN) {
-    distinctId = idName + '+' + currentId;
+    distinctId = idName + "+" + currentId;
   } else {
     distinctId = currentId;
   }
 
   originalId = store.getFirstId() || store.getDistinctId();
 
-  dataStage(
-    {
-      original_id: originalId,
-      distinct_id: distinctId,
-      login_id: distinctId,
-      type: 'track_signup',
-      event: eventName,
-      properties: p
-    });
+  dataStage({
+    original_id: originalId,
+    distinct_id: distinctId,
+    login_id: distinctId,
+    type: "track_signup",
+    event: eventName,
+    properties: p,
+  });
 }
 
 function login(id) {
@@ -3500,27 +3612,27 @@ function login(id) {
     store._state.identities[idName] = id;
 
     // 将登录 ID 保存到 history_login_id 对象中
-    store.set('history_login_id', {
+    store.set("history_login_id", {
       name: idName,
-      value: id
+      value: id,
     });
 
     // 处理 trackSignup 逻辑，其中 newDistinctId 作为 2.0 的 distinct_id 通过 trackSignup 进行保存
     if (!firstId) {
-      store.set('first_id', distinctId);
+      store.set("first_id", distinctId);
     }
 
     sa.trackSignup({
       id: id,
-      event_name: '$SignUp'
+      event_name: "$SignUp",
     });
 
     // trackSignup 完之后更行 storage 中的 ID
     // 若登录 ID 发生改变，此时将登录 id 保存到 storage，并且清除其他 ID
     store.identitiesSet({
-      type: 'login',
+      type: "login",
       id: id,
-      id_name: idName
+      id_name: idName,
     });
   }
 }
@@ -3533,7 +3645,7 @@ function login(id) {
  */
 function loginWithKey(name, id) {
   if (!isString(name)) {
-    log('Key must be String');
+    log("Key must be String");
     return false;
   }
   // 这个单独判断 name 的 length 是为了符合测试提出的多端检查统一，保证判断 loginWithKey 的 key 值时长度超过 100 打印日志，但继续做后续 ID 绑定
@@ -3541,16 +3653,23 @@ function loginWithKey(name, id) {
   // 在 name 的 length 的值小于 100 的情况下，若其他检查不符，会做 return 处理
   var info;
   if (!check.checkKeyword(name) && name.length > 100) {
-    info = 'Key [' + name + '] is invalid';
+    info = "Key [" + name + "] is invalid";
     log(info);
   } else if (!check.checkKeyword(name)) {
-    info = 'Key [' + name + '] is invalid';
+    info = "Key [" + name + "] is invalid";
     log(info);
     return false;
   }
-  var listKeys = ['$mp_openid', '$identity_mp_openid', '$identity_mp_unionid', '$mp_unionid', '$mp_id', '$identity_mp_id'];
+  var listKeys = [
+    "$mp_openid",
+    "$identity_mp_openid",
+    "$identity_mp_unionid",
+    "$mp_unionid",
+    "$mp_id",
+    "$identity_mp_id",
+  ];
   if (isPresetIdKeys(name, listKeys)) {
-    info = 'Key [' + name + '] is invalid';
+    info = "Key [" + name + "] is invalid";
     log(info);
     return false;
   }
@@ -3574,35 +3693,40 @@ function loginWithKey(name, id) {
     store._state.identities[name] = id;
 
     // 将登录 ID 保存到 history_login_id 对象中
-    store.set('history_login_id', {
+    store.set("history_login_id", {
       name: name,
-      value: id
+      value: id,
     });
 
     if (!firstId) {
-      store.set('first_id', distinctId);
+      store.set("first_id", distinctId);
     }
 
     sa.trackSignup({
       id: id,
-      event_name: '$SignUp',
-      id_name: name
+      event_name: "$SignUp",
+      id_name: name,
     });
     // trackSignup 完之后更行 storage 中的 ID
     // 若登录 ID 发生改变，此时将 login 保存到 storage，并且清除其他 ID
     store.identitiesSet({
-      type: 'login',
+      type: "login",
       id: id,
-      id_name: name
+      id_name: name,
     });
   }
 }
 
 function getAnonymousID() {
   if (isEmptyObject(store._state)) {
-    log('请先初始化SDK');
+    log("请先初始化SDK");
   } else {
-    return store._state._first_id || store._state.first_id || store._state._distinct_id || store._state.distinct_id;
+    return (
+      store._state._first_id ||
+      store._state.first_id ||
+      store._state._distinct_id ||
+      store._state.distinct_id
+    );
   }
 }
 
@@ -3612,7 +3736,7 @@ function getAnonymousID() {
  */
 function getIdentities() {
   if (isEmptyObject(store._state)) {
-    log('请先初始化SDK');
+    log("请先初始化SDK");
     return null;
   } else {
     return store._state.identities || null;
@@ -3623,22 +3747,22 @@ function logout(isChangeId) {
   var firstId = store.getFirstId();
 
   // IDM3 ID identities 先做更新，然后更新外层的 ID
-  store.identitiesSet({ type: 'logout' });
+  store.identitiesSet({ type: "logout" });
   // 删除 history_login_id 的登录 ID
-  store.set('history_login_id', {
-    name: '',
-    value: ''
+  store.set("history_login_id", {
+    name: "",
+    value: "",
   });
 
   if (firstId) {
-    store.set('first_id', '');
+    store.set("first_id", "");
     if (isChangeId === true) {
-      store.set('distinct_id', store.getUUID());
+      store.set("distinct_id", store.getUUID());
     } else {
-      store.set('distinct_id', firstId);
+      store.set("distinct_id", firstId);
     }
   } else {
-    log('没有first_id，logout失败');
+    log("没有first_id，logout失败");
   }
 }
 
@@ -3646,14 +3770,14 @@ function getPresetProperties() {
   if (meta.preset_properties && meta.preset_properties.$lib) {
     var builtinProps = {};
     each(meta.preset_properties, function (value, item) {
-      if (item.indexOf('$') === 0) {
+      if (item.indexOf("$") === 0) {
         builtinProps[item] = value;
       }
     });
     var propertyObj = {
       $url_path: getCurrentPath(),
       $is_first_day: getIsFirstDay(),
-      $is_first_time: meta.is_first_launch
+      $is_first_time: meta.is_first_launch,
     };
     var obj = extend(builtinProps, propertyObj, meta.preset_properties, store.getProps());
     delete obj.$lib;
@@ -3664,7 +3788,9 @@ function getPresetProperties() {
 }
 
 function setOpenid(openid, isCover) {
-  log('该方法已不建议使用，如果是 id2 用户，请使用 identify 代替，如果是 id3 用户，请使用 bindOpenid 代替');
+  log(
+    "该方法已不建议使用，如果是 id2 用户，请使用 identify 代替，如果是 id3 用户，请使用 bindOpenid 代替"
+  );
   openid = validId(openid);
   if (!openid) {
     return false;
@@ -3674,15 +3800,15 @@ function setOpenid(openid, isCover) {
   }
   if (!meta.init_status) {
     store.store_queue.push({
-      method: 'setOpenid',
-      params: arguments
+      method: "setOpenid",
+      params: arguments,
     });
     return false;
   }
   if (isCover) {
-    log('%c 当前版本 setOpenid 接口 已不支持传入第二个参数', 'color:#F39C12;font-size: 14px;');
+    log("%c 当前版本 setOpenid 接口 已不支持传入第二个参数", "color:#F39C12;font-size: 14px;");
   }
-  store.set('openid', openid);
+  store.set("openid", openid);
   sa.identify(openid, true);
 
   // IDM 3.0 只修改 identities 对象中 ID 的值，不上报 $BindID 事件
@@ -3692,19 +3818,22 @@ function setOpenid(openid, isCover) {
 }
 
 function unsetOpenid(val) {
-  log('该方法已不建议使用，如果是 id3 用户，请使用 unbindOpenid 代替');
+  log("该方法已不建议使用，如果是 id3 用户，请使用 unbindOpenid 代替");
   var id = validId(val);
   if (!id) {
     return false;
   }
   var openid = store._state.openid;
   if (openid === id) {
-    store.set('openid', '');
+    store.set("openid", "");
   }
 
   // IDM 3.0 只修改 identities 对象中 ID 的值，不上报 $UnbindID 事件
   var name = getOpenidNameByAppid();
-  if (hasOwnProperty$3.call(store._state.identities, name) && id === store._state.identities[name]) {
+  if (
+    hasOwnProperty$3.call(store._state.identities, name) &&
+    id === store._state.identities[name]
+  ) {
     delete store._state.identities[name];
 
     // 2022-11-29-老乡鸡优化
@@ -3713,10 +3842,10 @@ function unsetOpenid(val) {
     var mp_id = store._state && store._state.identities && store._state.identities.$identity_mp_id;
 
     if (first_id && first_id === openid && mp_id) {
-      store.change('first_id', mp_id);
+      store.change("first_id", mp_id);
     }
     if (distinct_id && distinct_id === openid && mp_id) {
-      store.change('distinct_id', mp_id);
+      store.change("distinct_id", mp_id);
     }
 
     store.save();
@@ -3745,7 +3874,7 @@ function unbindOpenid(val) {
 function setUnionid(val) {
   var id = validId(val);
   if (id) {
-    bind('$identity_mp_unionid', id);
+    bind("$identity_mp_unionid", id);
   }
 }
 
@@ -3753,7 +3882,10 @@ function unsetUnionid(val) {
   var id = validId(val);
   if (id) {
     // 为了与后端保持一致，解绑 unionid 时，若当前 unionid 存在，且与绑定的 ID 值一致，则清空 openid 及 unionid
-    if (hasOwnProperty$3.call(store._state.identities, '$identity_mp_unionid') && id === store._state.identities['$identity_mp_unionid']) {
+    if (
+      hasOwnProperty$3.call(store._state.identities, "$identity_mp_unionid") &&
+      id === store._state.identities["$identity_mp_unionid"]
+    ) {
       var openid = getOpenidNameByAppid();
       if (hasOwnProperty$3.call(store._state.identities, openid)) {
         delete store._state.identities[openid];
@@ -3761,7 +3893,7 @@ function unsetUnionid(val) {
         store.save();
       }
     }
-    unbind('$identity_mp_unionid', id);
+    unbind("$identity_mp_unionid", id);
   }
 }
 
@@ -3784,31 +3916,34 @@ function initWithOpenid(options, callback) {
 function bind(name, value) {
   if (isNumber(value)) {
     if (isInteger(value) && isSafeInteger(value) === false) {
-      log('Value must be String');
+      log("Value must be String");
       return false;
     }
     value = String(value);
   }
   if (!isString(name)) {
-    log('Key must be String');
+    log("Key must be String");
     return false;
   }
   // 获取当前的 login_id key
   var historyLoginId = store.getHistoryLoginId();
-  var currentLoginIdName = historyLoginId ? historyLoginId.name : '';
-  var info = '';
+  var currentLoginIdName = historyLoginId ? historyLoginId.name : "";
+  var info = "";
   // 通过 _.isPresetIdKeys 判断当前 ID 的 name 是否是预置的 ID key 值
-  if (!check.checkKeyword(name) || isPresetIdKeys(name, [IDENTITY_KEY.LOGIN, currentLoginIdName, '$mp_id', '$identity_mp_id'])) {
-    info = 'Key [' + name + '] is invalid';
+  if (
+    !check.checkKeyword(name) ||
+    isPresetIdKeys(name, [IDENTITY_KEY.LOGIN, currentLoginIdName, "$mp_id", "$identity_mp_id"])
+  ) {
+    info = "Key [" + name + "] is invalid";
     log(info);
     return false;
   }
-  if (!value || value === '') {
-    log('Value is empty or null');
+  if (!value || value === "") {
+    log("Value is empty or null");
     return false;
   }
   if (!isString(value)) {
-    log('Value must be String');
+    log("Value must be String");
     return false;
   }
   if (!check.checkIdLength(value)) {
@@ -3819,66 +3954,69 @@ function bind(name, value) {
   store.save();
 
   dataStage({
-    type: 'track_id_bind',
-    event: '$BindID'
+    type: "track_id_bind",
+    event: "$BindID",
   });
 }
 
 function unbind(name, value) {
   if (isNumber(value)) {
     if (isInteger(value) && isSafeInteger(value) === false) {
-      log('Value must be String');
+      log("Value must be String");
       return false;
     }
     value = String(value);
   }
   if (!isString(name)) {
-    log('Key must be String');
+    log("Key must be String");
     return false;
   }
-  var info = '';
+  var info = "";
   // 通过 _.isPresetIdKeys 判断是否是预置的 id key 值
   if (!sa._.check.checkKeyword(name) || isPresetIdKeys(name, [IDENTITY_KEY.LOGIN])) {
-    info = 'Key [' + name + '] is invalid';
+    info = "Key [" + name + "] is invalid";
     log(info);
     return false;
   }
-  if (!value || value === '') {
-    log('Value is empty or null');
+  if (!value || value === "") {
+    log("Value is empty or null");
     return false;
   }
   if (!isString(value)) {
-    log('Value must be String');
+    log("Value must be String");
     return false;
   }
   if (!sa._.check.checkIdLength(value)) {
     return false;
   }
 
-  if (hasOwnProperty$3.call(store._state.identities, name) && value === store._state.identities[name]) {
-    if (name !== '$mp_id' && name !== '$identity_mp_id') {
+  if (
+    hasOwnProperty$3.call(store._state.identities, name) &&
+    value === store._state.identities[name]
+  ) {
+    if (name !== "$mp_id" && name !== "$identity_mp_id") {
       delete store._state.identities[name];
     }
     store.save();
   }
   var distinctId = store.getDistinctId();
   var firstId = store.getFirstId();
-  var unbindDistinctId = name + '+' + value;
+  var unbindDistinctId = name + "+" + value;
 
   if (distinctId === unbindDistinctId) {
-    store.set('first_id', '');
-    store.set('distinct_id', firstId);
-    store.set('history_login_id', {
-      name: '',
-      value: ''
+    store.set("first_id", "");
+    store.set("distinct_id", firstId);
+    store.set("history_login_id", {
+      name: "",
+      value: "",
     });
   }
   var para = {};
   para[name] = value;
   dataStage({
-    type: 'track_id_unbind',
-    event: '$UnbindID',
-    unbind_value: para
+    type: "track_id_unbind",
+    event: "$UnbindID",
+    unbind_value: para,
   });
 }
 
@@ -3889,15 +4027,15 @@ function unbind(name, value) {
  * author:zhigang
  */
 function setWebViewUrl(url, after_hash) {
-  log('setWebViewUrl 方法已从 2022-9-23 开始废弃，请尽快去除该 API 的调用，并使用 use 插件 代替');
+  log("setWebViewUrl 方法已从 2022-9-23 开始废弃，请尽快去除该 API 的调用，并使用 use 插件 代替");
 
-  if (!isString(url) || url === '') {
-    log('error:请传入正确的 URL 格式');
+  if (!isString(url) || url === "") {
+    log("error:请传入正确的 URL 格式");
     return false;
   }
 
   if (!/^http(s)?:\/\//.test(url)) {
-    log('warning: 请传入正确的 URL 格式');
+    log("warning: 请传入正确的 URL 格式");
     return false;
   }
 
@@ -3908,48 +4046,50 @@ function setWebViewUrl(url, after_hash) {
     return false;
   }
 
-  var host = arr[1] || '',
-    search = arr[2] || '',
-    hash = arr[3] || '',
-    nurl = '';
+  var host = arr[1] || "",
+    search = arr[2] || "",
+    hash = arr[3] || "",
+    nurl = "";
 
-  var distinct_id = store.getDistinctId() || '',
-    first_id = store.getFirstId() || '',
+  var distinct_id = store.getDistinctId() || "",
+    first_id = store.getFirstId() || "",
     idIndex;
 
   if (urlSafeBase64 && urlSafeBase64.encode) {
-    distinct_id = distinct_id ? urlSafeBase64.trim(urlSafeBase64.encode(urlBase64Encode(distinct_id))) : '';
+    distinct_id = distinct_id
+      ? urlSafeBase64.trim(urlSafeBase64.encode(urlBase64Encode(distinct_id)))
+      : "";
   } else if (rot13obfs) {
-    distinct_id = distinct_id ? rot13obfs(distinct_id) : '';
+    distinct_id = distinct_id ? rot13obfs(distinct_id) : "";
   }
   distinct_id = encodeURIComponent(distinct_id);
-  var value = first_id ? 'f' + distinct_id : 'd' + distinct_id;
+  var value = first_id ? "f" + distinct_id : "d" + distinct_id;
 
   if (after_hash) {
-    idIndex = hash.indexOf('_sasdk');
-    var queryIndex = hash.indexOf('?');
+    idIndex = hash.indexOf("_sasdk");
+    var queryIndex = hash.indexOf("?");
     if (queryIndex > -1) {
       if (idIndex > -1) {
-        nurl = host + search + '#' + hash.substring(1, idIndex) + '_sasdk=' + value;
+        nurl = host + search + "#" + hash.substring(1, idIndex) + "_sasdk=" + value;
       } else {
-        nurl = host + search + '#' + hash.substring(1) + '&_sasdk=' + value;
+        nurl = host + search + "#" + hash.substring(1) + "&_sasdk=" + value;
       }
     } else {
-      nurl = host + search + '#' + hash.substring(1) + '?_sasdk=' + value;
+      nurl = host + search + "#" + hash.substring(1) + "?_sasdk=" + value;
     }
   } else {
-    idIndex = search.indexOf('_sasdk');
+    idIndex = search.indexOf("_sasdk");
     var hasQuery = /^\?(\w)+/.test(search);
     if (hasQuery) {
       if (idIndex > -1) {
         //如果 url 带有 sasdk 字段，进行值替换
-        var newSearch = search.replace(/(_sasdk=)([^&]*)/gi, '_sasdk=' + value);
+        var newSearch = search.replace(/(_sasdk=)([^&]*)/gi, "_sasdk=" + value);
         nurl = host + newSearch + hash;
       } else {
-        nurl = host + '?' + search.substring(1) + '&_sasdk=' + value + hash;
+        nurl = host + "?" + search.substring(1) + "&_sasdk=" + value + hash;
       }
     } else {
-      nurl = host + '?' + search.substring(1) + '_sasdk=' + value + hash;
+      nurl = host + "?" + search.substring(1) + "_sasdk=" + value + hash;
     }
   }
 
@@ -3965,19 +4105,24 @@ function quick() {
   var arg2 = arguments[2];
 
   var prop = isObject(arg2) ? arg2 : {};
-  if (arg0 === 'getAnonymousID') {
+  if (arg0 === "getAnonymousID") {
     if (isEmptyObject(store._state)) {
-      log('请先初始化SDK');
+      log("请先初始化SDK");
     } else {
-      return store._state._first_id || store._state.first_id || store._state._distinct_id || store._state.distinct_id;
+      return (
+        store._state._first_id ||
+        store._state.first_id ||
+        store._state._distinct_id ||
+        store._state.distinct_id
+      );
     }
-  } else if (arg0 === 'appLaunch' || arg0 === 'appShow') {
+  } else if (arg0 === "appLaunch" || arg0 === "appShow") {
     if (arg1) {
       sa.autoTrackCustom[arg0](arg1, prop);
     } else {
-      log('App的launch和show，在sensors.quick第二个参数必须传入App的options参数');
+      log("App的launch和show，在sensors.quick第二个参数必须传入App的options参数");
     }
-  } else if (arg0 === 'appHide') {
+  } else if (arg0 === "appHide") {
     prop = isObject(arg1) ? arg1 : {};
     sa.autoTrackCustom[arg0](prop);
   }
@@ -3989,7 +4134,7 @@ function appLaunch(option, prop) {
     meta.current_scene = option.scene;
     obj.$scene = getMPScene(option.scene);
   } else {
-    obj.$scene = '未取到值';
+    obj.$scene = "未取到值";
   }
   // 如果是从收藏夹进入小程序就把 query 中的 sampshare 删除
   if (option && option.scene && option.scene === 1010 && option.query) {
@@ -4021,13 +4166,13 @@ function appLaunch(option, prop) {
   sa.registerApp({ $latest_scene: obj.$scene });
 
   obj.$url_query = setQuery(option.query);
-  obj.$url = option.path + (obj.$url_query ? '?' + obj.$url_query : '');
+  obj.$url = option.path + (obj.$url_query ? "?" + obj.$url_query : "");
   //设置 ref
   setPageRefData(prop);
   if (isObject(prop)) {
     obj = extend(obj, prop);
   }
-  sa.track('$MPLaunch', obj);
+  sa.track("$MPLaunch", obj);
 }
 
 function appShow(option, prop) {
@@ -4037,7 +4182,7 @@ function appShow(option, prop) {
     meta.current_scene = option.scene;
     obj.$scene = getMPScene(option.scene);
   } else {
-    obj.$scene = '未取到值';
+    obj.$scene = "未取到值";
   }
   // 如果是从收藏夹进入小程序就把 query 中的 sampshare 删除
   if (option && option.scene && option.scene === 1010 && option.query) {
@@ -4058,21 +4203,25 @@ function appShow(option, prop) {
   sa.registerApp({ $latest_scene: obj.$scene });
   obj.$url_query = setQuery(option.query);
   if (option && option.path) {
-    obj.$url = option.path + (obj.$url_query ? '?' + obj.$url_query : '');
+    obj.$url = option.path + (obj.$url_query ? "?" + obj.$url_query : "");
   }
   //设置 ref
   setPageRefData(obj, option.path, obj.$url_query);
   if (isObject(prop)) {
     obj = extend(obj, prop);
   }
-  sa.track('$MPShow', obj);
+  sa.track("$MPShow", obj);
 }
 
 function appHide(prop) {
   var current_time = new Date().getTime();
   var obj = {};
   obj.$url_path = getCurrentPath();
-  if (meta.mp_show_time && current_time - meta.mp_show_time > 0 && (current_time - meta.mp_show_time) / 3600000 < 24) {
+  if (
+    meta.mp_show_time &&
+    current_time - meta.mp_show_time > 0 &&
+    (current_time - meta.mp_show_time) / 3600000 < 24
+  ) {
     obj.event_duration = (current_time - meta.mp_show_time) / 1000;
   }
   //设置 ref
@@ -4080,7 +4229,7 @@ function appHide(prop) {
   if (isObject(prop)) {
     obj = extend(obj, prop);
   }
-  sa.track('$MPHide', obj);
+  sa.track("$MPHide", obj);
   sa.sendStrategy.onAppHide();
 }
 
@@ -4094,7 +4243,7 @@ function pageShow(prop) {
     obj.$title = title;
   }
   obj.$url_path = router;
-  obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
+  obj.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : "";
   obj = extend(obj, getUtmFromPage());
   setPageSfSource(obj);
   //设置 ref
@@ -4102,7 +4251,7 @@ function pageShow(prop) {
   if (isObject(prop)) {
     obj = extend(obj, prop);
   }
-  sa.track('$MPViewScreen', obj);
+  sa.track("$MPViewScreen", obj);
 }
 
 function setPara(para) {
@@ -4110,9 +4259,9 @@ function setPara(para) {
   var channel = [];
   if (isArray(saPara.source_channel)) {
     var len = saPara.source_channel.length;
-    var reserve_channel = ' utm_source utm_medium utm_campaign utm_content utm_term sa_utm ';
+    var reserve_channel = " utm_source utm_medium utm_campaign utm_content utm_term sa_utm ";
     for (var c = 0; c < len; c++) {
-      if (reserve_channel.indexOf(' ' + saPara.source_channel[c] + ' ') === -1) {
+      if (reserve_channel.indexOf(" " + saPara.source_channel[c] + " ") === -1) {
         channel.push(saPara.source_channel[c]);
       }
     }
@@ -4125,20 +4274,21 @@ function setPara(para) {
 
   // 初始化各种预定义参数
   if (!saPara.openid_url) {
-    saPara.openid_url = saPara.server_url.replace(/([^\\/])\/(sa)(\.gif){0,1}/, '$1/mp_login');
+    saPara.openid_url = saPara.server_url.replace(/([^\\/])\/(sa)(\.gif){0,1}/, "$1/mp_login");
   }
 
-  if (typeof saPara.send_timeout !== 'number') {
+  if (typeof saPara.send_timeout !== "number") {
     saPara.send_timeout = 1000;
   }
 
   var batch_send_default = {
     send_timeout: 6000,
-    max_length: 6
+    max_length: 6,
   };
 
   // 如果已经配置为批量发送，且未定义请求撤销时间的情况下，设置请求撤销时间为 10s
-  if (para && para.datasend_timeout) ; else if (saPara.batch_send) {
+  if (para && para.datasend_timeout);
+  else if (saPara.batch_send) {
     saPara.datasend_timeout = 10000;
   }
 
@@ -4151,7 +4301,7 @@ function setPara(para) {
 
   var is_persistent_save_default = {
     share: false,
-    utm: false
+    utm: false,
   };
 
   if (saPara.is_persistent_save === true) {
@@ -4162,7 +4312,9 @@ function setPara(para) {
   }
 
   if (!saPara.server_url) {
-    log('请使用 setPara() 方法设置 server_url 数据接收地址,详情可查看https://www.sensorsdata.cn/manual/mp_sdk_new.html#112-%E5%BC%95%E5%85%A5%E5%B9%B6%E9%85%8D%E7%BD%AE%E5%8F%82%E6%95%B0');
+    log(
+      "请使用 setPara() 方法设置 server_url 数据接收地址,详情可查看https://www.sensorsdata.cn/manual/mp_sdk_new.html#112-%E5%BC%95%E5%85%A5%E5%B9%B6%E9%85%8D%E7%BD%AE%E5%8F%82%E6%95%B0"
+    );
     return;
   }
 
@@ -4172,7 +4324,7 @@ function setPara(para) {
   if (!isObject(saPara.autotrack_exclude_page)) {
     saPara.autotrack_exclude_page = {
       pageShow: [],
-      pageLeave: []
+      pageLeave: [],
     };
   }
   if (!isArray(saPara.autotrack_exclude_page.pageShow)) {
@@ -4190,9 +4342,9 @@ function getServerUrl() {
 var autoTrackCustom = {
   trackCustom: function (api, prop, event) {
     var temp = saPara.autoTrack[api];
-    var tempFunc = '';
+    var tempFunc = "";
     if (saPara.autoTrack && temp) {
-      if (typeof temp === 'function') {
+      if (typeof temp === "function") {
         tempFunc = temp();
         if (isObject(tempFunc)) {
           extend(prop, tempFunc);
@@ -4214,7 +4366,7 @@ var autoTrackCustom = {
     }
     // 对 appLaunch 进行暂存
     if (!meta.initialState.isComplete) {
-      meta.initialState.queue.push(['appLaunch', arguments]);
+      meta.initialState.queue.push(["appLaunch", arguments]);
       meta.life_state.app_launched = true;
       return false;
     }
@@ -4224,7 +4376,7 @@ var autoTrackCustom = {
       meta.current_scene = para.scene;
       prop.$scene = getMPScene(para.scene);
     } else {
-      prop.$scene = '未取到值';
+      prop.$scene = "未取到值";
     }
     // 如果是从收藏夹进入小程序就把 query 中的 sampshare 删除
     if (para && para.scene && para.scene === 1010 && para.query) {
@@ -4239,7 +4391,7 @@ var autoTrackCustom = {
 
       if (para.query && isObject(para.query)) {
         var _query = setQuery(para.query);
-        _query = _query ? '?' + _query : '';
+        _query = _query ? "?" + _query : "";
         prop.$url = prop.$url_path + _query;
       }
     }
@@ -4265,9 +4417,9 @@ var autoTrackCustom = {
     setPageRefData(prop);
     if (not_use_auto_track) {
       prop = extend(prop, not_use_auto_track);
-      sa.track('$MPLaunch', prop);
+      sa.track("$MPLaunch", prop);
     } else if (saPara.autoTrack && saPara.autoTrack.appLaunch) {
-      sa.autoTrackCustom.trackCustom('appLaunch', prop, '$MPLaunch');
+      sa.autoTrackCustom.trackCustom("appLaunch", prop, "$MPLaunch");
     }
   },
   appShow: function (para, not_use_auto_track) {
@@ -4280,7 +4432,7 @@ var autoTrackCustom = {
       meta.current_scene = para.scene;
       prop.$scene = getMPScene(para.scene);
     } else {
-      prop.$scene = '未取到值';
+      prop.$scene = "未取到值";
     }
 
     // 如果是从收藏夹进入小程序就把 query 中的 sampshare 删除
@@ -4308,29 +4460,33 @@ var autoTrackCustom = {
     //设置 ref
     setPageRefData(prop, para.path, prop.$url_query);
     if (para && para.path) {
-      prop.$url = para.path + (prop.$url_query ? '?' + prop.$url_query : '');
+      prop.$url = para.path + (prop.$url_query ? "?" + prop.$url_query : "");
     }
     if (not_use_auto_track) {
       prop = extend(prop, not_use_auto_track);
-      sa.track('$MPShow', prop);
+      sa.track("$MPShow", prop);
     } else if (saPara.autoTrack && saPara.autoTrack.appShow) {
-      sa.autoTrackCustom.trackCustom('appShow', prop, '$MPShow');
+      sa.autoTrackCustom.trackCustom("appShow", prop, "$MPShow");
     }
   },
   appHide: function (not_use_auto_track) {
     var current_time = new Date().getTime();
     var prop = {};
     prop.$url_path = getCurrentPath();
-    if (meta.mp_show_time && current_time - meta.mp_show_time > 0 && (current_time - meta.mp_show_time) / 3600000 < 24) {
+    if (
+      meta.mp_show_time &&
+      current_time - meta.mp_show_time > 0 &&
+      (current_time - meta.mp_show_time) / 3600000 < 24
+    ) {
       prop.event_duration = (current_time - meta.mp_show_time) / 1000;
     }
     //设置 ref
     setPageRefData(prop);
     if (not_use_auto_track) {
       prop = extend(prop, not_use_auto_track);
-      sa.track('$MPHide', prop);
+      sa.track("$MPHide", prop);
     } else if (saPara.autoTrack && saPara.autoTrack.appHide) {
-      sa.autoTrackCustom.trackCustom('appHide', prop, '$MPHide');
+      sa.autoTrackCustom.trackCustom("appHide", prop, "$MPHide");
     }
   },
   pageLoad: function (para) {
@@ -4353,7 +4509,7 @@ var autoTrackCustom = {
     var title = getPageTitle(router);
     setRefPage();
     prop.$url_path = router;
-    prop.$url_query = this.sensors_mp_url_query ? this.sensors_mp_url_query : '';
+    prop.$url_query = this.sensors_mp_url_query ? this.sensors_mp_url_query : "";
     prop = extend(prop, getUtmFromPage());
     //设置 ref
     setPageRefData(prop);
@@ -4366,7 +4522,7 @@ var autoTrackCustom = {
     if (saPara.onshow) {
       saPara.onshow(sa, router, this);
     } else if (saPara.autotrack_exclude_page.pageShow.indexOf(router) === -1) {
-      sa.autoTrackCustom.trackCustom('pageShow', prop, '$MPViewScreen');
+      sa.autoTrackCustom.trackCustom("pageShow", prop, "$MPViewScreen");
     }
   },
   pageShare: function (option) {
@@ -4376,18 +4532,18 @@ var autoTrackCustom = {
     };
 
     option.onShareAppMessage = function () {
-      meta.share_method = '转发消息卡片';
+      meta.share_method = "转发消息卡片";
       var oldShareValue = oldMessage.apply(this, arguments);
 
       if (saPara.autoTrack && saPara.autoTrack.pageShare) {
         var prop = {
           $url_path: getCurrentPath(),
           $share_depth: meta.query_share_depth,
-          $share_method: meta.share_method
+          $share_method: meta.share_method,
         };
         //设置 ref
         setPageRefData(prop);
-        sa.autoTrackCustom.trackCustom('pageShare', prop, '$MPShare');
+        sa.autoTrackCustom.trackCustom("pageShare", prop, "$MPShare");
       }
 
       function setPath(value) {
@@ -4395,16 +4551,16 @@ var autoTrackCustom = {
           value = {};
         }
 
-        if (isUndefined(value.path) || value.path === '') {
+        if (isUndefined(value.path) || value.path === "") {
           value.path = getCurrentUrl(this);
         }
 
         if (isString(value.path)) {
-          if (value.path.indexOf('?') === -1) {
-            value.path = value.path + '?';
+          if (value.path.indexOf("?") === -1) {
+            value.path = value.path + "?";
           } else {
-            if (value.path.slice(-1) !== '&') {
-              value.path = value.path + '&';
+            if (value.path.slice(-1) !== "&") {
+              value.path = value.path + "&";
             }
           }
         }
@@ -4423,7 +4579,7 @@ var autoTrackCustom = {
                   return setPath(data);
                 });
               } catch (error) {
-                log('onShareAppMessage: ' + error);
+                log("onShareAppMessage: " + error);
               }
             }
           }
@@ -4437,29 +4593,33 @@ var autoTrackCustom = {
     var oldMessage = option.onShareTimeline;
 
     option.onShareTimeline = function () {
-      meta.share_method = '朋友圈分享';
+      meta.share_method = "朋友圈分享";
       var oldValue = oldMessage.apply(this, arguments);
       if (saPara.autoTrack && saPara.autoTrack.pageShare) {
         var prop = {
           $url_path: getCurrentPath(),
           $share_depth: meta.query_share_depth,
-          $share_method: meta.share_method
+          $share_method: meta.share_method,
         };
         //设置 ref
         setPageRefData(prop);
-        sa.autoTrackCustom.trackCustom('pageShare', prop, '$MPShare');
+        sa.autoTrackCustom.trackCustom("pageShare", prop, "$MPShare");
       }
 
       if (saPara.allow_amend_share_path) {
-        if (typeof oldValue !== 'object') {
+        if (typeof oldValue !== "object") {
           oldValue = {};
         }
-        if (typeof oldValue === 'object' && typeof oldValue.query === 'undefined') {
-          oldValue.query = '';
+        if (typeof oldValue === "object" && typeof oldValue.query === "undefined") {
+          oldValue.query = "";
         }
-        if (typeof oldValue === 'object' && typeof oldValue.query === 'string' && oldValue.query !== '') {
-          if (oldValue.query.slice(-1) !== '&') {
-            oldValue.query = oldValue.query + '&';
+        if (
+          typeof oldValue === "object" &&
+          typeof oldValue.query === "string" &&
+          oldValue.query !== ""
+        ) {
+          if (oldValue.query.slice(-1) !== "&") {
+            oldValue.query = oldValue.query + "&";
           }
         }
 
@@ -4472,34 +4632,34 @@ var autoTrackCustom = {
     var prop = {};
     prop.$url_path = getCurrentPath();
     if (saPara.autoTrack && saPara.autoTrack.mpFavorite) {
-      sa.autoTrackCustom.trackCustom('mpFavorite', prop, '$MPAddFavorites');
+      sa.autoTrackCustom.trackCustom("mpFavorite", prop, "$MPAddFavorites");
     }
-  }
+  },
 };
 
 function sendPageLeave() {
   var currentPage = {};
-  var router = '';
+  var router = "";
   try {
     currentPage = getCurrentPage();
-    router = currentPage ? currentPage.route : '';
+    router = currentPage ? currentPage.route : "";
   } catch (error) {
     log(error);
   }
-  if (meta.page_show_time >= 0 && router !== '') {
+  if (meta.page_show_time >= 0 && router !== "") {
     var prop = {};
     var title = getPageTitle(router);
     var page_stay_time = (Date.now() - meta.page_show_time) / 1000;
     if (isNaN(page_stay_time) || page_stay_time < 0) {
       page_stay_time = 0;
     }
-    prop.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : '';
+    prop.$url_query = currentPage.sensors_mp_url_query ? currentPage.sensors_mp_url_query : "";
     prop.$url_path = router;
     prop.$title = title;
     prop.event_duration = page_stay_time;
     // 数据上报前，判断当前页面是否采集
     if (saPara.autotrack_exclude_page.pageLeave.indexOf(router) === -1) {
-      sa.track('$MPPageLeave', prop);
+      sa.track("$MPPageLeave", prop);
     }
     meta.page_show_time = -1;
   }
@@ -4512,20 +4672,20 @@ var openid = {
       success: function (res) {
         if (res.code && saPara.appid && saPara.openid_url) {
           wxrequest({
-            url: saPara.openid_url + '&code=' + res.code + '&appid=' + saPara.appid,
-            method: 'GET',
+            url: saPara.openid_url + "&code=" + res.code + "&appid=" + saPara.appid,
+            method: "GET",
             complete: function (res2) {
               if (isObject(res2) && isObject(res2.data) && res2.data.openid) {
                 callback(res2.data.openid);
               } else {
                 callback();
               }
-            }
+            },
           });
         } else {
           callback();
         }
-      }
+      },
     });
   },
   getWXStorage: function () {
@@ -4545,10 +4705,10 @@ var openid = {
     } else {
       this.getRequest(callback);
     }
-  }
+  },
 };
 
-var functions = /*#__PURE__*/Object.freeze({
+var functions = /*#__PURE__*/ Object.freeze({
   __proto__: null,
   setProfile: setProfile,
   setOnceProfile: setOnceProfile,
@@ -4589,7 +4749,7 @@ var functions = /*#__PURE__*/Object.freeze({
   register: register,
   clearAllRegister: clearAllRegister,
   clearAppRegister: clearAppRegister,
-  clearAllProps: clearAllProps
+  clearAllProps: clearAllProps,
 });
 
 /*
@@ -4627,7 +4787,7 @@ function checkIsComplete() {
   meta.initialState.isComplete = true;
   if (meta.initialState.queue.length > 0) {
     each(meta.initialState.queue, function (content) {
-      if (content[0] === 'appLaunch') {
+      if (content[0] === "appLaunch") {
         sa.autoTrackCustom.appLaunch.apply(sa.autoTrackCustom, slice.call(content[1]));
       } else {
         sa[content[0]].apply(sa, slice.call(content[1]));
@@ -4644,19 +4804,19 @@ function checkIsComplete() {
  */
 
 // 初始化 SDK 数据发送
-function init (obj) {
+function init(obj) {
   if (meta.init_status === true) {
     return false;
   }
   meta.init_status = true;
-  sa.ee.sdk.emit('beforeInit');
+  sa.ee.sdk.emit("beforeInit");
 
   //兼容老的参数配置逻辑
   if (obj && isObject(obj)) {
     sa.setPara(obj);
   }
-  sa.ee.sdk.emit('initPara');
-  sa.ee.sdk.emit('afterInitPara');
+  sa.ee.sdk.emit("initPara");
+  sa.ee.sdk.emit("afterInitPara");
 
   //用户信息初始化
   sa.store.init();
@@ -4684,7 +4844,7 @@ function init (obj) {
     checkAppLaunch();
 
     // ready 前不能有任何 track。可以用所有API，可以发数据
-    sa.ee.sdk.emit('ready');
+    sa.ee.sdk.emit("ready");
   }
 
   var promiseArr = [getNetworkType(), getSystemInfo()].concat(meta.promise_list);
@@ -4722,7 +4882,7 @@ sa.initialState = meta.initialState;
 //兼容老的引用关系 ID3
 sa.IDENTITY_KEY = {
   EMAIL: IDENTITY_KEY.EMAIL,
-  MOBILE: IDENTITY_KEY.MOBILE
+  MOBILE: IDENTITY_KEY.MOBILE,
 };
 
 //暴露对外API,需要在 apiStaging 之前执行
@@ -4749,7 +4909,7 @@ var disableSDK = {
     sa.enableSDK = this.enableSDK.bind(this);
     sa.getDisabled = this.getDisabled.bind(this);
   },
-  name: 'DisableSDK',
+  name: "DisableSDK",
   disabled: false,
   disableSDK() {
     this.disabled = true;
@@ -4759,7 +4919,7 @@ var disableSDK = {
   },
   getDisabled() {
     return this.disabled;
-  }
+  },
 };
 
 sa.usePlugin(disableSDK);
