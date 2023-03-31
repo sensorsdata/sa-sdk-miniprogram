@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.4';
+var LIB_VERSION = '1.18.5';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2966,10 +2966,12 @@ function mpProxy(option, method, identifier) {
         newFunc.apply(this, arguments);
         oldFunc.apply(this, arguments);
       }
+      sa.ee.page.emit(identifier);
     };
   } else {
     option[method] = function () {
       newFunc.apply(this, arguments);
+      sa.ee.page.emit(identifier);
     };
   }
 }
@@ -3067,26 +3069,6 @@ function getMethods(option) {
   return methods;
 }
 
-/**
- * 页面停留时长采集
- */
-function pageLeaveProxy(option) {
-  var oldHide = option['onHide'];
-  option['onHide'] = function () {
-    if (oldHide) {
-      oldHide.apply(this, arguments);
-    }
-    sa.sendPageLeave();
-  };
-  var oldUnload = option['onUnload'];
-  option['onUnload'] = function () {
-    if (oldUnload) {
-      oldUnload.apply(this, arguments);
-    }
-    sa.sendPageLeave();
-  };
-}
-
 /*
  * @Author: wangzhigang@sensorsdata.cn
  * @Date: 2022-05-07 14:40:11
@@ -3142,13 +3124,10 @@ function monitorClick(option) {
 }
 
 function monitorHooks(option) {
-  //完成 onhide onunload 事件的重写
-  if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
-    pageLeaveProxy(option);
-  }
-
   mpProxy(option, 'onLoad', 'pageLoad');
   mpProxy(option, 'onShow', 'pageShow');
+  mpProxy(option, 'onHide', 'pageHide');
+  mpProxy(option, 'onUnload', 'pageHide');
   mpProxy(option, 'onAddToFavorites', 'pageAddFavorites');
   if (typeof option.onShareAppMessage === 'function') {
     sa.autoTrackCustom.pageShare(option);
@@ -3226,6 +3205,7 @@ eventSub.prototype = {
 var ee = {};
 ee.sdk = new EventEmitterEx();
 ee.data = new EventEmitterEx();
+ee.page = new EventEmitterEx();
 
 /*
  * @Author: wangzhigang@sensorsdata.cn
@@ -4473,6 +4453,12 @@ var autoTrackCustom = {
     prop.$url_path = getCurrentPath();
     if (saPara.autoTrack && saPara.autoTrack.mpFavorite) {
       sa.autoTrackCustom.trackCustom('mpFavorite', prop, '$MPAddFavorites');
+    }
+  },
+  pageHide: function () {
+    if (sa.para.autoTrack && sa.para.autoTrack.pageLeave) {
+      // 原有 sendPageLeave 的逻辑
+      sendPageLeave();
     }
   }
 };
