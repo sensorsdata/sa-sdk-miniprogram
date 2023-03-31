@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.5';
+var LIB_VERSION = '1.18.6';
 var LIB_NAME = 'MiniProgram';
 
 /*
