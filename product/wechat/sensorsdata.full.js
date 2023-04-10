@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.18.6';
+var LIB_VERSION = '1.19.1';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2868,23 +2868,53 @@ sa.popupEmitter = {
  * @param {object} para
  */
 var usePlugin = function (plugin, para) {
-  // 判断是否为 A/B Testing 插件，如果是 A/B Testing 插件，则不处理合规状态 & 主 SDK 的初始化状态，立即执行 A/B Testing 插件的初始化
-  if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
-    if (typeof plugin.init === 'function') {
-      plugin.init(sa, para);
-      log('abtesting plugin is initialized');
-    }
+  if (!isObject(plugin) && !isFunction(plugin)) {
+    log('plugin must be an object', plugin);
     return false;
   }
 
-  // 过滤掉不包含name的插件
-  if (isObject(plugin) && isString(plugin.name) && plugin.name) {
+  if (!isFunction(plugin.init)) {
+    log('plugin maybe missing init method', plugin.plugin_name || plugin);
+  }
+
+  // 判断是否为 A/B Testing 插件，如果是 A/B Testing 插件，则不处理合规状态 & 主 SDK 的初始化状态，立即执行 A/B Testing 插件的初始化
+  if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
+    if (plugin.plugin_is_init === true) {
+      return plugin;
+    }
+    if (typeof plugin.init === 'function') {
+      plugin.init(sa, para);
+      plugin.plugin_is_init = true;
+      log('abtesting plugin is initialized');
+      return plugin;
+    } else {
+      return false;
+    }
+  }
+
+  // 过滤掉不包含name的插件，有 name 的话，使用已有的实例
+  if (isString(plugin.plugin_name) && plugin.plugin_name) {
     // 如果有插件，就使用原来的插件
-    if (sa.modules[plugin.name]) {
-      plugin = sa.modules[plugin.name];
+    if (sa.modules[plugin.plugin_name]) {
+      plugin = sa.modules[plugin.plugin_name];
     } else {
       // 如果没有插件，就存起来
-      sa.modules[plugin.name] = plugin;
+      sa.modules[plugin.plugin_name] = plugin;
+    }
+  } else {
+    log('plugin_name is not defined - ', plugin.plugin_name || plugin);
+  }
+
+  // 如果插件里有 plugin_is_init ，则返回
+  if (isObject(plugin) && plugin.plugin_is_init === true) {
+    //    log('duplicate initialization! plugin is already initialized - ', (plugin.plugin_name || plugin));
+    return plugin;
+  }
+
+  // 版本校验
+  if (isObject(plugin) && plugin.plugin_name) {
+    if (!isString(plugin.plugin_version) || plugin.plugin_version !== LIB_VERSION) {
+      log('warning!' + plugin.plugin_name + ' plugin version do not match SDK version ！！！');
     }
   }
 
@@ -2897,9 +2927,12 @@ var usePlugin = function (plugin, para) {
   } else {
     if (typeof plugin.init === 'function') {
       plugin.init(sa, para);
-      log(plugin.name + ' plugin is initialized');
+      plugin.plugin_is_init = true;
+      log(plugin.plugin_name + ' plugin is initialized');
     }
   }
+
+  return plugin;
 };
 
 /**
@@ -2909,10 +2942,13 @@ var checkPluginInitStatus = function () {
   if (meta.plugin.uninitialized_list.length > 0) {
     for (var temp in meta.plugin.uninitialized_list) {
       var plugin_item = meta.plugin.uninitialized_list[temp];
-      if (plugin_item && plugin_item.target && typeof plugin_item.target.init === 'function') {
+      if (plugin_item && plugin_item.target && typeof plugin_item.target.init === 'function' && !plugin_item.target.plugin_is_init) {
         plugin_item.target.init(sa, plugin_item.para);
-        if (isObject(plugin_item.target) && isString(plugin_item.target.name) && plugin_item.target.name) {
-          log(plugin_item.target.name + ' plugin is initialized');
+        if (isObject(plugin_item.target)) {
+          plugin_item.target.plugin_is_init = true;
+          if (isString(plugin_item.target.plugin_name) && plugin_item.target.plugin_name) {
+            log(plugin_item.target.plugin_name + ' plugin is initialized');
+          }
         }
       }
     }
@@ -4729,13 +4765,36 @@ initPageProxy();
 
 sa.init = init;
 
+var base = {
+  plugin_version: '1.19.1'
+};
+
+function createPlugin(obj) {
+  if (typeof obj === 'object'
+    && typeof obj.plugin_name === 'string'
+    && obj.plugin_name !== ''
+  ) {
+    obj.plugin_version = base.plugin_version;
+    obj.log = obj.log || function(){
+      if(typeof console === 'object' && typeof console.log === 'function'){
+        console.log.apply(console,arguments);
+      }
+    };
+    return obj;
+  } else {
+    typeof console === 'object'
+      && typeof console.error === 'function'
+      && console.error('plugin must contain  proprerty "plugin_name"');
+  }
+}
+
 var disableSDK = {
   init(sa) {
     sa.disableSDK = this.disableSDK.bind(this);
     sa.enableSDK = this.enableSDK.bind(this);
     sa.getDisabled = this.getDisabled.bind(this);
   },
-  name: 'DisableSDK',
+  plugin_name: 'DisableSDK',
   disabled: false,
   disableSDK() {
     this.disabled = true;
@@ -4748,7 +4807,9 @@ var disableSDK = {
   }
 };
 
-sa.usePlugin(disableSDK);
+var DisableSDK = createPlugin(disableSDK);
+
+sa.usePlugin(DisableSDK);
 
 /*
  * @Author: wangzhigang@sensorsdata.cn

@@ -7,7 +7,7 @@
 ### ES Module 方式
 ```javascript
 import exposure from '/dist/wechat/plugin/exposure/index.es6';
-sensors.use(exposure, {
+sensors.usePlugin(exposure, {
   class_tags:['sensors-exposure-track'],
   area_rate: 0, 
   stay_duration: 2, 
