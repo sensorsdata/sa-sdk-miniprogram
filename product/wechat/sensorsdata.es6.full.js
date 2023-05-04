@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.1';
+var LIB_VERSION = '1.19.2';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2875,21 +2875,6 @@ var usePlugin = function (plugin, para) {
     log('plugin maybe missing init method', plugin.plugin_name || plugin);
   }
 
-  // 判断是否为 A/B Testing 插件，如果是 A/B Testing 插件，则不处理合规状态 & 主 SDK 的初始化状态，立即执行 A/B Testing 插件的初始化
-  if (plugin && plugin.info && plugin.info.lib_plugin_name === 'miniprogram_abtesting') {
-    if (plugin.plugin_is_init === true) {
-      return plugin;
-    }
-    if (typeof plugin.init === 'function') {
-      plugin.init(sa, para);
-      plugin.plugin_is_init = true;
-      log('abtesting plugin is initialized');
-      return plugin;
-    } else {
-      return false;
-    }
-  }
-
   // 过滤掉不包含name的插件，有 name 的话，使用已有的实例
   if (isString(plugin.plugin_name) && plugin.plugin_name) {
     // 如果有插件，就使用原来的插件
@@ -4764,7 +4749,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.1'
+  plugin_version: '1.19.2'
 };
 
 function createPlugin(obj) {
