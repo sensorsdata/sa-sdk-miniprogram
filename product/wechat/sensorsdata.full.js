@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.2';
+var LIB_VERSION = '1.19.3';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -3264,6 +3264,13 @@ function checkPrivacyStatus() {
   }
 }
 
+/**
+ * 手动调用 API 控制数据可采集
+ */
+function enableDataCollect() {
+  meta.privacy.enable_data_collect = true;
+}
+
 /*
  * @Author: wangzhigang@sensorsdata.cn
  * @Date: 2022-06-30 19:42:06
@@ -4723,6 +4730,7 @@ sa.checkPluginInitStatus = checkPluginInitStatus;
 sa.eventSub = eventSub;
 sa.events = new eventEmitter();
 sa.ee = ee;
+sa.enableDataCollect = enableDataCollect; //合规方法
 
 //兼容老的引用关系 渠道插件
 sa.initialState = meta.initialState;
@@ -4751,7 +4759,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.2'
+  plugin_version: '1.19.3'
 };
 
 function createPlugin(obj) {
