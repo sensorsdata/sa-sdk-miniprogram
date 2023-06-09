@@ -1,3 +1,7 @@
+## 1.19.4（2023-6-9）
+1.  新增
+    - 新增 `registerPropertyPlugin` 接口，支持属性的删除和修改
+
 ## 1.19.3（2023-6-1）
 1.  修复
     - 修复 `enableDataCollect` 接口报错问题

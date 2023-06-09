@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.3';
+var LIB_VERSION = '1.19.4';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2809,7 +2809,7 @@ function buildData(p, custom_monitor_prop) {
   searchObjDate(data);
   strip_sa_properties(data.properties);
   searchObjString(data);
-
+  sa.ee.data.emit('finalAdjustData', data);
   return data;
 }
 
@@ -4711,6 +4711,30 @@ function init (obj) {
     });
 }
 
+function registerPropertyPlugin(arg) {
+  if (!isFunction(arg.properties)) {
+    log('registerPropertyPlugin arguments error, properties must be function');
+    return;
+  }
+
+  if (arg.isMatchedWithFilter && !isFunction(arg.isMatchedWithFilter)) {
+    log('registerPropertyPlugin arguments error, isMatchedWithFilter must be function');
+    return;
+  }
+
+  sa.ee.data.on('finalAdjustData', function (data) {
+    try {
+      if (isFunction(arg.isMatchedWithFilter)) {
+        arg.isMatchedWithFilter(data) && arg.properties(data);
+      } else {
+        arg.properties(data);
+      }
+    } catch (e) {
+      log('execute registerPropertyPlugin callback error:' + e);
+    }
+  });
+}
+
 /*
  * @Author: wangzhigang@sensorsdata.cn
  * @Date: 2022-06-15 15:45:40
@@ -4730,6 +4754,7 @@ sa.checkPluginInitStatus = checkPluginInitStatus;
 sa.eventSub = eventSub;
 sa.events = new eventEmitter();
 sa.ee = ee;
+sa.registerPropertyPlugin = registerPropertyPlugin;
 sa.enableDataCollect = enableDataCollect; //合规方法
 
 //兼容老的引用关系 渠道插件
@@ -4759,7 +4784,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.3'
+  plugin_version: '1.19.4'
 };
 
 function createPlugin(obj) {
