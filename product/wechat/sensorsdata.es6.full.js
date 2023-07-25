@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.5';
+var LIB_VERSION = '1.19.6';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2647,6 +2647,9 @@ var sendStrategy = {
         method: 'POST',
         dataType: 'text',
         data: data,
+        header: {
+          'content-type': 'text/plain'
+        },
         success: function () {
           option.success(option.len);
         },
@@ -3670,7 +3673,6 @@ function getPresetProperties() {
 }
 
 function setOpenid(openid, isCover) {
-  log('该方法已不建议使用，如果是 id2 用户，请使用 identify 代替，如果是 id3 用户，请使用 bindOpenid 代替');
   openid = validId(openid);
   if (!openid) {
     return false;
@@ -3685,6 +3687,7 @@ function setOpenid(openid, isCover) {
     });
     return false;
   }
+  log('该方法已不建议使用，如果是 id2 用户，请使用 identify 代替，如果是 id3 用户，请使用 bindOpenid 代替');
   if (isCover) {
     log('%c 当前版本 setOpenid 接口 已不支持传入第二个参数', 'color:#F39C12;font-size: 14px;');
   }
@@ -4782,7 +4785,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.5'
+  plugin_version: '1.19.6'
 };
 
 function createPlugin(obj) {
