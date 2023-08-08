@@ -1,8 +1,8 @@
 {
   "name": "sa-sdk-miniprogram",
-  "version": "1.19.6",
+  "version": "1.19.7",
   "description": "sensorsdata miniprogram sdk",
-  "main": "/dist/wechat/sensorsdata.cjs.js",
+  "main": "dist/wechat/sensorsdata.cjs.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

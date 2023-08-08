@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.6';
+var LIB_VERSION = '1.19.7';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -4787,7 +4787,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.6'
+  plugin_version: '1.19.7'
 };
 
 function createPlugin(obj) {
