@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.8';
+var LIB_VERSION = '1.19.9';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -4385,6 +4385,7 @@ var autoTrackCustom = {
     };
 
     option.onShareAppMessage = function () {
+      var me = this;
       meta.share_method = '转发消息卡片';
       var oldShareValue = oldMessage.apply(this, arguments);
 
@@ -4405,7 +4406,7 @@ var autoTrackCustom = {
         }
 
         if (isUndefined(value.path) || value.path === '') {
-          value.path = getCurrentUrl(this);
+          value.path = getCurrentUrl(me);
         }
 
         if (isString(value.path)) {
@@ -4785,7 +4786,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.8'
+  plugin_version: '1.19.9'
 };
 
 function createPlugin(obj) {
