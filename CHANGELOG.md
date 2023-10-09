@@ -1,3 +1,7 @@
+## 1.19.10（2023-10-9）
+1.  修复
+    - 曝光插件偶尔会报 Cannot read property 'area rate' of undefined 的问题
+
 ## 1.19.9（2023-9-19）
 1.  修复
     - 在开启 sampshare 且未定义 path 时，自动生成的 path 不带 query
