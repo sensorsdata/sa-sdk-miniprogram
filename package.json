@@ -1,6 +1,6 @@
 {
   "name": "sa-sdk-miniprogram",
-  "version": "1.19.10",
+  "version": "1.19.11",
   "description": "sensorsdata miniprogram sdk",
   "main": "dist/wechat/sensorsdata.cjs.js",
   "scripts": {

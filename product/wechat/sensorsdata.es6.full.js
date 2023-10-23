@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.10';
+var LIB_VERSION = '1.19.11';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2602,13 +2602,15 @@ var sendStrategy = {
   dataHasChange: false,
   syncStorage: false,
   failTime: 0,
+  /**
+   * 注意！！ init 在国密加密（以及将来其他加密插件）中进行重新实现，如果修改 init，必须考虑过密加密插件中 init 是否需要同步修改
+   */
   init: function () {
     this.sendHasInit = true;
     mergeStorageData.getData(sendStrategy.syncStorageState.bind(sendStrategy));
     this.batchInterval();
     this.onAppHide();
   },
-
   syncStorageState: function () {
     this.syncStorage = true;
   },
@@ -2620,6 +2622,9 @@ var sendStrategy = {
       }
     });
   },
+  /**
+   * 注意！！ send 在国密加密（以及将来其他加密插件）中进行重新实现，如果修改 send，必须考虑过密加密插件 send 是否需要同步修改
+   */
   send: function (data) {
     this.dataHasChange = true;
     if (store.mem.getLength() >= 500) {
@@ -2639,6 +2644,9 @@ var sendStrategy = {
       this.batchSend();
     }
   },
+  /**
+   * 注意！！ wxrequest 在国密加密插件（以及将来其他加密插件）中进行重新实现，如果修改 wxrequest， 必须考虑加密插件中 wxrequest 是否需要同步修改
+   */
   wxrequest: function (option) {
     if (isArray(option.data) && option.data.length > 0) {
       var data = kit.batchTrackData(option.data);
@@ -4683,15 +4691,15 @@ function init (obj) {
 
   // sa.ee.sdk.emit('afterInit');
 
-  //初始化 首次
-  setFirstVisitTime();
-
   //插件状态检查
   sa.checkPluginInitStatus();
 
+  //初始化 首次
+  setFirstVisitTime();
+
   //是否开启批量发送
   if (sa.para.batch_send) {
-    sendStrategy.init();
+    sa.sendStrategy.init();
   }
 
   function readySystemInfo() {
@@ -4786,7 +4794,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.10'
+  plugin_version: '1.19.11'
 };
 
 function createPlugin(obj) {
