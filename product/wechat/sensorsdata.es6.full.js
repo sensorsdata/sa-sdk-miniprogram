@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.11';
+var LIB_VERSION = '1.19.12';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -4106,7 +4106,6 @@ function pageShow(prop) {
   var router = getCurrentPath();
   var title = getPageTitle(router);
   var currentPage = getCurrentPage();
-  setRefPage();
   if (title) {
     obj.$title = title;
   }
@@ -4794,7 +4793,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.11'
+  plugin_version: '1.19.12'
 };
 
 function createPlugin(obj) {
