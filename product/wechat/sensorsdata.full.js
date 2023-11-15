@@ -541,7 +541,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.19.12';
+var LIB_VERSION = '1.20.1';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2764,7 +2764,7 @@ function onceSend(data) {
 function buildData(p, custom_monitor_prop) {
   var data = {
     distinct_id: sa.store.getDistinctId(),
-    identities: sa.store._state.identities,
+    identities: extend({}, sa.store._state.identities),
     lib: {
       $lib: LIB_NAME,
       $lib_method: 'code',
@@ -4795,7 +4795,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.19.12'
+  plugin_version: '1.20.1'
 };
 
 function createPlugin(obj) {
