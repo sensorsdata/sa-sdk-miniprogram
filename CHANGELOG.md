@@ -1,3 +1,8 @@
+## 1.20.2 (2023-11-17)
+1. 新增
+   - `sensors.resetAnonymousIdentity` 重置匿名 ID 的接口
+   - `sensors.kit.setData` 来设置内部 titile 变量，从而解决动态设置 titile 的问题
+
 ## 1.20.1（2023-11-15）
 1.  修复
    - 连续调用 track 和 bind，track 数据里有可能会包含 bind 信息的问题

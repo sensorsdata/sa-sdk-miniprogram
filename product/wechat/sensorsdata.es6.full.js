@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.20.1';
+var LIB_VERSION = '1.20.2';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2588,6 +2588,26 @@ function onceTrackData(data) {
 
 var kit = {};
 
+// 设置当前 titile 全局变量
+function setKitTitle(title) {
+  if (!isString(title)) {
+    return false;
+  }
+  var len = meta.page_route_map.length - 1;
+  if (len >= 0) {
+    meta.page_route_map[len].title = title;
+  }
+}
+
+kit.setData = function (obj) {
+  if (!isObject(obj)) {
+    return false;
+  }
+  if (obj.current_title) {
+    setKitTitle(obj.current_title);
+  }
+};
+
 //数据处理过程
 kit.processData = processData;
 
@@ -3287,7 +3307,7 @@ function enableDataCollect() {
  */
 
 function apiStaging() {
-  var saApiList = ['setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid', 'bindOpenid', 'unbindOpenid', 'bindUnionid', 'unbindUnionid'];
+  var saApiList = ['resetAnonymousIdentity', 'setProfile', 'setOnceProfile', 'track', 'quick', 'incrementProfile', 'appendProfile', 'login', 'logout', 'registerApp', 'register', 'clearAllRegister', 'clearAllProps', 'clearAppRegister', 'bind', 'unbind', 'unsetOpenid', 'setUnionid', 'unsetUnionid', 'bindOpenid', 'unbindOpenid', 'bindUnionid', 'unbindUnionid'];
   each(saApiList, function (method) {
     var temp = sa[method];
     sa[method] = function () {
@@ -3448,6 +3468,28 @@ function identify(id, isSave) {
         store.change('distinct_id', id);
       }
     }
+  }
+}
+
+// 重置 id3 匿名 id，只有在未登录情况下可以使用！！！
+function resetAnonymousIdentity(id) {
+  // 登录则 return
+  var firstId = store.getFirstId();
+  if (firstId) {
+    log('resetAnonymousIdentity must be used in a logout state ！');
+    return false;
+  }
+  if (typeof id === 'number') {
+    id = String(id);
+  }
+  // id 有值则替换，没值则重置
+  if (typeof id === 'undefined') {
+    var uuid = store.getUUID();
+    store._state.identities.$identity_mp_id = uuid;
+    store.set('distinct_id', uuid);
+  } else if (validId(id)) {
+    store._state.identities.$identity_mp_id = id;
+    store.set('distinct_id', id);
   }
 }
 
@@ -4579,6 +4621,7 @@ var functions = /*#__PURE__*/Object.freeze({
   incrementProfile: incrementProfile,
   track: track,
   identify: identify,
+  resetAnonymousIdentity: resetAnonymousIdentity,
   trackSignup: trackSignup,
   login: login,
   loginWithKey: loginWithKey,
@@ -4793,7 +4836,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.20.1'
+  plugin_version: '1.20.2'
 };
 
 function createPlugin(obj) {
