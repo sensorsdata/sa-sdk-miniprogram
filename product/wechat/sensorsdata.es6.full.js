@@ -539,7 +539,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.20.2';
+var LIB_VERSION = '1.20.3';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -827,6 +827,15 @@ var store = {
       obj['anonymous_id'] = distinct_id;
     }
     return obj;
+  },
+  // 区别于 identities，这里会加入 $identities_anonymous_id
+  getIdentities: function () {
+    var iden = JSON.parse(JSON.stringify(this._state.identities));
+    iden.$identity_anonymous_id = this.getAnonymousId();
+    return iden;
+  },
+  getAnonymousId: function () {
+    return this.getUnionId().anonymous_id;
   },
   /**
    * 新增 getHistoryLoginId 接口，用以获取到老的登录用户 ID 标识
@@ -2782,7 +2791,7 @@ function onceSend(data) {
 function buildData(p, custom_monitor_prop) {
   var data = {
     distinct_id: sa.store.getDistinctId(),
-    identities: extend({}, sa.store._state.identities),
+    identities: extend({}, sa.store.getIdentities()),
     lib: {
       $lib: LIB_NAME,
       $lib_method: 'code',
@@ -2791,21 +2800,30 @@ function buildData(p, custom_monitor_prop) {
     properties: {}
   };
 
-  if (p.type === 'track_id_unbind' && p.event === '$UnbindID') {
-    data.identities = deepCopy(p.unbind_value);
-    delete p.unbind_value;
-  }
-
   // 合并自定义监听事件添加的属性，合并此属性在合自定义属性前，保证此属性优先级低于事件本身的自定义属性
   if (!isObject(custom_monitor_prop)) {
     custom_monitor_prop = {};
   }
-
+  // unbind 额外属性修改
+  if (p.type === 'track_id_unbind' && p.event === '$UnbindID') {
+    data.identities = deepCopy(p.unbind_value);
+    delete p.unbind_value;
+  }
   extend(data, sa.store.getUnionId(), p);
 
   // 合并properties里的属性
   if (isObject(p.properties) && !isEmptyObject(p.properties)) {
     extend(data.properties, p.properties);
+  }
+
+  // unbind 额外id修改
+  if (p.type === 'track_id_unbind' && p.event === '$UnbindID') {
+    if (data.login_id) {
+      delete data.login_id;
+    }
+    if (data.anonymous_id) {
+      delete data.anonymous_id;
+    }
   }
 
   // profile时不传公用属性
@@ -3441,7 +3459,7 @@ function track(e, p, c) {
     });
 }
 
-function identify(id, isSave) {
+function identify(id) {
   if (!checkPrivacyStatus()) {
     return false;
   }
@@ -3455,18 +3473,10 @@ function identify(id, isSave) {
   id = validId(id);
   if (id) {
     var firstId = store.getFirstId();
-    if (isSave === true) {
-      if (firstId) {
-        store.set('first_id', id);
-      } else {
-        store.set('distinct_id', id);
-      }
+    if (firstId) {
+      store.set('first_id', id);
     } else {
-      if (firstId) {
-        store.change('first_id', id);
-      } else {
-        store.change('distinct_id', id);
-      }
+      store.set('distinct_id', id);
     }
   }
 }
@@ -3591,6 +3601,7 @@ function login(id) {
  * @returns
  */
 function loginWithKey(name, id) {
+  log('loginWithKey is deprecated !!!');
   if (!isString(name)) {
     log('Key must be String');
     return false;
@@ -3674,7 +3685,7 @@ function getIdentities() {
     log('请先初始化SDK');
     return null;
   } else {
-    return store._state.identities || null;
+    return store.getIdentities() || null;
   }
 }
 
@@ -3723,6 +3734,8 @@ function getPresetProperties() {
 }
 
 function setOpenid(openid, isCover) {
+  log('setOpenid is deprecated !!!');
+
   openid = validId(openid);
   if (!openid) {
     return false;
@@ -3742,7 +3755,7 @@ function setOpenid(openid, isCover) {
     log('%c 当前版本 setOpenid 接口 已不支持传入第二个参数', 'color:#F39C12;font-size: 14px;');
   }
   store.set('openid', openid);
-  sa.identify(openid, true);
+  sa.identify(openid);
 
   // IDM 3.0 只修改 identities 对象中 ID 的值，不上报 $BindID 事件
   var name = getOpenidNameByAppid();
@@ -3751,7 +3764,7 @@ function setOpenid(openid, isCover) {
 }
 
 function unsetOpenid(val) {
-  log('该方法已不建议使用，如果是 id3 用户，请使用 unbindOpenid 代替');
+  log('unsetOpenid 该方法已不建议使用，如果是 id3 用户，请使用 unbindOpenid 代替');
   var id = validId(val);
   if (!id) {
     return false;
@@ -3802,6 +3815,7 @@ function unbindOpenid(val) {
 }
 
 function setUnionid(val) {
+  log('setUnionid is deprecated !!!');
   var id = validId(val);
   if (id) {
     bind('$identity_mp_unionid', id);
@@ -3809,6 +3823,8 @@ function setUnionid(val) {
 }
 
 function unsetUnionid(val) {
+  log('unsetUnionid is deprecated !!!');
+
   var id = validId(val);
   if (id) {
     // 为了与后端保持一致，解绑 unionid 时，若当前 unionid 存在，且与绑定的 ID 值一致，则清空 openid 及 unionid
@@ -3825,6 +3841,8 @@ function unsetUnionid(val) {
 }
 
 function initWithOpenid(options, callback) {
+  log('initWithOpenid is deprecated !!!');
+
   options = options || {};
   if (options.appid) {
     saPara.appid = options.appid;
@@ -4836,7 +4854,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.20.2'
+  plugin_version: '1.20.3'
 };
 
 function createPlugin(obj) {

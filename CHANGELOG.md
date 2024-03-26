@@ -1,3 +1,7 @@
+## 1.20.3 (2024-3-26)
+1. 优化
+   - ID3 内外层匿名 ID 保持一致，不建议使用 loginWithKey, identify 默认是带 true 的结果。
+
 ## 1.20.2 (2023-11-17)
 1. 新增
    - `sensors.resetAnonymousIdentity` 重置匿名 ID 的接口
