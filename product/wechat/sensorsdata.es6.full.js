@@ -60,6 +60,7 @@ var saPara = {
     share_info_use_string: false //分享信息设置区分 A B 版本 URL 链接拼接方式不一样
   },
   batch_send: true,
+  sdk_id: '',
   storage_store_key: 'sensorsdata2015_wechat',
   storage_prepare_data_key: 'sensors_mp_prepare_data'
 };
@@ -539,7 +540,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.20.3';
+var LIB_VERSION = '1.20.4';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -4257,6 +4258,11 @@ function setPara(para) {
   if (!isArray(saPara.autotrack_exclude_page.pageLeave)) {
     saPara.autotrack_exclude_page.pageLeave = [];
   }
+  // 多 SDK
+  if (saPara.sdk_id) {
+    saPara.storage_store_key += saPara.sdk_id;
+    saPara.storage_prepare_data_key += saPara.sdk_id;
+  }
 }
 
 function getServerUrl() {
@@ -4854,7 +4860,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.20.3'
+  plugin_version: '1.20.4'
 };
 
 function createPlugin(obj) {
