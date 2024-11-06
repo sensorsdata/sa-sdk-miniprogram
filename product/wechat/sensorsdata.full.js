@@ -542,7 +542,7 @@ var IDENTITY_KEY = {
   LOGIN: '$identity_login_id'
 };
 
-var LIB_VERSION = '1.20.5';
+var LIB_VERSION = '1.20.6';
 var LIB_NAME = 'MiniProgram';
 
 /*
@@ -2970,6 +2970,52 @@ var usePlugin = function (plugin, para) {
   return plugin;
 };
 
+// 和 usePlugin 的唯一区别就是去除了底部的 if (!meta.init_status) 的判断，会立即执行，不会必须等初始化完成
+var use = function (plugin, para) {
+  if (!isObject(plugin) && !isFunction(plugin)) {
+    log('plugin must be an object', plugin);
+    return false;
+  }
+
+  if (!isFunction(plugin.init)) {
+    log('plugin maybe missing init method', plugin.plugin_name || plugin);
+  }
+
+  // 过滤掉不包含name的插件，有 name 的话，使用已有的实例
+  if (isString(plugin.plugin_name) && plugin.plugin_name) {
+    // 如果有插件，就使用原来的插件
+    if (sa.modules[plugin.plugin_name]) {
+      plugin = sa.modules[plugin.plugin_name];
+    } else {
+      // 如果没有插件，就存起来
+      sa.modules[plugin.plugin_name] = plugin;
+    }
+  } else {
+    log('plugin_name is not defined - ', plugin.plugin_name || plugin);
+  }
+
+  // 如果插件里有 plugin_is_init ，则返回
+  if (isObject(plugin) && plugin.plugin_is_init === true) {
+    //    log('duplicate initialization! plugin is already initialized - ', (plugin.plugin_name || plugin));
+    return plugin;
+  }
+
+  // 版本校验
+  if (isObject(plugin) && plugin.plugin_name) {
+    if (!isString(plugin.plugin_version) || plugin.plugin_version !== LIB_VERSION) {
+      log('warning!' + plugin.plugin_name + ' plugin version do not match SDK version ！！！');
+    }
+  }
+
+  if (typeof plugin.init === 'function') {
+    plugin.init(sa, para);
+    plugin.plugin_is_init = true;
+    log(plugin.plugin_name + ' plugin is initialized');
+  }
+
+  return plugin;
+};
+
 /**
  * 检查插件的初始化状态，未被初始化的插件重新完成初始化
  */
@@ -4705,7 +4751,7 @@ function buildAPI(sa) {
 
 function setFirstVisitTime() {
   if (meta.is_first_launch) {
-    setOnceProfile({ $first_visit_time: new Date() });
+    sa.setOnceProfile({ $first_visit_time: new Date() });
   }
 }
 
@@ -4828,6 +4874,7 @@ sa.dataStage = dataStage;
 sa.sendStrategy = sendStrategy;
 sa.store = store;
 sa.usePlugin = usePlugin;
+sa.use = use;
 sa.checkPluginInitStatus = checkPluginInitStatus;
 sa.eventSub = eventSub;
 sa.events = new eventEmitter();
@@ -4862,7 +4909,7 @@ initPageProxy();
 sa.init = init;
 
 var base = {
-  plugin_version: '1.20.5'
+  plugin_version: '1.20.6'
 };
 
 function createPlugin(obj) {
@@ -4905,7 +4952,7 @@ var disableSDK = {
 
 var DisableSDK = createPlugin(disableSDK);
 
-sa.usePlugin(DisableSDK);
+sa.use(DisableSDK);
 
 /*
  * @Author: wangzhigang@sensorsdata.cn
